@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
-import { useToast } from '../../components/ui/Toast';
+import { useAuth } from '../../hooks/useAuthHook';
+import { useToast } from '../../hooks/useToast';
 import { Button } from '../../components/ui/Button';
 
 interface RegisterForm {

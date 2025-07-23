@@ -605,7 +605,7 @@ export const authAPI = {
     };
   },
 
-  register: async (userData: any): Promise<ApiResponse<null>> => {
+  register: async (userData: { firstName: string; lastName: string; email: string; password: string }): Promise<ApiResponse<null>> => {
     await delay(1000);
     const existingUser = mockUsers.find(u => u.email === userData.email);
     if (existingUser) {

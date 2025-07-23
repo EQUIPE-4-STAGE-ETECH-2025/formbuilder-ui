@@ -60,7 +60,7 @@ export interface FormSettings {
 export interface Submission {
   id: string;
   formId: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   submittedAt: string;
   ipAddress: string;
   userAgent?: string;

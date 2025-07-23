@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, User, Settings, LogOut, Bell } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
-import { Button } from '../ui/Button';
+import { useAuth } from '../../hooks/useAuthHook';
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

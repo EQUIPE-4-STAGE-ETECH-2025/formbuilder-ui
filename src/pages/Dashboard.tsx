@@ -4,7 +4,7 @@ import { PlusCircle, FileText, Send, Users, TrendingUp, Calendar } from 'lucide-
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { Card, CardContent, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuthHook';
 import { dashboardAPI } from '../services/api';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -37,7 +37,12 @@ interface DashboardStats {
   totalSubmissions: number;
   publishedForms: number;
   submissionsThisMonth: number;
-  recentSubmissions: any[];
+  recentSubmissions: Array<{
+    id: string;
+    formId: string;
+    data: Record<string, unknown>;
+    submittedAt: string;
+  }>;
 }
 
 export function Dashboard() {

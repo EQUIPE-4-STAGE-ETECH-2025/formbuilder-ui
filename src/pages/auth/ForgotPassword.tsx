@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Mail, ArrowLeft } from 'lucide-react';
-import { useToast } from '../../components/ui/Toast';
+import { useToast } from '../../hooks/useToast';
 import { Button } from '../../components/ui/Button';
 
 interface ForgotPasswordForm {
@@ -21,7 +21,7 @@ export function ForgotPassword() {
     getValues
   } = useForm<ForgotPasswordForm>();
 
-  const onSubmit = async (data: ForgotPasswordForm) => {
+  const onSubmit = async () => {
     setLoading(true);
     try {
       // Simulate API call
@@ -32,7 +32,7 @@ export function ForgotPassword() {
         title: 'Email envoyé',
         message: 'Vérifiez votre boîte mail pour réinitialiser votre mot de passe'
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',

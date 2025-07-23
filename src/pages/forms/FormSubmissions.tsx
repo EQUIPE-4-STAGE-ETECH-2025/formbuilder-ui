@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Download, Filter, Calendar, Search } from 'lucide-react';
+import { Download, Calendar, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { Pagination } from '../../components/ui/Pagination';
-import { useToast } from '../../components/ui/Toast';
+import { useToast } from '../../hooks/useToast';
 import { Form, Submission } from '../../types';
 import { formsAPI, submissionsAPI } from '../../services/api';
 import { formatDistanceToNow } from 'date-fns';
@@ -22,13 +21,7 @@ export function FormSubmissions() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  useEffect(() => {
-    if (id) {
-      fetchData();
-    }
-  }, [id]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [formResponse, submissionsResponse] = await Promise.all([
         formsAPI.getById(id!),
@@ -42,12 +35,18 @@ export function FormSubmissions() {
       if (submissionsResponse.success && submissionsResponse.data) {
         setSubmissions(submissionsResponse.data);
       }
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    } catch {
+      console.error('Error fetching data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchData();
+    }
+  }, [id, fetchData]);
 
   const handleExport = async () => {
     if (!id) return;
@@ -72,7 +71,7 @@ export function FormSubmissions() {
           message: 'Le fichier CSV a été téléchargé'
         });
       }
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur d\'export',

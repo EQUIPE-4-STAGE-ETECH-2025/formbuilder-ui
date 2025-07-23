@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Filter, MoreHorizontal, Edit, Trash2, Eye, Copy } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '../../components/ui/Card';
+import { Card, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { Pagination } from '../../components/ui/Pagination';
-import { useToast } from '../../components/ui/Toast';
+import { useToast } from '../../hooks/useToast';
 import { Form } from '../../types';
 import { formsAPI } from '../../services/api';
 import { formatDistanceToNow } from 'date-fns';
@@ -31,8 +30,8 @@ export function FormsList() {
       if (response.success && response.data) {
         setForms(response.data);
       }
-    } catch (error) {
-      console.error('Error fetching forms:', error);
+    } catch {
+      console.error('Error fetching forms');
     } finally {
       setLoading(false);
     }
@@ -48,7 +47,7 @@ export function FormsList() {
           title: 'Formulaire supprimé',
           message: 'Le formulaire a été supprimé avec succès'
         });
-      } catch (error) {
+      } catch {
         addToast({
           type: 'error',
           title: 'Erreur',
@@ -83,7 +82,7 @@ export function FormsList() {
         title: 'Formulaire dupliqué',
         message: 'Le formulaire a été dupliqué avec succès'
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',
@@ -189,7 +188,7 @@ export function FormsList() {
               <Filter className="h-4 w-4 text-gray-400" />
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
+                onChange={(e) => setStatusFilter(e.target.value as 'all' | 'draft' | 'published' | 'disabled')}
                 className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">Tous les statuts</option>

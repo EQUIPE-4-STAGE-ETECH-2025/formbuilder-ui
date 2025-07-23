@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Users, FileText, TrendingUp, AlertTriangle, Search, MoreHorizontal, Ban, Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, AreaChart, Area } from 'recharts';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { Pagination } from '../../components/ui/Pagination';
-import { useToast } from '../../components/ui/Toast';
+import { useToast } from '../../hooks/useToast';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -134,9 +133,8 @@ const mockAuditLogs: AuditLog[] = [
 export function AdminDashboard() {
   const { addToast } = useToast();
   const [users, setUsers] = useState<AdminUser[]>(mockUsers);
-  const [stats, setStats] = useState<AdminStats>(mockStats);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(mockAuditLogs);
-  const [loading, setLoading] = useState(false);
+  const [stats] = useState<AdminStats>(mockStats);
+  const [auditLogs] = useState<AuditLog[]>(mockAuditLogs);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended'>('all');
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -174,7 +172,7 @@ export function AdminDashboard() {
         title: `Utilisateur ${action}`,
         message: `Le compte a été ${action} avec succès`
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',
@@ -193,7 +191,7 @@ export function AdminDashboard() {
           title: 'Utilisateur supprimé',
           message: 'Le compte a été supprimé définitivement'
         });
-      } catch (error) {
+      } catch {
         addToast({
           type: 'error',
           title: 'Erreur',
@@ -398,7 +396,7 @@ export function AdminDashboard() {
                 </div>
                 <select
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'suspended')}
                   className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Tous les statuts</option>

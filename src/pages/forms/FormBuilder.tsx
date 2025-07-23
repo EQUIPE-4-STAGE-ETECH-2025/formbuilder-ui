@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Save, 
@@ -23,7 +23,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { useToast } from '../../components/ui/Toast';
+import { useToast } from '../../hooks/useToast';
 import { Form, FormField } from '../../types';
 import { formsAPI } from '../../services/api';
 
@@ -46,6 +46,19 @@ export function FormBuilder() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'build' | 'preview' | 'embed'>('build');
+
+  const fetchForm = useCallback(async () => {
+    try {
+      const response = await formsAPI.getById(id!);
+      if (response.success && response.data) {
+        setForm(response.data);
+      }
+    } catch {
+      console.error('Error fetching form');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
     if (id && id !== 'new') {
@@ -76,20 +89,7 @@ export function FormBuilder() {
       });
       setLoading(false);
     }
-  }, [id]);
-
-  const fetchForm = async () => {
-    try {
-      const response = await formsAPI.getById(id!);
-      if (response.success && response.data) {
-        setForm(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching form:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [id, fetchForm]);
 
   const handleSave = async () => {
     if (!form) return;
@@ -113,7 +113,7 @@ export function FormBuilder() {
         title: 'Formulaire sauvegardé',
         message: 'Vos modifications ont été enregistrées'
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',
@@ -139,7 +139,7 @@ export function FormBuilder() {
           message: 'Votre formulaire est maintenant accessible au public'
         });
       }
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',
@@ -155,7 +155,7 @@ export function FormBuilder() {
 
     const newField: FormField = {
       id: `field-${Date.now()}`,
-      type: type as any,
+      type: type as FormField['type'],
       label: `Nouveau champ ${type}`,
       required: false,
       order: form.fields.length + 1

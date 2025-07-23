@@ -1,5 +1,5 @@
 import { Header } from './Header';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuthHook';
 import { useLocation } from 'react-router-dom';
 
 interface LayoutProps {

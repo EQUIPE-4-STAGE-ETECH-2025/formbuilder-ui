@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
-import { useToast } from '../../components/ui/Toast';
+import { useAuth } from '../../hooks/useAuthHook';
+import { useToast } from '../../hooks/useToast';
 import { Button } from '../../components/ui/Button';
 
 export function Login() {

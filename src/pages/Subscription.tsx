@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Check, Crown, Zap, Star } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { useToast } from '../components/ui/Toast';
-import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
+import { useAuth } from '../hooks/useAuthHook';
 import { Plan } from '../types';
 import { plansAPI } from '../services/api';
 
@@ -31,6 +31,8 @@ export function Subscription() {
   };
 
   const handleSubscribe = (planId: string) => {
+    // planId will be used when Stripe integration is implemented
+    console.log('Selected plan:', planId);
     addToast({
       type: 'info',
       title: 'Fonctionnalité en cours',

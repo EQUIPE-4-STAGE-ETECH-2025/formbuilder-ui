@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
@@ -13,21 +13,12 @@ export function FormEmbed() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, string | boolean | number>>({});
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const token = searchParams.get('token');
 
-  useEffect(() => {
-    if (id && token) {
-      fetchForm();
-    } else {
-      setError('Paramètres manquants');
-      setLoading(false);
-    }
-  }, [id, token]);
-
-  const fetchForm = async () => {
+  const fetchForm = useCallback(async () => {
     try {
       // In real app, would verify JWT token here
       const response = await formsAPI.getById(id!);
@@ -40,21 +31,30 @@ export function FormEmbed() {
       } else {
         setError('Formulaire non trouvé');
       }
-    } catch (error) {
+    } catch {
       setError('Erreur lors du chargement du formulaire');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const validateField = (field: FormField, value: any): string | null => {
+  useEffect(() => {
+    if (id && token) {
+      fetchForm();
+    } else {
+      setError('Paramètres manquants');
+      setLoading(false);
+    }
+  }, [id, token, fetchForm]);
+
+  const validateField = (field: FormField, value: string | boolean | number): string | null => {
     if (field.required && (!value || value.toString().trim() === '')) {
       return 'Ce champ est obligatoire';
     }
 
     if (field.type === 'email' && value) {
       const emailRegex = /\S+@\S+\.\S+/;
-      if (!emailRegex.test(value)) {
+      if (!emailRegex.test(value.toString())) {
         return 'Email invalide';
       }
     }
@@ -68,7 +68,7 @@ export function FormEmbed() {
     return null;
   };
 
-  const handleInputChange = (fieldId: string, value: any) => {
+  const handleInputChange = (fieldId: string, value: string | boolean | number) => {
     setFormData(prev => ({ ...prev, [fieldId]: value }));
     
     // Clear validation error when user starts typing
@@ -132,7 +132,7 @@ export function FormEmbed() {
         return (
           <input
             type={field.type}
-            value={value}
+            value={value.toString()}
             onChange={(e) => handleInputChange(field.id, e.target.value)}
             placeholder={field.placeholder}
             className={baseClasses}
@@ -144,7 +144,7 @@ export function FormEmbed() {
         return (
           <input
             type="date"
-            value={value}
+            value={value.toString()}
             onChange={(e) => handleInputChange(field.id, e.target.value)}
             className={baseClasses}
             required={field.required}
@@ -154,7 +154,7 @@ export function FormEmbed() {
       case 'textarea':
         return (
           <textarea
-            value={value}
+            value={value.toString()}
             onChange={(e) => handleInputChange(field.id, e.target.value)}
             placeholder={field.placeholder}
             rows={3}
@@ -166,7 +166,7 @@ export function FormEmbed() {
       case 'select':
         return (
           <select
-            value={value}
+            value={value.toString()}
             onChange={(e) => handleInputChange(field.id, e.target.value)}
             className={baseClasses}
             required={field.required}
@@ -183,7 +183,7 @@ export function FormEmbed() {
           <label className="flex items-center">
             <input
               type="checkbox"
-              checked={value || false}
+              checked={Boolean(value)}
               onChange={(e) => handleInputChange(field.id, e.target.checked)}
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               required={field.required}
@@ -201,7 +201,7 @@ export function FormEmbed() {
                   type="radio"
                   name={field.id}
                   value={option}
-                  checked={value === option}
+                  checked={value.toString() === option}
                   onChange={(e) => handleInputChange(field.id, e.target.value)}
                   className="text-blue-600 focus:ring-blue-500"
                   required={field.required}

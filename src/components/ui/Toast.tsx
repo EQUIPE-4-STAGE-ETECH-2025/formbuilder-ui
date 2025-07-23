@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useEffect, useState, ReactNode } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { clsx } from 'clsx';
+import { ToastContext } from '../../contexts/ToastContext';
 
 interface Toast {
   id: string;
@@ -9,13 +10,6 @@ interface Toast {
   message?: string;
   duration?: number;
 }
-
-interface ToastContextType {
-  addToast: (toast: Omit<Toast, 'id'>) => void;
-  removeToast: (id: string) => void;
-}
-
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -43,20 +37,14 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useToast = () => {
-  const context = useContext(ToastContext);
-  if (context === undefined) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
-};
+
 
 interface ToastContainerProps {
   toasts: Toast[];
   onRemove: (id: string) => void;
 }
 
-function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
+const ToastContainer = ({ toasts, onRemove }: ToastContainerProps) => {
   return (
     <div className="fixed bottom-4 right-4 z-50 space-y-2">
       {toasts.map(toast => (
@@ -64,14 +52,14 @@ function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
       ))}
     </div>
   );
-}
+};
 
 interface ToastItemProps {
   toast: Toast;
   onRemove: (id: string) => void;
 }
 
-function ToastItem({ toast, onRemove }: ToastItemProps) {
+const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -129,4 +117,4 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
       </button>
     </div>
   );
-}
+};

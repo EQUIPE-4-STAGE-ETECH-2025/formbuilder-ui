@@ -4,8 +4,20 @@ import { User, Mail, Lock, Trash2, Save } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { useToast } from '../components/ui/Toast';
-import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
+import { useAuth } from '../hooks/useAuthHook';
+
+interface ProfileForm {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+interface PasswordForm {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
 
 const AdminProfile = () => {
   const { user } = useAuth();
@@ -16,7 +28,7 @@ const AdminProfile = () => {
     register,
     handleSubmit,
     formState: { errors }
-  } = useForm({
+  } = useForm<ProfileForm>({
     defaultValues: {
       firstName: user?.firstName || '',
       lastName: user?.lastName || '',
@@ -24,7 +36,7 @@ const AdminProfile = () => {
     }
   });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async () => {
     setLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -33,7 +45,7 @@ const AdminProfile = () => {
         title: 'Profil administrateur mis à jour',
         message: 'Vos informations ont été sauvegardées'
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',
@@ -145,27 +157,8 @@ const AdminProfile = () => {
   );
 };
 
-interface ProfileForm {
-  firstName: string;
-  lastName: string;
-  email: string;
-}
-
-interface PasswordForm {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
-
 export function Profile() {
   const { user } = useAuth();
-
-  // Show admin profile for admin users
-  if (user?.role === 'ADMIN') {
-    return <AdminProfile />;
-  }
-
-  // Regular user profile
   const { addToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -193,7 +186,12 @@ export function Profile() {
 
   const newPassword = watch('newPassword');
 
-  const onProfileSubmit = async (data: ProfileForm) => {
+  // Show admin profile for admin users
+  if (user?.role === 'ADMIN') {
+    return <AdminProfile />;
+  }
+
+  const onProfileSubmit = async () => {
     setLoading(true);
     try {
       // Simulate API call
@@ -203,7 +201,7 @@ export function Profile() {
         title: 'Profil mis à jour',
         message: 'Vos informations ont été sauvegardées'
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',
@@ -214,7 +212,7 @@ export function Profile() {
     }
   };
 
-  const onPasswordSubmit = async (data: PasswordForm) => {
+  const onPasswordSubmit = async () => {
     setPasswordLoading(true);
     try {
       // Simulate API call
@@ -225,7 +223,7 @@ export function Profile() {
         message: 'Votre mot de passe a été mis à jour'
       });
       resetPassword();
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',
@@ -246,7 +244,7 @@ export function Profile() {
         message: 'Votre compte a été supprimé définitivement'
       });
       // In real app, would logout and redirect
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',

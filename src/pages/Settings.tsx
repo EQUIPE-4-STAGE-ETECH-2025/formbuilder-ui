@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Bell, Webhook, Key, Shield, Globe } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuthHook';
 import { Card, CardContent, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { useToast } from '../components/ui/Toast';
+import { useToast } from '../hooks/useToast';
 
 const AdminSettings = () => {
   const { addToast } = useToast();
@@ -30,7 +30,7 @@ const AdminSettings = () => {
         title: 'Paramètres système sauvegardés',
         message: 'La configuration a été mise à jour'
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',
@@ -165,13 +165,6 @@ const AdminSettings = () => {
 
 export function Settings() {
   const { user } = useAuth();
-
-  // Show admin settings for admin users
-  if (user?.role === 'ADMIN') {
-    return <AdminSettings />;
-  }
-
-  // Regular user settings
   const { addToast } = useToast();
   const [notifications, setNotifications] = useState({
     emailSubmissions: true,
@@ -182,6 +175,11 @@ export function Settings() {
   const [webhookUrl, setWebhookUrl] = useState('');
   const [apiKey, setApiKey] = useState('sk_live_...');
   const [loading, setLoading] = useState(false);
+
+  // Show admin settings for admin users
+  if (user?.role === 'ADMIN') {
+    return <AdminSettings />;
+  }
 
   const handleNotificationChange = (key: string, value: boolean) => {
     setNotifications(prev => ({ ...prev, [key]: value }));
@@ -197,7 +195,7 @@ export function Settings() {
         title: 'Paramètres sauvegardés',
         message: 'Vos préférences ont été mises à jour'
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',
@@ -219,7 +217,7 @@ export function Settings() {
         title: 'Nouvelle clé générée',
         message: 'Votre clé API a été régénérée'
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle, XCircle, Mail, Loader } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { useToast } from '../../components/ui/Toast';
+import { useToast } from '../../hooks/useToast';
 
 export function EmailVerification() {
   const [searchParams] = useSearchParams();
@@ -13,15 +13,7 @@ export function EmailVerification() {
   const token = searchParams.get('token');
   const email = searchParams.get('email');
 
-  useEffect(() => {
-    if (token) {
-      verifyEmail();
-    } else {
-      setStatus('error');
-    }
-  }, [token]);
-
-  const verifyEmail = async () => {
+  const verifyEmail = useCallback(async () => {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -34,10 +26,18 @@ export function EmailVerification() {
       } else {
         setStatus('success');
       }
-    } catch (error) {
+    } catch {
       setStatus('error');
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      verifyEmail();
+    } else {
+      setStatus('error');
+    }
+  }, [token, verifyEmail]);
 
   const resendVerification = async () => {
     setLoading(true);
@@ -49,7 +49,7 @@ export function EmailVerification() {
         title: 'Email envoyé',
         message: 'Un nouveau lien de vérification a été envoyé'
       });
-    } catch (error) {
+    } catch {
       addToast({
         type: 'error',
         title: 'Erreur',
