@@ -1,11 +1,11 @@
-# Pipeline CI/CD pour l'application React Vite FormBuilder
-# Ce workflow s'exécute à chaque push sur la branche main
 name: CI/CD React Vite UI
 
 # Déclencheurs du workflow
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
 
 # Jobs du pipeline
 jobs:
@@ -47,6 +47,8 @@ jobs:
     name: Build et Déploiement
     needs: test  # Dépend du job de test
     runs-on: ubuntu-latest
+    # Condition pour ne déployer que sur les push vers main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
       # Étape 1: Récupération du code source
