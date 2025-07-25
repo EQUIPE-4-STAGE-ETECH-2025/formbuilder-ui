@@ -65,3 +65,6 @@ Desktop.ini
 # Temporary files
 *.tmp
 *.temp
+
+# Cursor IDE
+.cursorignore
