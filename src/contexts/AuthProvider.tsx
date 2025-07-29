@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect, useState } from "react";
-import { authAPI } from "../services/api";
+import { authAPI } from "../services/api.mock";
 import { IUser } from "../types";
 import { AuthContext } from "./AuthContext";
 

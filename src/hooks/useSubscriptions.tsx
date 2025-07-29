@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { plansAPI, subscriptionsAPI } from "../services/api";
+import { plansAPI, subscriptionsAPI } from "../services/api.mock";
 import { IPlan, ISubscription } from "../types";
 
 interface IUseSubscriptionsReturn {

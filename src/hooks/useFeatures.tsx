@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { featuresAPI } from "../services/api";
+import { featuresAPI } from "../services/api.mock";
 import { IFeature } from "../types";
 
 interface IUseFeaturesReturn {

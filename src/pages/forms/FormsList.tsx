@@ -16,7 +16,7 @@ import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Pagination } from "../../components/ui/Pagination";
 import { useToast } from "../../hooks/useToast";
-import { formsAPI } from "../../services/api";
+import { formsAPI } from "../../services/api.mock";
 import { IForm } from "../../types";
 
 export function FormsList() {

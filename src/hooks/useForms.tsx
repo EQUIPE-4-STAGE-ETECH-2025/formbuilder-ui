@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { formsAPI } from "../services/api";
+import { formsAPI } from "../services/api.mock";
 import { IForm } from "../types";
 
 interface IUseFormsReturn {

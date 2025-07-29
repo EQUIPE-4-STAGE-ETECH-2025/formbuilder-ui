@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { quotaAPI } from "../services/api";
+import { quotaAPI } from "../services/api.mock";
 import { IQuotaStatus } from "../types";
 import { useAuth } from "./useAuth";
 

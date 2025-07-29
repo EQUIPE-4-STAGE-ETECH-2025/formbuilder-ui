@@ -32,7 +32,7 @@ import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { useToast } from "../../hooks/useToast";
-import { formsAPI } from "../../services/api";
+import { formsAPI } from "../../services/api.mock";
 import { IForm, IFormField } from "../../types";
 
 const fieldTypes = [

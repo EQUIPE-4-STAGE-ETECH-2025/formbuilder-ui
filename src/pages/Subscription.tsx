@@ -4,7 +4,7 @@ import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../components/ui/Card";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
-import { plansAPI } from "../services/api";
+import { plansAPI } from "../services/api.mock";
 import { IPlan } from "../types";
 
 export function Subscription() {
