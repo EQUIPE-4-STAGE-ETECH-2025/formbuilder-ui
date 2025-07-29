@@ -11,30 +11,30 @@ on:
 jobs:
   # Job de test - vérifie la qualité du code et les tests
   test:
-    name: Tests et Linting
+    name: tests and linting
     runs-on: ubuntu-latest
-    
+
     steps:
       # Étape 1: Récupération du code source
       - name: Checkout du code source
         uses: actions/checkout@v4
-        
+
       # Étape 2: Configuration de Node.js
       - name: Configuration de Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
           # Cache automatique des dépendances npm
-          cache: 'npm'
-          
+          cache: "npm"
+
       # Étape 3: Installation des dépendances
       - name: Installation des dépendances
         run: npm ci
-        
+
       # Étape 4: Vérification du linting
       - name: Vérification du linting
         run: npm run lint
-        
+
       # Étape 5: Exécution des tests
       - name: Exécution des tests
         run: npm run test
@@ -44,36 +44,36 @@ jobs:
 
   # Job de build et déploiement - s'exécute seulement si les tests passent
   build-and-deploy:
-    name: Build et Déploiement
-    needs: test  # Dépend du job de test
+    name: build and deployment
+    needs: test # Dépend du job de test
     runs-on: ubuntu-latest
     # Condition pour ne déployer que sur les push vers main
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+
     steps:
       # Étape 1: Récupération du code source
       - name: Checkout du code source
         uses: actions/checkout@v4
-        
+
       # Étape 2: Configuration de Node.js
       - name: Configuration de Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          
+          node-version: "20"
+          cache: "npm"
+
       # Étape 3: Installation des dépendances
       - name: Installation des dépendances
         run: npm ci
-        
+
       # Étape 4: Build de l'application
       - name: Build de l'application
         run: npm run build
-        
+
       # Étape 5: Configuration de Fly.io
       - name: Configuration de Fly.io
         uses: superfly/flyctl-actions/setup-flyctl@master
-        
+
       # Étape 6: Déploiement sur Fly.io
       - name: Déploiement sur Fly.io
         run: flyctl deploy --remote-only

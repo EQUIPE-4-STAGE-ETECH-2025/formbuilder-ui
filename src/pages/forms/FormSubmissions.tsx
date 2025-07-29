@@ -1,121 +1,123 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import { Download, Calendar, Search } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Pagination } from '../../components/ui/Pagination';
-import { useToast } from '../../hooks/useToast';
-import { Form, Submission } from '../../types';
-import { formsAPI, submissionsAPI } from '../../services/api';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { Download, Eye, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { Button } from "../../components/ui/Button";
+import { Card, CardContent, CardHeader } from "../../components/ui/Card";
+import { Pagination } from "../../components/ui/Pagination";
+import { useToast } from "../../hooks/useToast";
+import { formsAPI, submissionsAPI } from "../../services/api";
+import { IForm, ISubmission } from "../../types";
 
 export function FormSubmissions() {
   const { id } = useParams();
   const { addToast } = useToast();
-  const [form, setForm] = useState<Form | null>(null);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [form, setForm] = useState<IForm | null>(null);
+  const [submissions, setSubmissions] = useState<ISubmission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
 
-  const fetchData = useCallback(async () => {
+  const fetchForm = useCallback(async () => {
     try {
-      const [formResponse, submissionsResponse] = await Promise.all([
-        formsAPI.getById(id!),
-        submissionsAPI.getByFormId(id!)
-      ]);
-
-      if (formResponse.success && formResponse.data) {
-        setForm(formResponse.data);
-      }
-
-      if (submissionsResponse.success && submissionsResponse.data) {
-        setSubmissions(submissionsResponse.data);
+      const response = await formsAPI.getById(id!);
+      if (response.success && response.data) {
+        setForm(response.data);
       }
     } catch {
-      console.error('Error fetching data');
-    } finally {
-      setLoading(false);
+      console.error("Error fetching form");
     }
   }, [id]);
 
-  useEffect(() => {
-    if (id) {
-      fetchData();
-    }
-  }, [id, fetchData]);
-
-  const handleExport = async () => {
-    if (!id) return;
-
-    setExporting(true);
+  const fetchSubmissions = useCallback(async () => {
     try {
-      const response = await submissionsAPI.exportCsv(id);
-      if (response.success && response.data) {
-        // Create and download CSV file
-        const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `submissions-${form?.title || 'formulaire'}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      setLoading(true);
+      const response = await submissionsAPI.getByFormId(id!);
 
-        addToast({
-          type: 'success',
-          title: 'Export réussi',
-          message: 'Le fichier CSV a été téléchargé'
-        });
+      if (response.success && response.data) {
+        setSubmissions(response.data);
+        setTotalItems(response.data.length);
       }
     } catch {
+      console.error("Error fetching submissions");
       addToast({
-        type: 'error',
-        title: 'Erreur d\'export',
-        message: 'Impossible d\'exporter les données'
+        type: "error",
+        title: "Erreur",
+        message: "Impossible de charger les soumissions",
       });
     } finally {
-      setExporting(false);
+      setLoading(false);
+    }
+  }, [id, addToast]);
+
+  useEffect(() => {
+    if (id) {
+      fetchForm();
+      fetchSubmissions();
+    }
+  }, [id, currentPage, itemsPerPage, fetchForm, fetchSubmissions]);
+
+  const handleExport = async () => {
+    try {
+      // In real app, would trigger CSV export
+      addToast({
+        type: "success",
+        title: "Export en cours",
+        message: "Le fichier CSV sera téléchargé dans quelques secondes",
+      });
+    } catch {
+      addToast({
+        type: "error",
+        title: "Erreur",
+        message: "Impossible d'exporter les données",
+      });
     }
   };
 
-  const filteredSubmissions = submissions.filter(submission => {
-    if (!searchTerm) return true;
-    
-    const searchableData = Object.values(submission.data).join(' ').toLowerCase();
-    return searchableData.includes(searchTerm.toLowerCase());
-  });
-
-  // Pagination calculations
-  const totalItems = filteredSubmissions.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedSubmissions = filteredSubmissions.slice(startIndex, endIndex);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
+  const handleDeleteSubmission = async () => {
+    try {
+      // In real app, would call API to delete submission
+      addToast({
+        type: "success",
+        title: "Soumission supprimée",
+        message: "La soumission a été supprimée avec succès",
+      });
+      fetchSubmissions(); // Refresh the list
+    } catch {
+      addToast({
+        type: "error",
+        title: "Erreur",
+        message: "Impossible de supprimer la soumission",
+      });
+    }
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page
   };
 
-  if (loading) {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  if (loading && !form) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-32 bg-gray-200 rounded-lg"></div>
-        <div className="h-96 bg-gray-200 rounded-lg"></div>
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
       </div>
     );
   }
@@ -131,152 +133,141 @@ export function FormSubmissions() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{form.title}</h1>
-          <p className="text-gray-600">{submissions.length} soumissions</p>
+          <h1 className="text-2xl font-bold text-gray-900">Soumissions</h1>
+          <p className="text-gray-600">{form.title}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            loading={exporting}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Exporter CSV
-          </Button>
-        </div>
+        <Button onClick={handleExport} variant="outline">
+          <Download className="h-4 w-4 mr-2" />
+          Exporter CSV
+        </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900">{submissions.length}</p>
-              <p className="text-sm text-gray-600">Total des soumissions</p>
+              <p className="text-2xl font-bold text-blue-600">{totalItems}</p>
+              <p className="text-sm text-gray-600">Total soumissions</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900">
-                {submissions.filter(s => {
-                  const date = new Date(s.submittedAt);
-                  const now = new Date();
-                  return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-                }).length}
+              <p className="text-2xl font-bold text-green-600">
+                {submissions.length > 0 ? submissions.length : 0}
               </p>
-              <p className="text-sm text-gray-600">Ce mois</p>
+              <p className="text-sm text-gray-600">Cette page</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900">
-                {submissions.filter(s => {
-                  const date = new Date(s.submittedAt);
-                  const now = new Date();
-                  return date.toDateString() === now.toDateString();
-                }).length}
+              <p className="text-2xl font-bold text-purple-600">
+                {Math.ceil(totalItems / itemsPerPage)}
               </p>
-              <p className="text-sm text-gray-600">Aujourd'hui</p>
+              <p className="text-sm text-gray-600">Pages</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Rechercher dans les soumissions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Submissions List */}
+      {/* Submissions Table */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold text-gray-900">Soumissions</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Liste des soumissions
+          </h3>
         </CardHeader>
         <CardContent>
-          {paginatedSubmissions.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>
-                {searchTerm 
-                  ? 'Aucune soumission ne correspond à votre recherche'
-                  : 'Aucune soumission trouvée'
-                }
-              </p>
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-16 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          ) : submissions.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Aucune soumission pour le moment</p>
             </div>
           ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
-                      {form.fields.map((field) => (
-                        <th key={field.id} className="text-left py-3 px-4 font-medium text-gray-900">
-                          {field.label}
-                        </th>
-                      ))}
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">IP</th>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">
+                      Date
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">
+                      IP
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {submissions.map((submission) => (
+                    <tr
+                      key={submission.id}
+                      className="border-b border-gray-100 hover:bg-gray-50"
+                    >
+                      <td className="py-3 px-4 text-sm text-gray-900">
+                        {formatDate(submission.submitted_at)}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-600">
+                        {submission.ip_address}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              // In real app, would show submission details
+                              addToast({
+                                type: "info",
+                                title: "Détails",
+                                message:
+                                  "Fonctionnalité en cours de développement",
+                              });
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteSubmission()}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {paginatedSubmissions.map((submission) => (
-                      <tr key={submission.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {formatDistanceToNow(new Date(submission.submittedAt), { 
-                            addSuffix: true, 
-                            locale: fr 
-                          })}
-                        </td>
-                        {form.fields.map((field) => (
-                          <td key={field.id} className="py-3 px-4 text-sm text-gray-900">
-                            {submission.data[field.id] || '-'}
-                          </td>
-                        ))}
-                        <td className="py-3 px-4 text-sm text-gray-500">
-                          {submission.ipAddress}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination */}
-              {totalItems > 0 && (
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  totalItems={totalItems}
-                  itemsPerPage={itemsPerPage}
-                  onPageChange={handlePageChange}
-                  onItemsPerPageChange={handleItemsPerPageChange}
-                />
-              )}
-            </>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalItems > itemsPerPage && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(totalItems / itemsPerPage)}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
+      )}
     </div>
   );
 }

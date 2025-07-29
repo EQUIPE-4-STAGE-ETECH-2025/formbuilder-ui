@@ -1,5 +1,5 @@
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuthHook';
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -7,7 +7,11 @@ interface ProtectedRouteProps {
   userOnly?: boolean;
 }
 
-export function ProtectedRoute({ children, adminOnly = false, userOnly = false }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  children,
+  adminOnly = false,
+  userOnly = false,
+}: ProtectedRouteProps) {
   const { isAuthenticated, loading } = useAuth();
   const { user } = useAuth();
   const location = useLocation();
@@ -28,11 +32,11 @@ export function ProtectedRoute({ children, adminOnly = false, userOnly = false }
   }
 
   // Check role-based access
-  if (adminOnly && user?.role !== 'ADMIN') {
+  if (adminOnly && user?.role !== "ADMIN") {
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (userOnly && user?.role === 'ADMIN') {
+  if (userOnly && user?.role === "ADMIN") {
     return <Navigate to="/admin" replace />;
   }
   return <>{children}</>;

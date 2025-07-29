@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuthHook';
-import { useToast } from '../../hooks/useToast';
-import { Button } from '../../components/ui/Button';
+import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "../../components/ui/Button";
+import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../hooks/useToast";
 
 interface RegisterForm {
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -17,7 +17,7 @@ interface RegisterForm {
 export function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { register: registerUser, loading } = useAuth();
+  const { register: registerUser, loading, error, clearError } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -25,30 +25,33 @@ export function Register() {
     register,
     handleSubmit,
     formState: { errors },
-    watch
+    watch,
   } = useForm<RegisterForm>();
 
-  const password = watch('password');
+  const password = watch("password");
 
   const onSubmit = async (data: RegisterForm) => {
-    try {
-      await registerUser({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        password: data.password
-      });
+    clearError();
+
+    const success = await registerUser({
+      first_name: data.first_name,
+      last_name: data.last_name,
+      email: data.email,
+      password: data.password,
+    });
+
+    if (success) {
       addToast({
-        type: 'success',
-        title: 'Inscription réussie',
-        message: 'Vérifiez votre email pour confirmer votre compte'
+        type: "success",
+        title: "Inscription réussie",
+        message: "Vérifiez votre email pour confirmer votre compte",
       });
-      navigate('/login');
-    } catch (error) {
+      navigate("/login");
+    } else {
       addToast({
-        type: 'error',
-        title: 'Erreur d\'inscription',
-        message: error instanceof Error ? error.message : 'Une erreur est survenue'
+        type: "error",
+        title: "Erreur d'inscription",
+        message: error || "Une erreur est survenue",
       });
     }
   };
@@ -64,8 +67,11 @@ export function Register() {
             Créer votre compte
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Ou{' '}
-            <Link to="/login" className="text-blue-600 hover:text-blue-500 font-medium">
+            Ou{" "}
+            <Link
+              to="/login"
+              className="text-blue-600 hover:text-blue-500 font-medium"
+            >
               connectez-vous à votre compte existant
             </Link>
           </p>
@@ -75,7 +81,10 @@ export function Register() {
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="first_name"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Prénom
                 </label>
                 <div className="relative">
@@ -83,21 +92,26 @@ export function Register() {
                     <User className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    {...register('firstName', {
-                      required: 'Le prénom est requis'
+                    {...register("first_name", {
+                      required: "Le prénom est requis",
                     })}
                     type="text"
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Anna"
                   />
                 </div>
-                {errors.firstName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
+                {errors.first_name && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.first_name.message}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="last_name"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Nom
                 </label>
                 <div className="relative">
@@ -105,22 +119,27 @@ export function Register() {
                     <User className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    {...register('lastName', {
-                      required: 'Le nom est requis'
+                    {...register("last_name", {
+                      required: "Le nom est requis",
                     })}
                     type="text"
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Martin"
                   />
                 </div>
-                {errors.lastName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
+                {errors.last_name && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.last_name.message}
+                  </p>
                 )}
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Adresse email
               </label>
               <div className="relative">
@@ -128,12 +147,12 @@ export function Register() {
                   <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  {...register('email', {
-                    required: 'L\'email est requis',
+                  {...register("email", {
+                    required: "L'email est requis",
                     pattern: {
                       value: /\S+@\S+\.\S+/,
-                      message: 'Email invalide'
-                    }
+                      message: "Email invalide",
+                    },
                   })}
                   type="email"
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -141,12 +160,17 @@ export function Register() {
                 />
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Mot de passe
               </label>
               <div className="relative">
@@ -154,14 +178,15 @@ export function Register() {
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  {...register('password', {
-                    required: 'Le mot de passe est requis',
+                  {...register("password", {
+                    required: "Le mot de passe est requis",
                     minLength: {
                       value: 8,
-                      message: 'Le mot de passe doit contenir au moins 8 caractères'
-                    }
+                      message:
+                        "Le mot de passe doit contenir au moins 8 caractères",
+                    },
                   })}
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="••••••••"
                 />
@@ -178,12 +203,17 @@ export function Register() {
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Confirmer le mot de passe
               </label>
               <div className="relative">
@@ -191,11 +221,13 @@ export function Register() {
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  {...register('confirmPassword', {
-                    required: 'La confirmation du mot de passe est requise',
-                    validate: (value) => value === password || 'Les mots de passe ne correspondent pas'
+                  {...register("confirmPassword", {
+                    required: "La confirmation du mot de passe est requise",
+                    validate: (value) =>
+                      value === password ||
+                      "Les mots de passe ne correspondent pas",
                   })}
-                  type={showConfirmPassword ? 'text' : 'password'}
+                  type={showConfirmPassword ? "text" : "password"}
                   className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="••••••••"
                 />
@@ -212,7 +244,9 @@ export function Register() {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.confirmPassword.message}
+                </p>
               )}
             </div>
 

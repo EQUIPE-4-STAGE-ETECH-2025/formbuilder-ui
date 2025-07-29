@@ -1,794 +1,894 @@
-import { User, Form, Submission, Plan, ApiResponse } from '../types';
+import {
+  IDashboardStats,
+  IFeature,
+  IForm,
+  IFormVersion,
+  IPlan,
+  IQuotaStatus,
+  ISubmission,
+  ISubscription,
+  IUser,
+  TApiResponse,
+} from "../types";
 
-// Mock data
-const mockUsers: User[] = [
+// Types locaux
+interface ILoginResponse {
+  token: string;
+  user: IUser;
+}
+
+interface IRegisterData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+}
+
+// Constantes
+const API_DELAY = {
+  FAST: 200,
+  MEDIUM: 400,
+  SLOW: 800,
+  VERY_SLOW: 1000,
+};
+
+// Données mockées conformes au schéma Supabase
+const mockUsers: IUser[] = [
   {
-    id: 'user-1',
-    firstName: 'Anna',
-    lastName: 'Martin',
-    email: 'anna@example.com',
-    role: 'USER',
-    isEmailVerified: true,
-    subscription: {
-      plan: 'premium',
-      maxForms: 20,
-      maxSubmissionsPerMonth: 10000,
-      currentForms: 8,
-      currentSubmissions: 2340
-    },
-    createdAt: '2024-01-15T10:00:00Z'
+    id: "user-1",
+    first_name: "Anna",
+    last_name: "Martin",
+    email: "anna@example.com",
+    password_hash: "hashed_password",
+    is_email_verified: true,
+    role: "USER",
+    created_at: "2024-01-15T10:00:00Z",
+    updated_at: "2024-01-15T10:00:00Z",
   },
   {
-    id: 'admin-1',
-    firstName: 'Admin',
-    lastName: 'System',
-    email: 'admin@formbuilder.com',
-    role: 'ADMIN',
-    isEmailVerified: true,
-    subscription: {
-      plan: 'pro',
-      maxForms: -1,
-      maxSubmissionsPerMonth: -1,
-      currentForms: 0,
-      currentSubmissions: 0
-    },
-    createdAt: '2024-01-01T00:00:00Z'
-  }
+    id: "admin-1",
+    first_name: "Admin",
+    last_name: "System",
+    email: "admin@formbuilder.com",
+    password_hash: "hashed_password",
+    is_email_verified: true,
+    role: "ADMIN",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+  },
 ];
 
-const mockForms: Form[] = [
+const mockPlans: IPlan[] = [
   {
-    id: 'form-1',
-    title: 'Contact Lead Generation',
-    description: 'Formulaire de contact pour prospects',
-    status: 'published',
-    submissionCount: 245,
-    createdAt: '2024-06-15T10:00:00Z',
-    updatedAt: '2024-07-10T15:30:00Z',
-    userId: 'user-1',
-    fields: [
-      {
-        id: 'field-1',
-        type: 'text',
-        label: 'Nom complet',
-        placeholder: 'Votre nom',
-        required: true,
-        order: 1
-      },
-      {
-        id: 'field-2',
-        type: 'email',
-        label: 'Email',
-        placeholder: 'votre@email.com',
-        required: true,
-        order: 2
-      },
-      {
-        id: 'field-3',
-        type: 'textarea',
-        label: 'Message',
-        placeholder: 'Votre message',
-        required: false,
-        order: 3
-      }
-    ],
-    settings: {
-      theme: {
-        primaryColor: '#3B82F6',
-        backgroundColor: '#FFFFFF',
-        textColor: '#1F2937'
-      },
-      successMessage: 'Merci pour votre message !',
-      notifications: {
-        email: true
-      }
-    }
+    id: "plan-free",
+    name: "Free",
+    price_cents: 0,
+    stripe_product_id: "prod_free",
+    max_forms: 3,
+    max_submissions_per_month: 500,
+    max_storage_mb: 10,
   },
   {
-    id: 'form-3',
-    title: 'Enquête de satisfaction',
-    description: 'Collecte des avis clients après achat',
-    status: 'published',
-    submissionCount: 89,
-    createdAt: '2024-07-01T08:00:00Z',
-    updatedAt: '2024-07-14T11:20:00Z',
-    userId: 'user-1',
-    fields: [
-      {
-        id: 'field-6',
-        type: 'text',
-        label: 'Nom',
-        placeholder: 'Votre nom',
-        required: true,
-        order: 1
-      },
-      {
-        id: 'field-7',
-        type: 'select',
-        label: 'Note globale',
-        required: true,
-        options: ['1 - Très insatisfait', '2 - Insatisfait', '3 - Neutre', '4 - Satisfait', '5 - Très satisfait'],
-        order: 2
-      },
-      {
-        id: 'field-8',
-        type: 'textarea',
-        label: 'Commentaires',
-        placeholder: 'Vos commentaires...',
-        required: false,
-        order: 3
-      }
-    ],
-    settings: {
-      theme: {
-        primaryColor: '#F59E0B',
-        backgroundColor: '#FFFFFF',
-        textColor: '#1F2937'
-      },
-      successMessage: 'Merci pour votre avis !',
-      notifications: {
-        email: true
-      }
-    }
+    id: "plan-premium",
+    name: "Premium",
+    price_cents: 2900,
+    stripe_product_id: "prod_premium",
+    max_forms: 20,
+    max_submissions_per_month: 10000,
+    max_storage_mb: 100,
   },
   {
-    id: 'form-4',
-    title: 'Inscription Événement',
-    description: 'Formulaire d\'inscription pour notre prochain webinaire',
-    status: 'draft',
+    id: "plan-pro",
+    name: "Pro",
+    price_cents: 9900,
+    stripe_product_id: "prod_pro",
+    max_forms: -1,
+    max_submissions_per_month: 100000,
+    max_storage_mb: 500,
+  },
+];
+
+const mockSubscriptions: ISubscription[] = [
+  {
+    id: "sub-1",
+    user_id: "user-1",
+    plan_id: "plan-premium",
+    stripe_subscription_id: "sub_premium_123",
+    start_date: "2024-01-15",
+    end_date: "2025-01-15",
+    is_active: true,
+    created_at: "2024-01-15T10:00:00Z",
+    updated_at: "2024-01-15T10:00:00Z",
+  },
+];
+
+const mockForms: IForm[] = [
+  {
+    id: "form-1",
+    user_id: "user-1",
+    title: "Contact Lead Generation",
+    description: "Formulaire de contact pour prospects",
+    status: "published",
+    published_at: "2024-07-10T15:30:00Z",
+    created_at: "2024-06-15T10:00:00Z",
+    updated_at: "2024-07-10T15:30:00Z",
+    submissionCount: 2,
+    version: 2,
+    fields: [],
+    history: {
+      versions: [],
+      currentVersion: 2,
+      maxVersions: 10,
+    },
+    settings: {
+      theme: {
+        primary_color: "#3B82F6",
+        background_color: "#FFFFFF",
+        text_color: "#1F2937",
+      },
+      success_message: "Merci pour votre message !",
+      notifications: {
+        email: true,
+      },
+    },
+  },
+  {
+    id: "form-2",
+    user_id: "user-1",
+    title: "Inscription Newsletter",
+    description: "Collecte d'emails pour la newsletter",
+    status: "published",
+    published_at: "2024-05-20T14:00:00Z",
+    created_at: "2024-05-20T14:00:00Z",
+    updated_at: "2024-07-12T09:15:00Z",
     submissionCount: 0,
-    createdAt: '2024-07-13T16:30:00Z',
-    updatedAt: '2024-07-13T16:30:00Z',
-    userId: 'user-1',
-    fields: [
-      {
-        id: 'field-9',
-        type: 'text',
-        label: 'Prénom',
-        placeholder: 'Votre prénom',
-        required: true,
-        order: 1
-      },
-      {
-        id: 'field-10',
-        type: 'text',
-        label: 'Nom',
-        placeholder: 'Votre nom',
-        required: true,
-        order: 2
-      },
-      {
-        id: 'field-11',
-        type: 'email',
-        label: 'Email professionnel',
-        placeholder: 'votre@entreprise.com',
-        required: true,
-        order: 3
-      },
-      {
-        id: 'field-12',
-        type: 'text',
-        label: 'Entreprise',
-        placeholder: 'Nom de votre entreprise',
-        required: false,
-        order: 4
-      }
-    ],
+    version: 1,
+    fields: [],
+    history: {
+      versions: [],
+      currentVersion: 1,
+      maxVersions: 10,
+    },
     settings: {
       theme: {
-        primaryColor: '#8B5CF6',
-        backgroundColor: '#FFFFFF',
-        textColor: '#1F2937'
+        primary_color: "#3B82F6",
+        background_color: "#FFFFFF",
+        text_color: "#1F2937",
       },
-      successMessage: 'Inscription confirmée !',
+      success_message: "Merci pour votre inscription !",
       notifications: {
-        email: true
-      }
-    }
+        email: true,
+      },
+    },
   },
-  {
-    id: 'form-5',
-    title: 'Demande de Devis',
-    description: 'Formulaire pour demander un devis personnalisé',
-    status: 'published',
-    submissionCount: 156,
-    createdAt: '2024-06-28T10:15:00Z',
-    updatedAt: '2024-07-11T14:45:00Z',
-    userId: 'user-1',
-    fields: [
-      {
-        id: 'field-13',
-        type: 'text',
-        label: 'Nom complet',
-        placeholder: 'Votre nom complet',
-        required: true,
-        order: 1
-      },
-      {
-        id: 'field-14',
-        type: 'email',
-        label: 'Email',
-        placeholder: 'votre@email.com',
-        required: true,
-        order: 2
-      },
-      {
-        id: 'field-15',
-        type: 'select',
-        label: 'Type de projet',
-        required: true,
-        options: ['Site vitrine', 'E-commerce', 'Application web', 'Application mobile', 'Autre'],
-        order: 3
-      },
-      {
-        id: 'field-16',
-        type: 'textarea',
-        label: 'Description du projet',
-        placeholder: 'Décrivez votre projet en détail...',
-        required: true,
-        order: 4
-      },
-      {
-        id: 'field-17',
-        type: 'select',
-        label: 'Budget approximatif',
-        required: false,
-        options: ['< 5 000€', '5 000€ - 15 000€', '15 000€ - 50 000€', '> 50 000€'],
-        order: 5
-      }
-    ],
-    settings: {
-      theme: {
-        primaryColor: '#EF4444',
-        backgroundColor: '#FFFFFF',
-        textColor: '#1F2937'
-      },
-      successMessage: 'Votre demande a été envoyée !',
-      notifications: {
-        email: true
-      }
-    }
-  },
-  {
-    id: 'form-6',
-    title: 'Candidature Emploi',
-    description: 'Formulaire de candidature pour nos offres d\'emploi',
-    status: 'published',
-    submissionCount: 67,
-    createdAt: '2024-07-05T09:00:00Z',
-    updatedAt: '2024-07-12T16:30:00Z',
-    userId: 'user-1',
-    fields: [
-      {
-        id: 'field-18',
-        type: 'text',
-        label: 'Prénom',
-        placeholder: 'Votre prénom',
-        required: true,
-        order: 1
-      },
-      {
-        id: 'field-19',
-        type: 'text',
-        label: 'Nom',
-        placeholder: 'Votre nom',
-        required: true,
-        order: 2
-      },
-      {
-        id: 'field-20',
-        type: 'email',
-        label: 'Email',
-        placeholder: 'votre@email.com',
-        required: true,
-        order: 3
-      },
-      {
-        id: 'field-21',
-        type: 'select',
-        label: 'Poste souhaité',
-        required: true,
-        options: ['Développeur Frontend', 'Développeur Backend', 'Designer UI/UX', 'Chef de projet', 'Marketing'],
-        order: 4
-      },
-      {
-        id: 'field-22',
-        type: 'textarea',
-        label: 'Lettre de motivation',
-        placeholder: 'Expliquez pourquoi vous souhaitez rejoindre notre équipe...',
-        required: true,
-        order: 5
-      }
-    ],
-    settings: {
-      theme: {
-        primaryColor: '#06B6D4',
-        backgroundColor: '#FFFFFF',
-        textColor: '#1F2937'
-      },
-      successMessage: 'Candidature reçue !',
-      notifications: {
-        email: true
-      }
-    }
-  },
-  {
-    id: 'form-7',
-    title: 'Support Technique',
-    description: 'Formulaire de demande d\'assistance technique',
-    status: 'disabled',
-    submissionCount: 234,
-    createdAt: '2024-05-15T11:30:00Z',
-    updatedAt: '2024-07-08T13:15:00Z',
-    userId: 'user-1',
-    fields: [
-      {
-        id: 'field-23',
-        type: 'text',
-        label: 'Nom',
-        placeholder: 'Votre nom',
-        required: true,
-        order: 1
-      },
-      {
-        id: 'field-24',
-        type: 'email',
-        label: 'Email',
-        placeholder: 'votre@email.com',
-        required: true,
-        order: 2
-      },
-      {
-        id: 'field-25',
-        type: 'select',
-        label: 'Priorité',
-        required: true,
-        options: ['Faible', 'Normale', 'Élevée', 'Critique'],
-        order: 3
-      },
-      {
-        id: 'field-26',
-        type: 'textarea',
-        label: 'Description du problème',
-        placeholder: 'Décrivez le problème rencontré...',
-        required: true,
-        order: 4
-      }
-    ],
-    settings: {
-      theme: {
-        primaryColor: '#DC2626',
-        backgroundColor: '#FFFFFF',
-        textColor: '#1F2937'
-      },
-      successMessage: 'Ticket créé !',
-      notifications: {
-        email: true
-      }
-    }
-  },
-  {
-    id: 'form-2',
-    title: 'Inscription Newsletter',
-    description: 'Collecte d\'emails pour la newsletter',
-    status: 'published',
-    submissionCount: 1523,
-    createdAt: '2024-05-20T14:00:00Z',
-    updatedAt: '2024-07-12T09:15:00Z',
-    userId: 'user-1',
-    fields: [
-      {
-        id: 'field-4',
-        type: 'email',
-        label: 'Adresse email',
-        placeholder: 'votre@email.com',
-        required: true,
-        order: 1
-      },
-      {
-        id: 'field-5',
-        type: 'checkbox',
-        label: 'J\'accepte de recevoir les communications',
-        required: true,
-        order: 2
-      }
-    ],
-    settings: {
-      theme: {
-        primaryColor: '#10B981',
-        backgroundColor: '#F9FAFB',
-        textColor: '#374151'
-      },
-      successMessage: 'Inscription réussie !',
-      notifications: {
-        email: true
-      }
-    }
-  }
 ];
 
-const mockSubmissions: Submission[] = [
+const mockFormVersions: IFormVersion[] = [
   {
-    id: 'sub-1',
-    formId: 'form-1',
-    data: {
-      'field-1': 'Jean Dupont',
-      'field-2': 'jean@example.com',
-      'field-3': 'Intéressé par vos services'
+    id: "version-1",
+    form_id: "form-1",
+    version_number: 1,
+    schema: {
+      title: "Contact Lead Generation",
+      description: "Formulaire de contact pour prospects",
+      status: "draft",
+      fields: [
+        {
+          id: "field-1",
+          form_version_id: "version-1",
+          label: "Nom complet",
+          type: "text",
+          is_required: true,
+          options: {
+            placeholder: "Votre nom",
+          },
+          position: 1,
+          order: 1,
+          validation_rules: {
+            required: true,
+            min_length: 2,
+          },
+        },
+        {
+          id: "field-2",
+          form_version_id: "version-1",
+          label: "Email",
+          type: "email",
+          is_required: true,
+          options: {
+            placeholder: "votre@email.com",
+          },
+          position: 2,
+          order: 2,
+          validation_rules: {
+            required: true,
+            pattern: "^[^@]+@[^@]+\\.[^@]+$",
+          },
+        },
+      ],
+      settings: {
+        theme: {
+          primary_color: "#3B82F6",
+          background_color: "#FFFFFF",
+          text_color: "#1F2937",
+        },
+        success_message: "Merci pour votre message !",
+        notifications: {
+          email: true,
+        },
+      },
     },
-    submittedAt: '2024-07-14T10:30:00Z',
-    ipAddress: '192.168.1.1',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    created_at: "2024-06-15T10:00:00Z",
   },
   {
-    id: 'sub-2',
-    formId: 'form-1',
-    data: {
-      'field-1': 'Marie Dubois',
-      'field-2': 'marie@example.com',
-      'field-3': 'Demande de devis'
+    id: "version-2",
+    form_id: "form-1",
+    version_number: 2,
+    schema: {
+      title: "Contact Lead Generation",
+      description: "Formulaire de contact pour prospects",
+      status: "published",
+      fields: [
+        {
+          id: "field-1",
+          form_version_id: "version-2",
+          label: "Nom complet",
+          type: "text",
+          is_required: true,
+          options: {
+            placeholder: "Votre nom",
+          },
+          position: 1,
+          order: 1,
+          validation_rules: {
+            required: true,
+            min_length: 2,
+          },
+        },
+        {
+          id: "field-2",
+          form_version_id: "version-2",
+          label: "Email",
+          type: "email",
+          is_required: true,
+          options: {
+            placeholder: "votre@email.com",
+          },
+          position: 2,
+          order: 2,
+          validation_rules: {
+            required: true,
+            pattern: "^[^@]+@[^@]+\\.[^@]+$",
+          },
+        },
+        {
+          id: "field-3",
+          form_version_id: "version-2",
+          label: "Message",
+          type: "textarea",
+          is_required: false,
+          options: {
+            placeholder: "Votre message",
+          },
+          position: 3,
+          order: 3,
+          validation_rules: {
+            required: false,
+            max_length: 1000,
+          },
+        },
+      ],
+      settings: {
+        theme: {
+          primary_color: "#3B82F6",
+          background_color: "#FFFFFF",
+          text_color: "#1F2937",
+        },
+        success_message: "Merci pour votre message !",
+        notifications: {
+          email: true,
+        },
+      },
     },
-    submittedAt: '2024-07-13T16:45:00Z',
-    ipAddress: '192.168.1.2',
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+    created_at: "2024-07-10T15:30:00Z",
   },
-  {
-    id: 'sub-3',
-    formId: 'form-1',
-    data: {
-      'field-1': 'Pierre Martin',
-      'field-2': 'pierre@example.com',
-      'field-3': 'Question sur vos tarifs'
-    },
-    submittedAt: '2024-07-12T14:20:00Z',
-    ipAddress: '192.168.1.3',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-  },
-  {
-    id: 'sub-4',
-    formId: 'form-1',
-    data: {
-      'field-1': 'Sophie Leroy',
-      'field-2': 'sophie@example.com',
-      'field-3': 'Demande de partenariat'
-    },
-    submittedAt: '2024-07-11T09:15:00Z',
-    ipAddress: '192.168.1.4',
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-  },
-  {
-    id: 'sub-5',
-    formId: 'form-1',
-    data: {
-      'field-1': 'Thomas Bernard',
-      'field-2': 'thomas@example.com',
-      'field-3': 'Intérêt pour formation'
-    },
-    submittedAt: '2024-07-10T11:30:00Z',
-    ipAddress: '192.168.1.5',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-  },
-  {
-    id: 'sub-6',
-    formId: 'form-1',
-    data: {
-      'field-1': 'Camille Rousseau',
-      'field-2': 'camille@example.com',
-      'field-3': 'Demande de démonstration'
-    },
-    submittedAt: '2024-07-09T15:45:00Z',
-    ipAddress: '192.168.1.6',
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-  },
-  {
-    id: 'sub-7',
-    formId: 'form-1',
-    data: {
-      'field-1': 'Nicolas Petit',
-      'field-2': 'nicolas@example.com',
-      'field-3': 'Question technique'
-    },
-    submittedAt: '2024-07-08T13:20:00Z',
-    ipAddress: '192.168.1.7',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-  },
-  {
-    id: 'sub-8',
-    formId: 'form-1',
-    data: {
-      'field-1': 'Émilie Moreau',
-      'field-2': 'emilie@example.com',
-      'field-3': 'Demande de support'
-    },
-    submittedAt: '2024-07-07T10:10:00Z',
-    ipAddress: '192.168.1.8',
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-  },
-  {
-    id: 'sub-9',
-    formId: 'form-1',
-    data: {
-      'field-1': 'Julien Garnier',
-      'field-2': 'julien@example.com',
-      'field-3': 'Proposition de collaboration'
-    },
-    submittedAt: '2024-07-06T16:30:00Z',
-    ipAddress: '192.168.1.9',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-  },
-  {
-    id: 'sub-10',
-    formId: 'form-1',
-    data: {
-      'field-1': 'Laure Vincent',
-      'field-2': 'laure@example.com',
-      'field-3': 'Demande d\'information'
-    },
-    submittedAt: '2024-07-05T12:45:00Z',
-    ipAddress: '192.168.1.10',
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-  },
-  {
-    id: 'sub-11',
-    formId: 'form-1',
-    data: {
-      'field-1': 'Antoine Durand',
-      'field-2': 'antoine@example.com',
-      'field-3': 'Question sur l\'API'
-    },
-    submittedAt: '2024-07-04T14:15:00Z',
-    ipAddress: '192.168.1.11',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-  },
-  {
-    id: 'sub-12',
-    formId: 'form-1',
-    data: {
-      'field-1': 'Céline Fabre',
-      'field-2': 'celine@example.com',
-      'field-3': 'Demande de devis personnalisé'
-    },
-    submittedAt: '2024-07-03T09:30:00Z',
-    ipAddress: '192.168.1.12',
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-  }
 ];
 
-const mockPlans: Plan[] = [
+const mockSubmissions: ISubmission[] = [
   {
-    id: 'free',
-    name: 'Free',
-    price: 0,
-    features: ['3 formulaires', '500 soumissions/mois', '10 Mo de stockage'],
-    maxForms: 3,
-    maxSubmissions: 500
+    id: "sub-1",
+    form_id: "form-1",
+    data: {
+      "field-1": "Jean Dupont",
+      "field-2": "jean@example.com",
+      "field-3": "Intéressé par vos services",
+    },
+    submitted_at: "2024-07-14T10:30:00Z",
+    ip_address: "192.168.1.1",
   },
   {
-    id: 'premium',
-    name: 'Premium',
-    price: 29,
-    features: ['20 formulaires', '10 000 soumissions/mois', '100 Mo de stockage', 'Support prioritaire'],
-    maxForms: 20,
-    maxSubmissions: 10000,
-    popular: true
+    id: "sub-2",
+    form_id: "form-1",
+    data: {
+      "field-1": "Marie Dubois",
+      "field-2": "marie@example.com",
+      "field-3": "Demande de devis",
+    },
+    submitted_at: "2024-07-13T16:45:00Z",
+    ip_address: "192.168.1.2",
   },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: 99,
-    features: ['Formulaires illimités', '100 000 soumissions/mois', '500 Mo de stockage', 'Webhooks', 'API'],
-    maxForms: -1,
-    maxSubmissions: 100000
-  }
 ];
 
-// Simulate API delays
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const mockQuotaStatus: IQuotaStatus[] = [
+  {
+    id: "quota-1",
+    user_id: "user-1",
+    month: "2024-07",
+    form_count: 8,
+    submission_count: 2340,
+    storage_used_mb: 25,
+    notified80: false,
+    notified100: false,
+  },
+];
 
-// Auth API
+const mockFeatures: IFeature[] = [
+  {
+    id: "feature-1",
+    code: "unlimited_forms",
+    label: "Formulaires illimités",
+  },
+  {
+    id: "feature-2",
+    code: "webhooks",
+    label: "Webhooks",
+  },
+  {
+    id: "feature-3",
+    code: "api_access",
+    label: "Accès API",
+  },
+];
+
+// Fonctions utilitaires
+const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+// Service d'authentification
 export const authAPI = {
-  login: async (email: string, password: string): Promise<ApiResponse<{ token: string; user: User }>> => {
-    await delay(800);
-    const user = mockUsers.find(u => u.email === email);
-    if (user && password === 'password123') {
+  login: async (
+    email: string,
+    password: string
+  ): Promise<TApiResponse<ILoginResponse>> => {
+    try {
+      await delay(API_DELAY.SLOW);
+      const user = mockUsers.find((u) => u.email === email);
+
+      if (user && password === "password123") {
+        return {
+          success: true,
+          data: {
+            token: "mock-jwt-token",
+            user,
+          },
+        };
+      }
+
+      return {
+        success: false,
+        error: "Identifiants invalides",
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la connexion",
+      };
+    }
+  },
+
+  register: async (userData: IRegisterData): Promise<TApiResponse<null>> => {
+    try {
+      await delay(API_DELAY.VERY_SLOW);
+      const existingUser = mockUsers.find((u) => u.email === userData.email);
+
+      if (existingUser) {
+        return {
+          success: false,
+          error: "Cet email existe déjà",
+        };
+      }
+
+      return {
+        success: true,
+        message: "Inscription réussie. Veuillez vérifier votre email.",
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de l'inscription",
+      };
+    }
+  },
+
+  me: async (): Promise<TApiResponse<IUser>> => {
+    try {
+      await delay(API_DELAY.FAST);
+      return {
+        success: true,
+        data: mockUsers[0],
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la récupération du profil",
+      };
+    }
+  },
+};
+
+// Service des formulaires
+export const formsAPI = {
+  getAll: async (): Promise<TApiResponse<IForm[]>> => {
+    try {
+      await delay(API_DELAY.MEDIUM);
+      return {
+        success: true,
+        data: mockForms,
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la récupération des formulaires",
+      };
+    }
+  },
+
+  getById: async (id: string): Promise<TApiResponse<IForm>> => {
+    try {
+      await delay(API_DELAY.FAST);
+      const form = mockForms.find((f) => f.id === id);
+
+      if (form) {
+        return {
+          success: true,
+          data: form,
+        };
+      }
+
+      return {
+        success: false,
+        error: "Formulaire non trouvé",
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la récupération du formulaire",
+      };
+    }
+  },
+
+  create: async (formData: Partial<IForm>): Promise<TApiResponse<IForm>> => {
+    try {
+      await delay(API_DELAY.MEDIUM);
+      const newForm: IForm = {
+        id: `form-${Date.now()}`,
+        user_id: "user-1",
+        title: formData.title || "Nouveau formulaire",
+        description: formData.description || "",
+        status: "draft",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        submissionCount: 0,
+        version: 1,
+        fields: [],
+        history: {
+          versions: [],
+          currentVersion: 1,
+          maxVersions: 10,
+        },
+        settings: {
+          theme: {
+            primary_color: "#3B82F6",
+            background_color: "#FFFFFF",
+            text_color: "#1F2937",
+          },
+          success_message: "Merci pour votre soumission !",
+          notifications: {
+            email: true,
+          },
+        },
+      };
+
+      mockForms.push(newForm);
+      return {
+        success: true,
+        data: newForm,
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la création du formulaire",
+      };
+    }
+  },
+
+  update: async (
+    id: string,
+    formData: Partial<IForm>
+  ): Promise<TApiResponse<IForm>> => {
+    try {
+      await delay(API_DELAY.MEDIUM);
+      const index = mockForms.findIndex((f) => f.id === id);
+
+      if (index !== -1) {
+        mockForms[index] = {
+          ...mockForms[index],
+          ...formData,
+          updated_at: new Date().toISOString(),
+        };
+
+        return {
+          success: true,
+          data: mockForms[index],
+        };
+      }
+
+      return {
+        success: false,
+        error: "Formulaire non trouvé",
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la mise à jour du formulaire",
+      };
+    }
+  },
+
+  delete: async (id: string): Promise<TApiResponse<null>> => {
+    try {
+      await delay(API_DELAY.MEDIUM);
+      const index = mockForms.findIndex((f) => f.id === id);
+
+      if (index !== -1) {
+        mockForms.splice(index, 1);
+        return {
+          success: true,
+        };
+      }
+
+      return {
+        success: false,
+        error: "Formulaire non trouvé",
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la suppression du formulaire",
+      };
+    }
+  },
+};
+
+// Service des versions de formulaires
+export const formVersionsAPI = {
+  getByFormId: async (
+    formId: string
+  ): Promise<TApiResponse<IFormVersion[]>> => {
+    try {
+      await delay(API_DELAY.FAST);
+      const versions = mockFormVersions.filter((v) => v.form_id === formId);
+      return {
+        success: true,
+        data: versions,
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la récupération des versions",
+      };
+    }
+  },
+
+  getById: async (id: string): Promise<TApiResponse<IFormVersion>> => {
+    try {
+      await delay(API_DELAY.FAST);
+      const version = mockFormVersions.find((v) => v.id === id);
+
+      if (version) {
+        return {
+          success: true,
+          data: version,
+        };
+      }
+
+      return {
+        success: false,
+        error: "Version non trouvée",
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la récupération de la version",
+      };
+    }
+  },
+
+  create: async (
+    formId: string,
+    schema: IFormVersion["schema"]
+  ): Promise<TApiResponse<IFormVersion>> => {
+    try {
+      await delay(API_DELAY.MEDIUM);
+      const existingVersions = mockFormVersions.filter(
+        (v) => v.form_id === formId
+      );
+      const nextVersion = existingVersions.length + 1;
+
+      const newVersion: IFormVersion = {
+        id: `version-${Date.now()}`,
+        form_id: formId,
+        version_number: nextVersion,
+        schema,
+        created_at: new Date().toISOString(),
+      };
+
+      mockFormVersions.push(newVersion);
+      return {
+        success: true,
+        data: newVersion,
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la création de la version",
+      };
+    }
+  },
+
+  restore: async (versionId: string): Promise<TApiResponse<IFormVersion>> => {
+    try {
+      await delay(API_DELAY.MEDIUM);
+      const version = mockFormVersions.find((v) => v.id === versionId);
+
+      if (!version) {
+        return {
+          success: false,
+          error: "Version non trouvée",
+        };
+      }
+
+      // Créer une nouvelle version avec le schéma de la version restaurée
+      const newVersion: IFormVersion = {
+        id: `version-${Date.now()}`,
+        form_id: version.form_id,
+        version_number: version.version_number + 1,
+        schema: version.schema,
+        created_at: new Date().toISOString(),
+      };
+
+      mockFormVersions.push(newVersion);
+      return {
+        success: true,
+        data: newVersion,
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la restauration de la version",
+      };
+    }
+  },
+
+  delete: async (versionId: string): Promise<TApiResponse<null>> => {
+    try {
+      await delay(API_DELAY.MEDIUM);
+      const index = mockFormVersions.findIndex((v) => v.id === versionId);
+
+      if (index !== -1) {
+        mockFormVersions.splice(index, 1);
+        return {
+          success: true,
+        };
+      }
+
+      return {
+        success: false,
+        error: "Version non trouvée",
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la suppression de la version",
+      };
+    }
+  },
+};
+
+// Service des soumissions
+export const submissionsAPI = {
+  getByFormId: async (formId: string): Promise<TApiResponse<ISubmission[]>> => {
+    try {
+      await delay(API_DELAY.MEDIUM);
+      const submissions = mockSubmissions.filter((s) => s.form_id === formId);
+      return {
+        success: true,
+        data: submissions,
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la récupération des soumissions",
+      };
+    }
+  },
+
+  exportCsv: async (formId: string): Promise<TApiResponse<string>> => {
+    try {
+      await delay(API_DELAY.VERY_SLOW);
+      const submissions = mockSubmissions.filter((s) => s.form_id === formId);
+      const versions = mockFormVersions.filter((v) => v.form_id === formId);
+      const latestVersion = versions[versions.length - 1];
+
+      if (!latestVersion) {
+        return {
+          success: false,
+          error: "Formulaire non trouvé",
+        };
+      }
+
+      let csv = "Date;IP;";
+      latestVersion.schema.fields.forEach((field) => {
+        csv += `${field.label};`;
+      });
+      csv += "\n";
+
+      submissions.forEach((submission) => {
+        csv += `${new Date(submission.submitted_at).toLocaleDateString()};${
+          submission.ip_address
+        };`;
+        latestVersion.schema.fields.forEach((field) => {
+          csv += `${submission.data[field.id] || ""};`;
+        });
+        csv += "\n";
+      });
+
+      return {
+        success: true,
+        data: csv,
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de l'export CSV",
+      };
+    }
+  },
+};
+
+// Service des plans et abonnements
+export const plansAPI = {
+  getAll: async (): Promise<TApiResponse<IPlan[]>> => {
+    try {
+      await delay(API_DELAY.FAST);
+      return {
+        success: true,
+        data: mockPlans,
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la récupération des plans",
+      };
+    }
+  },
+};
+
+export const subscriptionsAPI = {
+  getByUserId: async (
+    userId: string
+  ): Promise<TApiResponse<ISubscription[]>> => {
+    try {
+      await delay(API_DELAY.FAST);
+      const subscriptions = mockSubscriptions.filter(
+        (s) => s.user_id === userId
+      );
+      return {
+        success: true,
+        data: subscriptions,
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la récupération des abonnements",
+      };
+    }
+  },
+};
+
+// Service des quotas
+export const quotaAPI = {
+  getByUserId: async (
+    userId: string
+  ): Promise<TApiResponse<IQuotaStatus[]>> => {
+    try {
+      await delay(API_DELAY.FAST);
+      const quotas = mockQuotaStatus.filter((q) => q.user_id === userId);
+      return {
+        success: true,
+        data: quotas,
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la récupération des quotas",
+      };
+    }
+  },
+};
+
+// Service des fonctionnalités
+export const featuresAPI = {
+  getAll: async (): Promise<TApiResponse<IFeature[]>> => {
+    try {
+      await delay(API_DELAY.FAST);
+      return {
+        success: true,
+        data: mockFeatures,
+      };
+    } catch {
+      return {
+        success: false,
+        error: "Erreur lors de la récupération des fonctionnalités",
+      };
+    }
+  },
+};
+
+// Service du tableau de bord
+export const dashboardAPI = {
+  getStats: async (): Promise<TApiResponse<IDashboardStats>> => {
+    try {
+      await delay(API_DELAY.MEDIUM);
+      const submissionsThisMonth = mockSubmissions.filter((s) => {
+        const date = new Date(s.submitted_at);
+        const now = new Date();
+        return (
+          date.getMonth() === now.getMonth() &&
+          date.getFullYear() === now.getFullYear()
+        );
+      }).length;
+
+      const currentQuota = mockQuotaStatus[0];
+      const currentSubscription = mockSubscriptions[0];
+      const currentPlan = mockPlans.find(
+        (p) => p.id === currentSubscription?.plan_id
+      );
+
       return {
         success: true,
         data: {
-          token: 'mock-jwt-token',
-          user
-        }
-      };
-    }
-    return {
-      success: false,
-      error: 'Invalid credentials'
-    };
-  },
-
-  register: async (userData: { firstName: string; lastName: string; email: string; password: string }): Promise<ApiResponse<null>> => {
-    await delay(1000);
-    const existingUser = mockUsers.find(u => u.email === userData.email);
-    if (existingUser) {
-      return {
-        success: false,
-        error: 'Email already exists'
-      };
-    }
-    return {
-      success: true,
-      message: 'Registration successful. Please check your email for verification.'
-    };
-  },
-
-  me: async (): Promise<ApiResponse<User>> => {
-    await delay(200);
-    return {
-      success: true,
-      data: mockUsers[0]
-    };
-  }
-};
-
-// Forms API
-export const formsAPI = {
-  getAll: async (): Promise<ApiResponse<Form[]>> => {
-    await delay(300);
-    return {
-      success: true,
-      data: mockForms
-    };
-  },
-
-  getById: async (id: string): Promise<ApiResponse<Form>> => {
-    await delay(200);
-    const form = mockForms.find(f => f.id === id);
-    if (form) {
-      return {
-        success: true,
-        data: form
-      };
-    }
-    return {
-      success: false,
-      error: 'Form not found'
-    };
-  },
-
-  create: async (formData: Partial<Form>): Promise<ApiResponse<Form>> => {
-    await delay(500);
-    const newForm: Form = {
-      id: `form-${Date.now()}`,
-      title: formData.title || 'Nouveau formulaire',
-      description: formData.description || '',
-      status: 'draft',
-      submissionCount: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      userId: 'user-1',
-      fields: formData.fields || [],
-      settings: formData.settings || {
-        theme: {
-          primaryColor: '#3B82F6',
-          backgroundColor: '#FFFFFF',
-          textColor: '#1F2937'
+          total_forms: mockForms.length,
+          total_submissions: mockSubmissions.length,
+          published_forms: mockForms.filter((f) => f.status === "published")
+            .length,
+          submissions_this_month: submissionsThisMonth,
+          recent_submissions: mockSubmissions.slice(-5).reverse(),
+          quota_usage: {
+            forms_used: currentQuota?.form_count || 0,
+            forms_limit: currentPlan?.max_forms || 0,
+            submissions_used: currentQuota?.submission_count || 0,
+            submissions_limit: currentPlan?.max_submissions_per_month || 0,
+            storage_used_mb: currentQuota?.storage_used_mb || 0,
+            storage_limit_mb: currentPlan?.max_storage_mb || 0,
+          },
         },
-        successMessage: 'Merci pour votre soumission !',
-        notifications: {
-          email: true
-        }
-      }
-    };
-    mockForms.push(newForm);
-    return {
-      success: true,
-      data: newForm
-    };
-  },
-
-  update: async (id: string, formData: Partial<Form>): Promise<ApiResponse<Form>> => {
-    await delay(400);
-    const index = mockForms.findIndex(f => f.id === id);
-    if (index !== -1) {
-      mockForms[index] = { ...mockForms[index], ...formData, updatedAt: new Date().toISOString() };
-      return {
-        success: true,
-        data: mockForms[index]
       };
-    }
-    return {
-      success: false,
-      error: 'Form not found'
-    };
-  },
-
-  delete: async (id: string): Promise<ApiResponse<null>> => {
-    await delay(300);
-    const index = mockForms.findIndex(f => f.id === id);
-    if (index !== -1) {
-      mockForms.splice(index, 1);
-      return {
-        success: true
-      };
-    }
-    return {
-      success: false,
-      error: 'Form not found'
-    };
-  }
-};
-
-// Submissions API
-export const submissionsAPI = {
-  getByFormId: async (formId: string): Promise<ApiResponse<Submission[]>> => {
-    await delay(300);
-    const submissions = mockSubmissions.filter(s => s.formId === formId);
-    return {
-      success: true,
-      data: submissions
-    };
-  },
-
-  exportCsv: async (formId: string): Promise<ApiResponse<string>> => {
-    await delay(1000);
-    const submissions = mockSubmissions.filter(s => s.formId === formId);
-    const form = mockForms.find(f => f.id === formId);
-    
-    if (!form) {
+    } catch {
       return {
         success: false,
-        error: 'Form not found'
+        error: "Erreur lors de la récupération des statistiques",
       };
     }
-
-    let csv = 'Date;IP;';
-    form.fields.forEach(field => {
-      csv += `${field.label};`;
-    });
-    csv += '\n';
-
-    submissions.forEach(submission => {
-      csv += `${new Date(submission.submittedAt).toLocaleDateString()};${submission.ipAddress};`;
-      form.fields.forEach(field => {
-        csv += `${submission.data[field.id] || ''};`;
-      });
-      csv += '\n';
-    });
-
-    return {
-      success: true,
-      data: csv
-    };
-  }
-};
-
-// Plans API
-export const plansAPI = {
-  getAll: async (): Promise<ApiResponse<Plan[]>> => {
-    await delay(200);
-    return {
-      success: true,
-      data: mockPlans
-    };
-  }
-};
-
-// Dashboard API
-export const dashboardAPI = {
-  getStats: async () => {
-    await delay(400);
-    return {
-      success: true,
-      data: {
-        totalForms: mockForms.length,
-        totalSubmissions: mockSubmissions.length,
-        publishedForms: mockForms.filter(f => f.status === 'published').length,
-        submissionsThisMonth: mockSubmissions.filter(s => {
-          const date = new Date(s.submittedAt);
-          const now = new Date();
-          return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-        }).length,
-        recentSubmissions: mockSubmissions.slice(-5).reverse()
-      }
-    };
-  }
+  },
 };

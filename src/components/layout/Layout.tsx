@@ -1,6 +1,6 @@
-import { Header } from './Header';
-import { useAuth } from '../../hooks/useAuthHook';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { Header } from "./Header";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,7 +11,7 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
 
   // Don't show header for embed pages
-  const isEmbedPage = location.pathname.startsWith('/embed/');
+  const isEmbedPage = location.pathname.startsWith("/embed/");
 
   if (!isAuthenticated || isEmbedPage) {
     return children;

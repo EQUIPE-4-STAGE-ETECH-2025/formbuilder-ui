@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User, Settings, LogOut, Bell } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuthHook';
+import { Bell, LogOut, Menu, Settings, User, X } from "lucide-react";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -10,13 +10,13 @@ export function Header() {
   const location = useLocation();
 
   const navigation = [
-    ...(user?.role === 'ADMIN' ? [
-      { name: 'Administration', href: '/admin' }
-    ] : [
-      { name: 'Dashboard', href: '/dashboard' },
-      { name: 'Formulaires', href: '/forms' },
-      { name: 'Abonnement', href: '/subscription' }
-    ])
+    ...(user?.role === "ADMIN"
+      ? [{ name: "Administration", href: "/admin" }]
+      : [
+          { name: "Dashboard", href: "/dashboard" },
+          { name: "Formulaires", href: "/forms" },
+          { name: "Abonnement", href: "/subscription" },
+        ]),
   ];
 
   const isActive = (href: string) => location.pathname === href;
@@ -31,7 +31,9 @@ export function Header() {
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">F</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">FormBuilder</span>
+              <span className="text-xl font-bold text-gray-900">
+                FormBuilder
+              </span>
             </Link>
           </div>
 
@@ -43,8 +45,8 @@ export function Header() {
                 to={item.href}
                 className={`px-3 py-2 text-sm font-medium transition-colors ${
                   isActive(item.href)
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-gray-700 hover:text-blue-600'
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-700 hover:text-blue-600"
                 }`}
               >
                 {item.name}
@@ -67,11 +69,12 @@ export function Header() {
               >
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
-                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    {user?.first_name?.[0]}
+                    {user?.last_name?.[0]}
                   </span>
                 </div>
                 <span className="hidden md:block text-sm font-medium text-gray-700">
-                  {user?.firstName} {user?.lastName}
+                  {user?.first_name} {user?.last_name}
                 </span>
               </button>
 
@@ -134,8 +137,8 @@ export function Header() {
                   to={item.href}
                   className={`block px-3 py-2 text-base font-medium transition-colors ${
                     isActive(item.href)
-                      ? 'text-blue-600 bg-blue-50'
-                      : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                      ? "text-blue-600 bg-blue-50"
+                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
