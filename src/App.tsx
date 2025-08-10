@@ -12,6 +12,7 @@ import { AuthProvider } from "./contexts/AuthProvider";
 import { useAuth } from "./hooks/useAuth";
 
 // Pages
+
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { EmailVerification } from "./pages/auth/EmailVerification";
 import { ForgotPassword } from "./pages/auth/ForgotPassword";

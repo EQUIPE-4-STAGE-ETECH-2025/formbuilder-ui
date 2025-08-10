@@ -1,11 +1,11 @@
-import { useEffect, useState, ReactNode } from 'react';
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-import { clsx } from 'clsx';
-import { ToastContext } from '../../contexts/ToastContext';
+import { clsx } from "clsx";
+import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from "lucide-react";
+import { ReactNode, useEffect, useState } from "react";
+import { ToastContext } from "../../contexts/ToastContext";
 
 interface Toast {
   id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
+  type: "success" | "error" | "warning" | "info";
   title: string;
   message?: string;
   duration?: number;
@@ -14,10 +14,10 @@ interface Toast {
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = (toast: Omit<Toast, 'id'>) => {
+  const addToast = (toast: Omit<Toast, "id">) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast = { ...toast, id };
-    setToasts(prev => [...prev, newToast]);
+    setToasts((prev) => [...prev, newToast]);
 
     // Auto remove after duration
     setTimeout(() => {
@@ -26,7 +26,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
   return (
@@ -37,8 +37,6 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-
-
 interface ToastContainerProps {
   toasts: Toast[];
   onRemove: (id: string) => void;
@@ -47,7 +45,7 @@ interface ToastContainerProps {
 const ToastContainer = ({ toasts, onRemove }: ToastContainerProps) => {
   return (
     <div className="fixed bottom-4 right-4 z-50 space-y-2">
-      {toasts.map(toast => (
+      {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
       ))}
     </div>
@@ -75,21 +73,21 @@ const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
     success: CheckCircle,
     error: AlertCircle,
     warning: AlertTriangle,
-    info: Info
+    info: Info,
   };
 
   const colors = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800'
+    success: "bg-green-900/20 backdrop-blur-sm border-green-700/50 text-green-200",
+    error: "bg-red-900/20 backdrop-blur-sm border-red-700/50 text-red-200",
+    warning: "bg-yellow-900/20 backdrop-blur-sm border-yellow-700/50 text-yellow-200",
+    info: "bg-blue-900/20 backdrop-blur-sm border-blue-700/50 text-blue-200",
   };
 
   const iconColors = {
-    success: 'text-green-500',
-    error: 'text-red-500',
-    warning: 'text-yellow-500',
-    info: 'text-blue-500'
+    success: "text-green-400",
+    error: "text-red-400",
+    warning: "text-yellow-400",
+    info: "text-blue-400",
   };
 
   const Icon = icons[toast.type];
@@ -97,12 +95,12 @@ const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
   return (
     <div
       className={clsx(
-        'flex items-start gap-3 rounded-lg border p-4 shadow-lg transition-all duration-300 max-w-md',
+        "flex items-start gap-3 rounded-lg border p-4 shadow-lg transition-all duration-300 max-w-md backdrop-blur-md",
         colors[toast.type],
-        isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
+        isVisible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
       )}
     >
-      <Icon className={clsx('h-5 w-5 mt-0.5', iconColors[toast.type])} />
+      <Icon className={clsx("h-5 w-5 mt-0.5", iconColors[toast.type])} />
       <div className="flex-1">
         <h4 className="font-medium">{toast.title}</h4>
         {toast.message && (
@@ -111,7 +109,7 @@ const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
       </div>
       <button
         onClick={handleRemove}
-        className="ml-2 rounded-full p-1 hover:bg-black hover:bg-opacity-10 transition-colors"
+        className="ml-2 rounded-full p-1 hover:bg-white/10 transition-colors"
       >
         <X className="h-4 w-4" />
       </button>

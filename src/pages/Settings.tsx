@@ -1,4 +1,4 @@
-import { Bell, Globe, Key, Shield, Webhook } from "lucide-react";
+import { Bell, Key, Shield, Webhook } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../components/ui/Card";
@@ -42,17 +42,19 @@ const AdminSettings = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-modern">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Paramètres Système</h1>
-        <p className="text-gray-600">Configuration globale de la plateforme</p>
+        <h1 className="text-2xl font-bold text-text-100">Paramètres Système</h1>
+        <p className="text-surface-400">
+          Configuration globale de la plateforme
+        </p>
       </div>
 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <Shield className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <Shield className="h-5 w-5 text-accent-500" />
+            <h3 className="text-lg font-semibold text-text-100">
               Paramètres de sécurité
             </h3>
           </div>
@@ -60,8 +62,8 @@ const AdminSettings = () => {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900">Mode maintenance</p>
-              <p className="text-sm text-gray-600">
+              <p className="font-medium text-text-100">Mode maintenance</p>
+              <p className="text-sm text-surface-400">
                 Désactiver l'accès utilisateur temporairement
               </p>
             </div>
@@ -74,16 +76,16 @@ const AdminSettings = () => {
                 }
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+              <div className="w-11 h-6 bg-surface-700/50 backdrop-blur-sm peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
             </label>
           </div>
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-text-100">
                 Inscription utilisateur
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-surface-400">
                 Permettre aux nouveaux utilisateurs de s'inscrire
               </p>
             </div>
@@ -96,71 +98,15 @@ const AdminSettings = () => {
                 }
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-surface-700/50 backdrop-blur-sm peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
             </label>
           </div>
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900">
-                Journalisation des audits
-              </p>
-              <p className="text-sm text-gray-600">
-                Enregistrer toutes les actions administratives
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.auditLogging}
-                onChange={(e) =>
-                  handleSettingChange("auditLogging", e.target.checked)
-                }
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Globe className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
-              Paramètres globaux
-            </h3>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Rétention des données (jours)
-            </label>
-            <select
-              value={settings.dataRetention}
-              onChange={(e) =>
-                handleSettingChange("dataRetention", e.target.value)
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="30">30 jours</option>
-              <option value="90">90 jours</option>
-              <option value="180">180 jours</option>
-              <option value="365">1 an</option>
-              <option value="730">2 ans</option>
-              <option value="-1">Illimité</option>
-            </select>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">
-                Notifications email système
-              </p>
-              <p className="text-sm text-gray-600">
-                Alertes pour les administrateurs
+              <p className="font-medium text-text-100">Notifications email</p>
+              <p className="text-sm text-surface-400">
+                Envoyer des notifications par email
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -172,17 +118,54 @@ const AdminSettings = () => {
                 }
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-surface-700/50 backdrop-blur-sm peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
             </label>
           </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-text-100">Journal d'audit</p>
+              <p className="text-sm text-surface-400">
+                Enregistrer toutes les actions administrateur
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.auditLogging}
+                onChange={(e) =>
+                  handleSettingChange("auditLogging", e.target.checked)
+                }
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-surface-700/50 backdrop-blur-sm peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-100 mb-2">
+              Rétention des données (jours)
+            </label>
+            <Input
+              type="number"
+              value={settings.dataRetention}
+              onChange={(e) =>
+                handleSettingChange("dataRetention", e.target.value)
+              }
+              className="w-32"
+            />
+          </div>
+
+          <Button
+            onClick={handleSaveSettings}
+            loading={loading}
+            className="w-full"
+            variant="accent"
+          >
+            Sauvegarder les paramètres
+          </Button>
         </CardContent>
       </Card>
-
-      <div className="flex justify-end">
-        <Button onClick={handleSaveSettings} loading={loading} size="lg">
-          Sauvegarder la configuration
-        </Button>
-      </div>
     </div>
   );
 };
@@ -190,15 +173,14 @@ const AdminSettings = () => {
 export function Settings() {
   const { user } = useAuth();
   const { addToast } = useToast();
-  const [notifications, setNotifications] = useState({
-    emailSubmissions: true,
-    emailQuotas: true,
-    emailMarketing: false,
-    webhookEnabled: false,
-  });
-  const [webhookUrl, setWebhookUrl] = useState("");
-  const [apiKey, setApiKey] = useState("sk_live_...");
   const [loading, setLoading] = useState(false);
+  const [apiKeyLoading, setApiKeyLoading] = useState(false);
+  const [notifications, setNotifications] = useState({
+    email: true,
+    browser: true,
+    marketing: false,
+  });
+  const [apiKey, setApiKey] = useState("sk_test_1234567890abcdef");
 
   // Show admin settings for admin users
   if (user?.role === "ADMIN") {
@@ -212,7 +194,6 @@ export function Settings() {
   const handleSaveSettings = async () => {
     setLoading(true);
     try {
-      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
       addToast({
         type: "success",
@@ -231,32 +212,33 @@ export function Settings() {
   };
 
   const generateNewApiKey = async () => {
+    setApiKeyLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const newKey = `sk_live_${Math.random().toString(36).substring(2, 15)}`;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const newKey = "sk_test_" + Math.random().toString(36).substr(2, 15);
       setApiKey(newKey);
       addToast({
         type: "success",
-        title: "Nouvelle clé générée",
-        message: "Votre clé API a été régénérée",
+        title: "Clé API régénérée",
+        message: "Une nouvelle clé API a été générée",
       });
     } catch {
       addToast({
         type: "error",
         title: "Erreur",
-        message: "Impossible de générer une nouvelle clé",
+        message: "Impossible de régénérer la clé API",
       });
+    } finally {
+      setApiKeyLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-modern">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Paramètres</h1>
-        <p className="text-gray-600">
-          Configurez vos préférences et intégrations
+        <h1 className="text-2xl font-bold text-text-100">Paramètres</h1>
+        <p className="text-surface-400">
+          Gérez vos préférences et paramètres de compte
         </p>
       </div>
 
@@ -265,8 +247,8 @@ export function Settings() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <Bell className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">
+              <Bell className="h-5 w-5 text-accent-500" />
+              <h3 className="text-lg font-semibold text-text-100">
                 Notifications
               </h3>
             </div>
@@ -274,94 +256,121 @@ export function Settings() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">
-                  Nouvelles soumissions
-                </p>
-                <p className="text-sm text-gray-600">
-                  Recevoir un email pour chaque soumission
+                <p className="font-medium text-text-100">Notifications email</p>
+                <p className="text-sm text-surface-400">
+                  Recevoir des notifications par email
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={notifications.emailSubmissions}
+                  checked={notifications.email}
                   onChange={(e) =>
-                    handleNotificationChange(
-                      "emailSubmissions",
-                      e.target.checked
-                    )
+                    handleNotificationChange("email", e.target.checked)
                   }
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-surface-700/50 backdrop-blur-sm peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
               </label>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Alertes de quotas</p>
-                <p className="text-sm text-gray-600">
-                  Notifications à 80% et 100% des quotas
+                <p className="font-medium text-text-100">
+                  Notifications navigateur
+                </p>
+                <p className="text-sm text-surface-400">
+                  Afficher les notifications dans le navigateur
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={notifications.emailQuotas}
+                  checked={notifications.browser}
                   onChange={(e) =>
-                    handleNotificationChange("emailQuotas", e.target.checked)
+                    handleNotificationChange("browser", e.target.checked)
                   }
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-surface-700/50 backdrop-blur-sm peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
               </label>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Marketing</p>
-                <p className="text-sm text-gray-600">
-                  Nouveautés et conseils d'utilisation
+                <p className="font-medium text-text-100">Emails marketing</p>
+                <p className="text-sm text-surface-400">
+                  Recevoir des offres et nouveautés
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={notifications.emailMarketing}
+                  checked={notifications.marketing}
                   onChange={(e) =>
-                    handleNotificationChange("emailMarketing", e.target.checked)
+                    handleNotificationChange("marketing", e.target.checked)
                   }
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-surface-700/50 backdrop-blur-sm peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
               </label>
             </div>
+
+            <Button
+              onClick={handleSaveSettings}
+              loading={loading}
+              className="w-full"
+              variant="accent"
+            >
+              Sauvegarder les préférences
+            </Button>
           </CardContent>
         </Card>
 
-        {/* API Key */}
+        {/* API Settings */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <Key className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Clé API</h3>
+              <Key className="h-5 w-5 text-accent-500" />
+              <h3 className="text-lg font-semibold text-text-100">Clé API</h3>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Utilisez cette clé pour intégrer FormBuilder avec vos applications
-            </p>
-            <div className="flex gap-2">
-              <Input value={apiKey} readOnly className="font-mono text-sm" />
-              <Button variant="outline" onClick={generateNewApiKey}>
-                Régénérer
-              </Button>
-            </div>
-            <div className="p-3 bg-yellow-50 rounded-lg">
-              <p className="text-sm text-yellow-800">
-                <Shield className="h-4 w-4 inline mr-1" />
-                Gardez cette clé secrète et ne la partagez jamais publiquement
+            <div>
+              <label className="block text-sm font-medium text-text-100 mb-2">
+                Votre clé API
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  value={apiKey}
+                  readOnly
+                  className="flex-1 font-mono text-sm"
+                />
+                <Button
+                  onClick={generateNewApiKey}
+                  loading={apiKeyLoading}
+                  variant="secondary"
+                >
+                  Régénérer
+                </Button>
+              </div>
+              <p className="text-xs text-surface-500 mt-1">
+                Utilisez cette clé pour intégrer vos formulaires
               </p>
+            </div>
+
+            <div className="p-4 bg-surface-800 rounded-xl">
+              <h4 className="font-medium text-text-100 mb-2">
+                Exemple d'intégration
+              </h4>
+              <pre className="text-xs text-surface-400 bg-surface-900 p-3 rounded-lg overflow-x-auto">
+                {`<script>
+  FormBuilder.init({
+    apiKey: '${apiKey}',
+    formId: 'your-form-id'
+  });
+</script>`}
+              </pre>
             </div>
           </CardContent>
         </Card>
@@ -371,63 +380,41 @@ export function Settings() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <Webhook className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Webhooks</h3>
+            <Webhook className="h-5 w-5 text-accent-500" />
+            <h3 className="text-lg font-semibold text-text-100">Webhooks</h3>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-gray-600">
-            Recevez des notifications en temps réel sur votre serveur lors de
-            nouvelles soumissions
-          </p>
-
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+        <CardContent>
+          <div className="space-y-4">
             <div>
-              <p className="font-medium text-gray-900">Activer les webhooks</p>
-              <p className="text-sm text-gray-600">
-                Envoyer les données vers votre endpoint
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={notifications.webhookEnabled}
-                onChange={(e) =>
-                  handleNotificationChange("webhookEnabled", e.target.checked)
-                }
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          {notifications.webhookEnabled && (
-            <div className="space-y-3">
+              <label className="block text-sm font-medium text-text-100 mb-2">
+                URL du webhook
+              </label>
               <Input
-                label="URL du webhook"
-                value={webhookUrl}
-                onChange={(e) => setWebhookUrl(e.target.value)}
-                placeholder="https://votre-site.com/webhook"
-                helper="L'URL doit accepter les requêtes POST avec les données de soumission"
+                placeholder="https://votre-domaine.com/webhook"
+                className="w-full"
               />
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <Globe className="h-4 w-4 inline mr-1" />
-                  Format des données envoyées : JSON avec signature HMAC pour la
-                  sécurité
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-text-100">
+                  Activer les webhooks
+                </p>
+                <p className="text-sm text-surface-400">
+                  Recevoir les soumissions en temps réel
                 </p>
               </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" />
+                <div className="w-11 h-6 bg-surface-700/50 backdrop-blur-sm peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
+              </label>
             </div>
-          )}
+            <Button variant="accent" className="w-full">
+              Sauvegarder le webhook
+            </Button>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <Button onClick={handleSaveSettings} loading={loading} size="lg">
-          Sauvegarder les paramètres
-        </Button>
-      </div>
     </div>
   );
 }

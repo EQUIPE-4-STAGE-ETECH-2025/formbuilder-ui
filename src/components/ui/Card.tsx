@@ -1,5 +1,5 @@
-import { clsx } from 'clsx';
-import { forwardRef } from 'react';
+import { clsx } from "clsx";
+import { forwardRef } from "react";
 
 interface CardProps {
   className?: string;
@@ -9,9 +9,12 @@ interface CardProps {
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, children }, ref) => {
     return (
-      <div 
+      <div
         ref={ref}
-        className={clsx('rounded-lg border border-gray-200 bg-white shadow-sm', className)}
+        className={clsx(
+          "bg-surface-900/50 backdrop-blur-sm border border-surface-700/50 rounded-2xl",
+          className
+        )}
       >
         {children}
       </div>
@@ -19,7 +22,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
   }
 );
 
-Card.displayName = 'Card';
+Card.displayName = "Card";
 
 interface CardHeaderProps {
   className?: string;
@@ -28,7 +31,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ className, children }: CardHeaderProps) {
   return (
-    <div className={clsx('border-b border-gray-200 px-6 py-4', className)}>
+    <div className={clsx("border-b border-surface-800 px-6 py-6", className)}>
       {children}
     </div>
   );
@@ -40,11 +43,7 @@ interface CardContentProps {
 }
 
 export function CardContent({ className, children }: CardContentProps) {
-  return (
-    <div className={clsx('px-6 py-4', className)}>
-      {children}
-    </div>
-  );
+  return <div className={clsx("px-6 py-6", className)}>{children}</div>;
 }
 
 interface CardFooterProps {
@@ -54,7 +53,7 @@ interface CardFooterProps {
 
 export function CardFooter({ className, children }: CardFooterProps) {
   return (
-    <div className={clsx('border-t border-gray-200 px-6 py-4', className)}>
+    <div className={clsx("border-t border-surface-800 px-6 py-6", className)}>
       {children}
     </div>
   );

@@ -1,13 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Eye,
-  RotateCcw,
-  Trash2,
-} from "lucide-react";
+import { Eye, FileText, GitBranch, RotateCcw, Trash2 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { useToast } from "../../hooks/useToast";
 import { formVersionsAPI } from "../../services/api.mock";
@@ -147,22 +140,6 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
     }
   };
 
-  const getStatusIcon = (version: IFormVersion) => {
-    // Utiliser le statut du schéma de la version
-    const status = version.schema.status;
-
-    switch (status) {
-      case "published":
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case "draft":
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      case "disabled":
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
   const getStatusText = (version: IFormVersion) => {
     const status = version.schema.status;
 
@@ -180,94 +157,105 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className="space-modern">
+        <div className="space-modern">
+          <div className="h-32 loading-blur rounded-2xl"></div>
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-20 loading-blur rounded-2xl"></div>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Historique des versions</h3>
-        <span className="text-sm text-gray-500">
-          {versions.length} version{versions.length !== 1 ? "s" : ""}
-        </span>
-      </div>
-
+    <div className="space-modern">
       {versions.length === 0 ? (
         <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-gray-500">Aucune version disponible</p>
+          <CardContent className="p-12 text-center">
+            <div className="text-surface-500 mb-4">
+              <GitBranch className="w-16 h-16 mx-auto" />
+            </div>
+            <h3 className="text-lg font-medium text-text-100 mb-2">
+              Aucune version disponible
+            </h3>
+            <p className="text-surface-400 mb-4">
+              Les versions apparaîtront ici après sauvegarde
+            </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {versions.map((version) => (
             <Card
               key={version.id}
-              className={`p-4 border rounded-lg ${
+              className={`hover:border-accent-500/30 transition-all duration-200 ${
                 version.version_number === currentVersion
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-accent-500/30 bg-accent-900/10"
+                  : ""
               }`}
             >
-              <CardContent className="p-0">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center space-x-3">
-                    {getStatusIcon(version)}
-                    <span className="font-medium">
-                      Version {version.version_number}
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-text-100">
+                        Version numéro {version.version_number}
+                      </h3>
                       {version.version_number === currentVersion && (
-                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-accent-500/20 text-accent-400 border border-accent-500/30">
                           Actuelle
                         </span>
                       )}
-                    </span>
+                    </div>
+                    <p className="text-surface-400 mb-4">
+                      {version.schema.title || "Sans titre"}
+                    </p>
+                    <div className="flex items-center gap-6 text-sm text-surface-500">
+                      <span>Statut : {getStatusText(version)}</span>
+                      <span>
+                        Contient {version.schema.fields.length} champ
+                        {version.schema.fields.length !== 1 ? "s" : ""}
+                      </span>
+                      <span>
+                        Créée{" "}
+                        {formatDistanceToNow(new Date(version.created_at), {
+                          addSuffix: true,
+                          locale: fr,
+                        })}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-sm text-gray-500">
-                    {formatDistanceToNow(new Date(version.created_at), {
-                      addSuffix: true,
-                      locale: fr,
-                    })}
-                  </span>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">
-                      {getStatusText(version)}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant="secondary"
+                      size="md"
+                      className="shadow-none hover:shadow-none"
                       onClick={() => handleViewVersion(version)}
                     >
-                      <Eye className="w-4 h-4 mr-1" />
-                      Voir
+                      <Eye className="h-4 w-4 mr-2" />
+                      Voir les détails
                     </Button>
 
                     {version.version_number !== currentVersion && (
                       <>
                         <Button
-                          variant="outline"
-                          size="sm"
+                          variant="secondary"
+                          size="md"
+                          className="shadow-none hover:shadow-none"
                           onClick={() => handleRestoreVersion(version)}
                         >
-                          <RotateCcw className="w-4 h-4 mr-1" />
+                          <RotateCcw className="h-4 w-4 mr-2" />
                           Restaurer
                         </Button>
 
                         <Button
-                          variant="outline"
-                          size="sm"
+                          variant="secondary"
+                          size="md"
+                          className="shadow-none hover:shadow-none text-red-400 hover:text-red-300"
                           onClick={() => handleDeleteVersion(version)}
-                          className="text-red-600 hover:text-red-700"
                         >
-                          <Trash2 className="w-4 h-4 mr-1" />
+                          <Trash2 className="h-4 w-4 mr-2" />
                           Supprimer
                         </Button>
                       </>
@@ -284,28 +272,69 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
       <Modal
         isOpen={showVersionModal}
         onClose={() => setShowVersionModal(false)}
-        title={`Version ${selectedVersion?.version_number} - ${selectedVersion?.schema.title}`}
         size="lg"
       >
         {selectedVersion && (
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium mb-2">Informations</h4>
-              <p className="text-sm text-gray-600">
-                {selectedVersion.schema.description}
-              </p>
+              <h4 className="font-medium mb-2 text-text-100">Informations</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-surface-400">Titre :</span>
+                  <span className="text-text-100">
+                    {selectedVersion.schema.title}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-surface-400">Statut :</span>
+                  <span className="text-text-100">
+                    {getStatusText(selectedVersion)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-surface-400">Champs :</span>
+                  <span className="text-text-100">
+                    {selectedVersion.schema.fields.length}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-surface-400">Créée le :</span>
+                  <span className="text-text-100">
+                    {new Date(selectedVersion.created_at).toLocaleDateString(
+                      "fr-FR"
+                    )}
+                  </span>
+                </div>
+              </div>
             </div>
 
+            {selectedVersion.schema.description && (
+              <div>
+                <h4 className="font-medium mb-2 text-text-100">Description</h4>
+                <p className="text-sm text-surface-300 bg-surface-800/50 backdrop-blur-sm p-3 rounded-xl">
+                  {selectedVersion.schema.description}
+                </p>
+              </div>
+            )}
+
             <div>
-              <h4 className="font-medium mb-2">Champs</h4>
+              <h4 className="font-medium mb-2 text-text-100">Champs</h4>
               <div className="space-y-2">
                 {selectedVersion.schema.fields.map((field) => (
                   <div
                     key={field.id}
-                    className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                    className="flex items-center justify-between p-2 bg-surface-800/50 backdrop-blur-sm rounded-lg"
                   >
-                    <span className="text-sm font-medium">{field.label}</span>
-                    <span className="text-xs text-gray-500 capitalize">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-3 h-3 text-surface-400" />
+                      <span className="text-sm font-medium text-text-100">
+                        {field.label}
+                      </span>
+                      {field.is_required && (
+                        <span className="text-red-400 text-xs">*</span>
+                      )}
+                    </div>
+                    <span className="text-xs text-surface-500 capitalize">
                       {field.type}
                     </span>
                   </div>
@@ -324,7 +353,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
       >
         {selectedVersion && (
           <div className="space-y-4">
-            <p>
+            <p className="text-surface-300">
               Êtes-vous sûr de vouloir restaurer la version{" "}
               {selectedVersion.version_number} ? Cette action créera une
               nouvelle version avec le contenu de la version sélectionnée.
@@ -332,7 +361,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
 
             <div className="flex justify-end space-x-3">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => setShowRestoreModal(false)}
               >
                 Annuler
@@ -340,7 +369,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
               <Button
                 onClick={confirmRestore}
                 disabled={restoring}
-                className="bg-blue-600 hover:bg-blue-700"
+                variant="accent"
               >
                 {restoring ? "Restauration..." : "Restaurer"}
               </Button>
@@ -357,14 +386,14 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
       >
         {selectedVersion && (
           <div className="space-y-4">
-            <p>
+            <p className="text-surface-300">
               Êtes-vous sûr de vouloir supprimer la version{" "}
               {selectedVersion.version_number} ? Cette action est irréversible.
             </p>
 
             <div className="flex justify-end space-x-3">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => setShowDeleteModal(false)}
               >
                 Annuler
@@ -372,7 +401,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
               <Button
                 onClick={confirmDelete}
                 disabled={deleting}
-                className="bg-red-600 hover:bg-red-700"
+                variant="danger"
               >
                 {deleting ? "Suppression..." : "Supprimer"}
               </Button>

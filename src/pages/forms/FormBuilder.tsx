@@ -1,4 +1,20 @@
 import {
+  closestCenter,
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import {
   Calendar,
   CheckSquare,
   Circle,
@@ -17,23 +33,159 @@ import {
   Send,
   Trash2,
   Type,
+  Wrench,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import {
-  DragDropContext,
-  Draggable,
-  Droppable,
-  DropResult,
-} from "react-beautiful-dnd";
 import { useNavigate, useParams } from "react-router-dom";
 import { FormHistory } from "../../components/forms/FormHistory";
-import { VersionIndicator } from "../../components/forms/VersionIndicator";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../../components/ui/Card";
+import { Dropdown } from "../../components/ui/Dropdown";
 import { Input } from "../../components/ui/Input";
 import { useToast } from "../../hooks/useToast";
 import { formsAPI } from "../../services/api.mock";
 import { IForm, IFormField } from "../../types";
+
+// Composant DraggableField extrait pour éviter les re-rendus
+interface IDraggableFieldProps {
+  field: IFormField;
+  onUpdate: (fieldId: string, updates: Partial<IFormField>) => void;
+  onRemove: (fieldId: string) => void;
+}
+
+const DraggableField = ({
+  field,
+  onUpdate,
+  onRemove,
+  disabled = false,
+}: IDraggableFieldProps & { disabled?: boolean }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field.id, disabled });
+
+  const style = {
+    transform: transform
+      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+      : undefined,
+    transition: isDragging ? "none" : transition,
+  } as React.CSSProperties;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`mb-4 field-card ${
+        isDragging
+          ? "dragging shadow-2xl rotate-1 scale-105 z-50"
+          : "hover:shadow-lg"
+      } ${disabled ? "opacity-60 pointer-events-none" : ""}`}
+    >
+      <Card
+        className={
+          isDragging
+            ? "bg-surface-800/80 backdrop-blur-sm border-accent-500/30"
+            : ""
+        }
+      >
+        <CardContent className="p-4">
+          <div className="flex items-start gap-4">
+            {/* Drag Handle */}
+            <div
+              {...attributes}
+              {...listeners}
+              className="flex-shrink-0 mt-2 p-2 cursor-grab active:cursor-grabbing hover:bg-surface-700/50 rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
+              tabIndex={0}
+              role="button"
+              aria-label="Déplacer ce champ"
+            >
+              <GripVertical className="h-5 w-5 text-surface-400 hover:text-surface-300 transition-colors duration-200" />
+            </div>
+
+            <div className="flex-1 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Label du champ"
+                  value={field.label}
+                  onChange={(e) =>
+                    onUpdate(field.id, { label: e.target.value })
+                  }
+                  disabled={disabled}
+                />
+                <Input
+                  label="Placeholder"
+                  value={field.placeholder || ""}
+                  onChange={(e) =>
+                    onUpdate(field.id, { placeholder: e.target.value })
+                  }
+                  disabled={disabled}
+                />
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={field.is_required}
+                    onChange={(e) =>
+                      onUpdate(field.id, {
+                        is_required: e.target.checked,
+                      })
+                    }
+                    disabled={disabled}
+                    className="disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <span className="ml-2 text-sm text-surface-300">
+                    Champ obligatoire
+                  </span>
+                </label>
+                <span className="text-sm text-surface-500">
+                  Type: {field.type}
+                </span>
+              </div>
+              {(field.type === "select" || field.type === "radio") && (
+                <div>
+                  <label className="block text-sm font-medium text-text-100 mb-2">
+                    Options (une par ligne)
+                  </label>
+                  <textarea
+                    value={field.options?.choices?.join("\n") || ""}
+                    onChange={(e) =>
+                      onUpdate(field.id, {
+                        options: {
+                          ...field.options,
+                          choices: e.target.value
+                            .split("\n")
+                            .filter((o) => o.trim()),
+                        },
+                      })
+                    }
+                    placeholder="Option 1&#10;Option 2&#10;Option 3"
+                    className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    rows={3}
+                    disabled={disabled}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Bouton de suppression */}
+            <button
+              onClick={() => onRemove(field.id)}
+              disabled={disabled}
+              className="flex-shrink-0 p-2 text-red-400 hover:bg-red-900/20 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 const fieldTypes = [
   { type: "text", label: "Texte", icon: Type },
@@ -57,6 +209,18 @@ export function FormBuilder() {
     "build" | "preview" | "embed" | "history"
   >("build");
 
+  // Configuration des capteurs pour @dnd-kit
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const fetchForm = useCallback(async () => {
     try {
       const response = await formsAPI.getById(id!);
@@ -78,7 +242,7 @@ export function FormBuilder() {
       setForm({
         id: "new",
         user_id: "user-1",
-        title: "Nouveau formulaire",
+        title: "",
         description: "",
         status: "draft",
         submissionCount: 0,
@@ -93,9 +257,9 @@ export function FormBuilder() {
         fields: [],
         settings: {
           theme: {
-            primary_color: "#3B82F6",
-            background_color: "#FFFFFF",
-            text_color: "#1F2937",
+            primary_color: "#0ea5e9",
+            background_color: "#020617",
+            text_color: "#ffffff",
           },
           success_message: "Merci pour votre soumission !",
           notifications: {
@@ -166,11 +330,44 @@ export function FormBuilder() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!form || form.id === "new") return;
+
+    if (
+      !window.confirm(
+        "Êtes-vous sûr de vouloir supprimer ce formulaire ? Cette action est irréversible."
+      )
+    ) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await formsAPI.delete(form.id);
+      if (response.success) {
+        addToast({
+          type: "success",
+          title: "Formulaire supprimé",
+          message: "Le formulaire a été supprimé avec succès",
+        });
+        navigate("/forms");
+      }
+    } catch {
+      addToast({
+        type: "error",
+        title: "Erreur",
+        message: "Impossible de supprimer le formulaire",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const addField = (type: string) => {
     if (!form) return;
 
     const newField: IFormField = {
-      id: `field-${Date.now()}`,
+      id: `field-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       form_version_id: "temp",
       type: type as IFormField["type"],
       label: `Nouveau champ ${type}`,
@@ -189,44 +386,65 @@ export function FormBuilder() {
     });
   };
 
-  const updateField = (fieldId: string, updates: Partial<IFormField>) => {
-    if (!form) return;
+  const updateField = useCallback(
+    (fieldId: string, updates: Partial<IFormField>) => {
+      if (!form) return;
 
-    setForm({
-      ...form,
-      fields: form.fields.map((field) =>
-        field.id === fieldId ? { ...field, ...updates } : field
-      ),
-    });
-  };
+      setForm({
+        ...form,
+        fields: form.fields.map((field) =>
+          field.id === fieldId ? { ...field, ...updates } : field
+        ),
+      });
+    },
+    [form]
+  );
 
-  const removeField = (fieldId: string) => {
-    if (!form) return;
+  const removeField = useCallback(
+    (fieldId: string) => {
+      if (!form) return;
 
-    setForm({
-      ...form,
-      fields: form.fields.filter((field) => field.id !== fieldId),
-    });
-  };
+      setForm({
+        ...form,
+        fields: form.fields.filter((field) => field.id !== fieldId),
+      });
+    },
+    [form]
+  );
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination || !form) return;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
 
-    const sortedFields = [...form.fields].sort((a, b) => a.order - b.order);
-    const items = Array.from(sortedFields);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+    if (!over || !form) return;
 
-    // Update order property
-    const updatedFields = items.map((field, index) => ({
-      ...field,
-      order: index + 1,
-    }));
+    if (active.id === over.id) return;
 
-    setForm({
-      ...form,
-      fields: updatedFields,
-    });
+    try {
+      const sortedFields = [...form.fields].sort((a, b) => a.order - b.order);
+
+      const oldIndex = sortedFields.findIndex(
+        (field) => field.id === active.id
+      );
+      const newIndex = sortedFields.findIndex((field) => field.id === over.id);
+
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const reorderedFields = arrayMove(sortedFields, oldIndex, newIndex);
+
+      // Mettre à jour les propriétés order et position
+      const updatedFields = reorderedFields.map((field, index) => ({
+        ...field,
+        order: index + 1,
+        position: index + 1,
+      }));
+
+      setForm({
+        ...form,
+        fields: updatedFields,
+      });
+    } catch (error) {
+      console.error("Erreur lors du réordonnancement:", error);
+    }
   };
 
   const getPublishUrl = () => {
@@ -256,123 +474,29 @@ export function FormBuilder() {
     }
   };
 
-  const renderFieldEditor = (field: IFormField, index: number) => {
-    return (
-      <Draggable key={field.id} draggableId={field.id} index={index}>
-        {(provided, snapshot) => (
-          <Card
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            className={`mb-4 ${
-              snapshot.isDragging ? "shadow-lg rotate-2" : ""
-            }`}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start gap-4">
-                <div
-                  {...provided.dragHandleProps}
-                  className="flex-shrink-0 mt-2 cursor-grab active:cursor-grabbing"
-                >
-                  <GripVertical className="h-5 w-5 text-gray-400" />
-                </div>
-                <div className="flex-1 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input
-                      label="Label du champ"
-                      value={field.label}
-                      onChange={(e) =>
-                        updateField(field.id, { label: e.target.value })
-                      }
-                    />
-                    <Input
-                      label="Placeholder"
-                      value={field.placeholder || ""}
-                      onChange={(e) =>
-                        updateField(field.id, { placeholder: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={field.is_required}
-                        onChange={(e) =>
-                          updateField(field.id, {
-                            is_required: e.target.checked,
-                          })
-                        }
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">
-                        Champ obligatoire
-                      </span>
-                    </label>
-                    <span className="text-sm text-gray-500">
-                      Type: {field.type}
-                    </span>
-                  </div>
-                  {(field.type === "select" || field.type === "radio") && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Options (une par ligne)
-                      </label>
-                      <textarea
-                        value={field.options?.choices?.join("\n") || ""}
-                        onChange={(e) =>
-                          updateField(field.id, {
-                            options: {
-                              ...field.options,
-                              choices: e.target.value
-                                .split("\n")
-                                .filter((o) => o.trim()),
-                            },
-                          })
-                        }
-                        placeholder="Option 1&#10;Option 2&#10;Option 3"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        rows={3}
-                      />
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => removeField(field.id)}
-                  className="flex-shrink-0 p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </Draggable>
-    );
-  };
-
   const renderFormPreview = () => {
     return (
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <h2 className="text-xl font-bold text-gray-900">{form?.title}</h2>
+          <h2 className="text-xl font-bold text-text-100">{form?.title}</h2>
           {form?.description && (
-            <p className="text-gray-600">{form.description}</p>
+            <p className="text-surface-400">{form.description}</p>
           )}
         </CardHeader>
         <CardContent className="space-y-6">
           {form?.fields.map((field) => (
             <div key={field.id}>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-text-100 mb-2">
                 {field.label}
                 {field.is_required && (
-                  <span className="text-red-500 ml-1">*</span>
+                  <span className="text-red-400 ml-1">*</span>
                 )}
               </label>
               {field.type === "text" && (
                 <input
                   type="text"
                   placeholder={field.placeholder}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                   disabled
                 />
               )}
@@ -380,7 +504,7 @@ export function FormBuilder() {
                 <input
                   type="email"
                   placeholder={field.placeholder}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                   disabled
                 />
               )}
@@ -388,14 +512,14 @@ export function FormBuilder() {
                 <input
                   type="number"
                   placeholder={field.placeholder}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                   disabled
                 />
               )}
               {field.type === "date" && (
                 <input
                   type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                   disabled
                 />
               )}
@@ -403,35 +527,29 @@ export function FormBuilder() {
                 <textarea
                   placeholder={field.placeholder}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                   disabled
                 />
               )}
               {field.type === "select" && (
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <Dropdown
+                  value=""
+                  options={
+                    field.options?.choices?.map((choice: string) => ({
+                      value: choice,
+                      label: choice,
+                    })) || []
+                  }
+                  placeholder={field.placeholder || "Sélectionner une option"}
                   disabled
-                >
-                  <option value="">
-                    {field.placeholder || "Sélectionner une option"}
-                  </option>
-                  {field.options?.choices?.map(
-                    (option: string, index: number) => (
-                      <option key={index} value={option}>
-                        {option}
-                      </option>
-                    )
-                  )}
-                </select>
+                  className="w-full"
+                  onChange={() => {}} // No-op function since this is a preview
+                />
               )}
               {field.type === "checkbox" && (
                 <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    disabled
-                  />
-                  <span className="ml-2 text-sm text-gray-700">
+                  <input type="checkbox" disabled />
+                  <span className="ml-2 text-sm text-surface-300">
                     {field.label}
                   </span>
                 </label>
@@ -445,10 +563,10 @@ export function FormBuilder() {
                           type="radio"
                           name={field.id}
                           value={option}
-                          className="text-blue-600 focus:ring-blue-500"
+                          className="text-accent-600 focus:ring-accent-500"
                           disabled
                         />
-                        <span className="ml-2 text-sm text-gray-700">
+                        <span className="ml-2 text-sm text-surface-300">
                           {option}
                         </span>
                       </label>
@@ -458,7 +576,7 @@ export function FormBuilder() {
               )}
             </div>
           ))}
-          <Button className="w-full" disabled>
+          <Button className="w-full" variant="accent" disabled>
             Envoyer
           </Button>
         </CardContent>
@@ -471,17 +589,17 @@ export function FormBuilder() {
     const iframeSnippet = getIframeSnippet();
 
     return (
-      <div className="space-y-6">
+      <div className="space-modern">
         <Card>
           <CardHeader>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-xl font-semibold text-text-100">
               Intégration du formulaire
             </h3>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* URL publique */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-text-100 mb-2">
                 URL publique
               </label>
               <div className="flex gap-2">
@@ -489,16 +607,16 @@ export function FormBuilder() {
                   type="text"
                   value={publishUrl}
                   readOnly
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono"
+                  className="flex-1 px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-sm font-mono text-surface-400"
                 />
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => copyToClipboard(publishUrl, "Lien")}
                 >
                   <Copy className="h-4 w-4 mr-2" />
                   Copier le lien
                 </Button>
-                <Button variant="outline" onClick={openEmbedPreview}>
+                <Button variant="secondary" onClick={openEmbedPreview}>
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Ouvrir
                 </Button>
@@ -507,18 +625,18 @@ export function FormBuilder() {
 
             {/* Code iframe */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-text-100 mb-2">
                 Code d'intégration (iframe)
               </label>
               <div className="space-y-2">
                 <textarea
                   value={iframeSnippet}
                   readOnly
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-sm font-mono text-text-100"
                   rows={3}
                 />
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => copyToClipboard(iframeSnippet, "Code")}
                   className="w-full"
                 >
@@ -533,12 +651,12 @@ export function FormBuilder() {
         {/* Prévisualisation */}
         <Card>
           <CardHeader>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-xl font-semibold text-text-100">
               Prévisualisation intégrée
             </h3>
           </CardHeader>
           <CardContent>
-            <div className="border border-gray-300 rounded-lg overflow-hidden">
+            <div className="border border-surface-700 rounded-xl overflow-hidden">
               <iframe
                 src={publishUrl}
                 width="100%"
@@ -556,9 +674,82 @@ export function FormBuilder() {
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-32 bg-gray-200 rounded-lg"></div>
-        <div className="h-96 bg-gray-200 rounded-lg"></div>
+      <div className="space-modern">
+        {/* Header skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div className="space-y-3">
+            <div className="h-9 loading-blur rounded-xl w-80"></div>
+            <div className="h-5 loading-blur rounded-lg w-96"></div>
+          </div>
+          <div className="flex gap-2">
+            <div className="h-11 loading-blur rounded-xl w-32"></div>
+            <div className="h-11 loading-blur rounded-xl w-32"></div>
+          </div>
+        </div>
+
+        {/* Form info skeleton */}
+        <div className="loading-blur rounded-2xl p-6">
+          <div className="h-6 loading-blur rounded-lg w-48 mb-6"></div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="h-4 loading-blur rounded w-32"></div>
+              <div className="h-12 loading-blur rounded-xl w-full"></div>
+            </div>
+            <div className="space-y-2">
+              <div className="h-4 loading-blur rounded w-36"></div>
+              <div className="h-12 loading-blur rounded-xl w-full"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs skeleton */}
+        <div className="loading-blur rounded-2xl p-3 mb-6">
+          <div className="flex gap-2">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-12 loading-blur rounded-xl w-24"></div>
+            ))}
+          </div>
+        </div>
+
+        {/* Content skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Field types skeleton */}
+          <div className="loading-blur rounded-2xl p-6">
+            <div className="h-6 loading-blur rounded-lg w-32 mb-6"></div>
+            <div className="space-y-2">
+              {[...Array(8)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-12 loading-blur rounded-xl w-full"
+                ></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Form builder skeleton */}
+          <div className="lg:col-span-3">
+            <div className="loading-blur rounded-2xl p-6">
+              <div className="h-6 loading-blur rounded-lg w-48 mb-6"></div>
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="loading-blur rounded-xl p-4">
+                    <div className="flex items-start gap-4">
+                      <div className="h-10 loading-blur rounded-lg w-10"></div>
+                      <div className="flex-1 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="h-12 loading-blur rounded-xl"></div>
+                          <div className="h-12 loading-blur rounded-xl"></div>
+                        </div>
+                        <div className="h-4 loading-blur rounded w-32"></div>
+                      </div>
+                      <div className="h-10 loading-blur rounded-xl w-10"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -566,85 +757,40 @@ export function FormBuilder() {
   if (!form) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Formulaire non trouvé</p>
+        <p className="text-surface-500">Formulaire non trouvé</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-modern">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Titre du formulaire
-          </label>
-          <Input
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="text-2xl font-bold border-none p-0 focus:ring-0"
-            placeholder="Titre du formulaire"
-          />
-          <label className="block text-sm font-medium text-gray-700 mb-1 mt-3">
-            Description du formulaire
-          </label>
-          <Input
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="text-gray-600 border-none p-0 focus:ring-0 mt-2"
-            placeholder="Description du formulaire"
-          />
-          {form.id !== "new" && form.history && (
-            <div className="mt-3">
-              <VersionIndicator
-                currentVersion={form.version}
-                totalVersions={form.history.versions.length}
-                maxVersions={form.history.maxVersions}
-              />
-            </div>
-          )}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-bold text-text-100">
+            {form.id === "new"
+              ? "Nouveau formulaire"
+              : "Modifier le formulaire"}
+          </h1>
+          <p className="text-surface-400 mt-2">
+            {form.id === "new"
+              ? "Créez un nouveau formulaire personnalisé pour collecter des données"
+              : "Modifiez votre formulaire et personnalisez ses champs"}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setActiveTab("preview")}
-            className={
-              activeTab === "preview" ? "bg-blue-50 text-blue-600" : ""
-            }
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            Prévisualiser
-          </Button>
-          {form.id !== "new" && (
-            <Button
-              variant="outline"
-              onClick={() => setActiveTab("embed")}
-              className={
-                activeTab === "embed" ? "bg-blue-50 text-blue-600" : ""
-              }
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Intégrer
-            </Button>
-          )}
-          {form.id !== "new" && (
-            <Button
-              variant="outline"
-              onClick={() => setActiveTab("history")}
-              className={
-                activeTab === "history" ? "bg-blue-50 text-blue-600" : ""
-              }
-            >
-              <Clock className="h-4 w-4 mr-2" />
-              Historique
-            </Button>
-          )}
-          <Button variant="outline" onClick={handleSave} loading={saving}>
+        <div className="flex flex-wrap justify-end items-center gap-2">
+          <Button variant="secondary" onClick={handleSave} loading={saving}>
             <Save className="h-4 w-4 mr-2" />
             Sauvegarder
           </Button>
+          {form.id !== "new" && (
+            <Button variant="danger" onClick={handleDelete} loading={saving}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Supprimer
+            </Button>
+          )}
           {form.status === "draft" && (
-            <Button onClick={handlePublish} loading={saving}>
+            <Button variant="accent" onClick={handlePublish} loading={saving}>
               <Send className="h-4 w-4 mr-2" />
               Publier
             </Button>
@@ -652,50 +798,101 @@ export function FormBuilder() {
         </div>
       </div>
 
+      {/* Header */}
+      <Card>
+        <CardHeader>
+          <h3 className="text-xl font-semibold text-text-100">
+            Informations du formulaire
+          </h3>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="title"
+                className="block text-sm font-medium text-text-100 mb-2"
+              >
+                Titre du formulaire
+              </label>
+              <input
+                id="title"
+                type="text"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                className="block w-full px-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                placeholder="Ex: Formulaire de contact, Sondage client..."
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-text-100 mb-2"
+              >
+                Description du formulaire
+              </label>
+              <input
+                id="description"
+                type="text"
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                className="block w-full px-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                placeholder="Ex: Collectez les informations de vos visiteurs..."
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Tabs Navigation */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="bg-surface-900/50 backdrop-blur-sm border border-surface-700/50 rounded-2xl p-3 mb-6">
+        <nav className="flex flex-wrap gap-2">
           <button
             onClick={() => setActiveTab("build")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ease-out ${
               activeTab === "build"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                ? "bg-accent-500/10 text-accent-400 shadow-md shadow-accent-500/10 border border-accent-500/20"
+                : "text-surface-400 hover:text-surface-300 hover:bg-surface-800/50 border border-transparent"
             }`}
           >
+            <Wrench className="h-4 w-4" />
             Construire
           </button>
           <button
             onClick={() => setActiveTab("preview")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ease-out ${
               activeTab === "preview"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                ? "bg-accent-500/10 text-accent-400 shadow-md shadow-accent-500/10 border border-accent-500/20"
+                : "text-surface-400 hover:text-surface-300 hover:bg-surface-800/50 border border-transparent"
             }`}
           >
+            <Eye className="h-4 w-4" />
             Prévisualisation
           </button>
           {form.id !== "new" && (
             <button
               onClick={() => setActiveTab("embed")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ease-out ${
                 activeTab === "embed"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "bg-accent-500/10 text-accent-400 shadow-md shadow-accent-500/10 border border-accent-500/20"
+                  : "text-surface-400 hover:text-surface-300 hover:bg-surface-800/50 border border-transparent"
               }`}
             >
+              <ExternalLink className="h-4 w-4" />
               Intégration
             </button>
           )}
           {form.id !== "new" && (
             <button
               onClick={() => setActiveTab("history")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ease-out ${
                 activeTab === "history"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "bg-accent-500/10 text-accent-400 shadow-md shadow-accent-500/10 border border-accent-500/20"
+                  : "text-surface-400 hover:text-surface-300 hover:bg-surface-800/50 border border-transparent"
               }`}
             >
+              <Clock className="h-4 w-4" />
               Historique
             </button>
           )}
@@ -704,11 +901,28 @@ export function FormBuilder() {
 
       {/* Content */}
       {activeTab === "build" && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 relative">
+          {/* Loading overlay during save */}
+          {saving && (
+            <div className="absolute inset-0 bg-surface-900/80 backdrop-blur-sm rounded-2xl z-10 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
+                <p className="text-accent-400 font-medium">
+                  Sauvegarde en cours...
+                </p>
+                <p className="text-surface-400 text-sm mt-1">
+                  Veuillez patienter
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Field Types */}
           <Card>
             <CardHeader>
-              <h3 className="font-semibold text-gray-900">Types de champs</h3>
+              <h3 className="text-xl font-semibold text-text-100">
+                Types de champs
+              </h3>
             </CardHeader>
             <CardContent className="space-y-2">
               {fieldTypes.map((fieldType) => {
@@ -717,7 +931,8 @@ export function FormBuilder() {
                   <button
                     key={fieldType.type}
                     onClick={() => addField(fieldType.type)}
-                    className="w-full flex items-center gap-3 p-3 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                    disabled={saving}
+                    className="w-full flex items-center gap-3 p-3 text-left text-surface-300 hover:bg-surface-800/50 hover:backdrop-blur-sm rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Icon className="h-4 w-4" />
                     <span className="text-sm">{fieldType.label}</span>
@@ -731,38 +946,40 @@ export function FormBuilder() {
           <div className="lg:col-span-3">
             <Card>
               <CardHeader>
-                <h3 className="font-semibold text-gray-900">
+                <h3 className="text-xl font-semibold text-text-100">
                   Constructeur de formulaire
                 </h3>
               </CardHeader>
               <CardContent>
                 {form.fields.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <Plus className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <div className="text-center py-12 text-surface-500">
+                    <Plus className="h-12 w-12 mx-auto mb-4 text-surface-600" />
                     <p>Aucun champ ajouté</p>
                     <p className="text-sm">
                       Cliquez sur un type de champ pour commencer
                     </p>
                   </div>
                 ) : (
-                  <DragDropContext onDragEnd={handleDragEnd}>
-                    <Droppable droppableId="fields">
-                      {(provided) => (
-                        <div
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                        >
-                          {form.fields
-                            .slice()
-                            .sort((a, b) => a.order - b.order)
-                            .map((field, index) =>
-                              renderFieldEditor(field, index)
-                            )}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
-                  </DragDropContext>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={form.fields.map((field) => field.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {form.fields.map((field) => (
+                        <DraggableField
+                          key={field.id}
+                          field={field}
+                          onUpdate={updateField}
+                          onRemove={removeField}
+                          disabled={saving}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
                 )}
               </CardContent>
             </Card>
@@ -771,27 +988,78 @@ export function FormBuilder() {
       )}
 
       {activeTab === "preview" && (
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">
+        <div className="relative">
+          {/* Loading overlay during save */}
+          {saving && (
+            <div className="absolute inset-0 bg-surface-900/80 backdrop-blur-sm rounded-2xl z-10 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
+                <p className="text-accent-400 font-medium">
+                  Sauvegarde en cours...
+                </p>
+                <p className="text-surface-400 text-sm mt-1">
+                  Veuillez patienter
+                </p>
+              </div>
+            </div>
+          )}
+
+          <h3 className="text-xl font-semibold text-text-100 mb-8 text-center">
             Prévisualisation du formulaire
           </h3>
           {renderFormPreview()}
         </div>
       )}
 
-      {activeTab === "embed" && renderEmbedView()}
+      {activeTab === "embed" && (
+        <div className="relative">
+          {/* Loading overlay during save */}
+          {saving && (
+            <div className="absolute inset-0 bg-surface-900/80 backdrop-blur-sm rounded-2xl z-10 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
+                <p className="text-accent-400 font-medium">
+                  Sauvegarde en cours...
+                </p>
+                <p className="text-surface-400 text-sm mt-1">
+                  Veuillez patienter
+                </p>
+              </div>
+            </div>
+          )}
+
+          {renderEmbedView()}
+        </div>
+      )}
 
       {activeTab === "history" && (
-        <FormHistory
-          formId={form.id}
-          currentVersion={form.version}
-          onVersionRestored={() => {
-            // Recharger le formulaire après restauration
-            if (form.id !== "new") {
-              fetchForm();
-            }
-          }}
-        />
+        <div className="relative">
+          {/* Loading overlay during save */}
+          {saving && (
+            <div className="absolute inset-0 bg-surface-900/80 backdrop-blur-sm rounded-2xl z-10 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
+                <p className="text-accent-400 font-medium">
+                  Sauvegarde en cours...
+                </p>
+                <p className="text-surface-400 text-sm mt-1">
+                  Veuillez patienter
+                </p>
+              </div>
+            </div>
+          )}
+
+          <FormHistory
+            formId={form.id}
+            currentVersion={form.version}
+            onVersionRestored={() => {
+              // Recharger le formulaire après restauration
+              if (form.id !== "new") {
+                fetchForm();
+              }
+            }}
+          />
+        </div>
       )}
     </div>
   );

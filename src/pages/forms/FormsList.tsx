@@ -1,35 +1,27 @@
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import {
-  Copy,
-  Edit,
-  Eye,
-  Filter,
-  MoreHorizontal,
-  Plus,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { Calendar, Edit, Eye, PlusCircle, Search, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
+import { Dropdown } from "../../components/ui/Dropdown";
 import { Pagination } from "../../components/ui/Pagination";
-import { useToast } from "../../hooks/useToast";
+
 import { formsAPI } from "../../services/api.mock";
 import { IForm } from "../../types";
 
 export function FormsList() {
+  const navigate = useNavigate();
   const [forms, setForms] = useState<IForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "draft" | "published" | "disabled"
   >("all");
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [dateFilter, setDateFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
-  const { addToast } = useToast();
 
   useEffect(() => {
     fetchForms();
@@ -48,102 +40,81 @@ export function FormsList() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce formulaire ?")) {
-      try {
-        await formsAPI.delete(id);
-        setForms(forms.filter((form) => form.id !== id));
-        addToast({
-          type: "success",
-          title: "Formulaire supprimé",
-          message: "Le formulaire a été supprimé avec succès",
-        });
-      } catch {
-        addToast({
-          type: "error",
-          title: "Erreur",
-          message: "Impossible de supprimer le formulaire",
-        });
-      }
-    }
-    setActiveDropdown(null);
-  };
-
-  const handleDuplicateForm = async (formId: string) => {
-    try {
-      const originalForm = forms.find((f) => f.id === formId);
-      if (!originalForm) return;
-
-      const duplicatedForm: IForm = {
-        ...originalForm,
-        id: `form-${Date.now()}`,
-        title: `${originalForm.title} (Copie)`,
-        status: "draft",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setForms([duplicatedForm, ...forms]);
-
-      addToast({
-        type: "success",
-        title: "Formulaire dupliqué",
-        message: "Le formulaire a été dupliqué avec succès",
-      });
-    } catch {
-      addToast({
-        type: "error",
-        title: "Erreur",
-        message: "Impossible de dupliquer le formulaire",
-      });
-    }
-    setActiveDropdown(null);
-  };
-
   const getStatusBadge = (status: string) => {
-    const badges = {
-      draft: "bg-yellow-100 text-yellow-800",
-      published: "bg-green-100 text-green-800",
-      disabled: "bg-red-100 text-red-800",
-    };
-    return badges[status as keyof typeof badges] || "bg-gray-100 text-gray-800";
+    switch (status) {
+      case "published":
+        return "border-green-500 text-green-500 bg-green-500/10";
+      case "draft":
+        return "border-yellow-500 text-yellow-500 bg-yellow-500/10";
+      case "disabled":
+        return "border-red-500 text-red-500 bg-red-500/10";
+      default:
+        return "border-gray-500 text-gray-500 bg-gray-500/10";
+    }
   };
 
   const getStatusText = (status: string) => {
-    const texts = {
-      draft: "Brouillon",
-      published: "Publié",
-      disabled: "Désactivé",
-    };
-    return texts[status as keyof typeof texts] || status;
+    switch (status) {
+      case "published":
+        return "Publié";
+      case "draft":
+        return "Brouillon";
+      case "disabled":
+        return "Désactivé";
+      default:
+        return "Inconnu";
+    }
   };
 
   const filteredForms = forms.filter((form) => {
-    const matchesSearch =
-      form.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = form.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || form.status === statusFilter;
-    return matchesSearch && matchesStatus;
+
+    // Filtre par date
+    let matchesDate = true;
+    if (dateFilter !== "all") {
+      const formDate = new Date(form.created_at);
+      const now = new Date();
+      const oneDay = 24 * 60 * 60 * 1000;
+
+      switch (dateFilter) {
+        case "today":
+          matchesDate = formDate.toDateString() === now.toDateString();
+          break;
+        case "week": {
+          const weekAgo = new Date(now.getTime() - 7 * oneDay);
+          matchesDate = formDate >= weekAgo;
+          break;
+        }
+        case "month": {
+          const monthAgo = new Date(now.getTime() - 30 * oneDay);
+          matchesDate = formDate >= monthAgo;
+          break;
+        }
+        case "year": {
+          const yearAgo = new Date(now.getTime() - 365 * oneDay);
+          matchesDate = formDate >= yearAgo;
+          break;
+        }
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
-  // Pagination calculations
   const totalItems = filteredForms.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedForms = filteredForms.slice(startIndex, endIndex);
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  const paginatedForms = filteredForms.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
@@ -153,11 +124,11 @@ export function FormsList() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-32 bg-gray-200 rounded-lg"></div>
+      <div className="space-modern">
+        <div className="space-modern">
+          <div className="h-32 loading-blur rounded-2xl"></div>
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-20 bg-gray-200 rounded-lg"></div>
+            <div key={i} className="h-20 loading-blur rounded-2xl"></div>
           ))}
         </div>
       </div>
@@ -165,206 +136,195 @@ export function FormsList() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-modern">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Mes Formulaires</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-text-100">Mes formulaires</h1>
+          <p className="text-surface-400 mt-2">
             Gérez vos formulaires et suivez leurs performances
           </p>
         </div>
         <Link to="/forms/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button variant="accent">
+            <PlusCircle className="h-4 w-4 mr-2" />
             Nouveau formulaire
           </Button>
         </Link>
       </div>
 
-      {/* Filters */}
+      {/* Search and Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Rechercher un formulaire..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+        <CardContent className="p-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+            {/* Search */}
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-surface-500" />
+              <input
+                type="text"
+                placeholder="Rechercher un formulaire..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-text-100 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-400" />
-              <select
+
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Dropdown
                 value={statusFilter}
-                onChange={(e) =>
+                options={[
+                  { value: "all", label: "Tous les statuts" },
+                  { value: "draft", label: "Brouillon" },
+                  { value: "published", label: "Publié" },
+                  { value: "disabled", label: "Désactivé" },
+                ]}
+                onChange={(value: string) =>
                   setStatusFilter(
-                    e.target.value as "all" | "draft" | "published" | "disabled"
+                    value as "all" | "draft" | "published" | "disabled"
                   )
                 }
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">Tous les statuts</option>
-                <option value="draft">Brouillon</option>
-                <option value="published">Publié</option>
-                <option value="disabled">Désactivé</option>
-              </select>
+                size="md"
+                className="min-w-[160px]"
+                icon={<Zap className="h-4 w-4" />}
+              />
+              <Dropdown
+                value={dateFilter}
+                options={[
+                  { value: "all", label: "Toutes les dates" },
+                  { value: "today", label: "Aujourd'hui" },
+                  { value: "week", label: "Cette semaine" },
+                  { value: "month", label: "Ce mois" },
+                  { value: "year", label: "Cette année" },
+                ]}
+                onChange={(value: string) => setDateFilter(value)}
+                size="md"
+                className="min-w-[160px]"
+                icon={<Calendar className="h-4 w-4" />}
+              />
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Forms List */}
-      <Card>
-        <CardContent className="p-0">
-          {paginatedForms.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="text-gray-400 mb-4">
-                <svg
-                  className="w-16 h-16 mx-auto"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Aucun formulaire trouvé
-              </h3>
-              <p className="text-gray-600 mb-4">
-                {searchTerm || statusFilter !== "all"
-                  ? "Aucun formulaire ne correspond à vos critères de recherche."
-                  : "Vous n'avez encore créé aucun formulaire."}
-              </p>
-              <Link to="/forms/new">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Créer votre premier formulaire
-                </Button>
-              </Link>
+      {paginatedForms.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <div className="text-surface-500 mb-4">
+              <svg
+                className="w-16 h-16 mx-auto"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
             </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {paginatedForms.map((form) => (
-                <div
-                  key={form.id}
-                  className="p-6 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {form.title}
-                        </h3>
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(
-                            form.status
-                          )}`}
-                        >
-                          {getStatusText(form.status)}
-                        </span>
-                      </div>
-                      <p className="text-gray-600 mb-4">{form.description}</p>
-                      <div className="flex items-center gap-6 text-sm text-gray-500">
-                        <span>
-                          Modifié{" "}
-                          {formatDistanceToNow(new Date(form.updated_at), {
-                            addSuffix: true,
-                            locale: fr,
-                          })}
-                        </span>
-                        <span>
-                          Créé le{" "}
-                          {new Date(form.created_at).toLocaleDateString()}
-                        </span>
-                        {form.published_at && (
-                          <span>
-                            Publié le{" "}
-                            {new Date(form.published_at).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
+            <h3 className="text-lg font-medium text-text-100 mb-2">
+              Aucun formulaire trouvé
+            </h3>
+            <p className="text-surface-400 mb-4">
+              {searchTerm || statusFilter !== "all"
+                ? "Aucun formulaire ne correspond à vos critères de recherche."
+                : "Vous n'avez encore créé aucun formulaire."}
+            </p>
+            <Link to="/forms/new">
+              <Button variant="accent">
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Créer votre premier formulaire
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {paginatedForms.map((form) => (
+            <Card
+              key={form.id}
+              className="hover:border-accent-500/30 transition-all duration-200"
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-text-100">
+                        {form.title}
+                      </h3>
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusBadge(
+                          form.status
+                        )}`}
+                      >
+                        {getStatusText(form.status)}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Link to={`/forms/${form.id}/submissions`}>
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-2" />
-                          Voir les réponses
-                        </Button>
-                      </Link>
-                      <div className="relative">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setActiveDropdown(
-                              activeDropdown === form.id ? null : form.id
-                            )
-                          }
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                        {activeDropdown === form.id && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                            <div className="py-1">
-                              <Link
-                                to={`/forms/${form.id}/edit`}
-                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                onClick={() => setActiveDropdown(null)}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Modifier
-                              </Link>
-                              <button
-                                onClick={() => handleDuplicateForm(form.id)}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                <Copy className="h-4 w-4 mr-2" />
-                                Dupliquer
-                              </button>
-                              <hr className="my-1" />
-                              <button
-                                onClick={() => handleDelete(form.id)}
-                                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Supprimer
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                    <p className="text-surface-400 mb-4">{form.description}</p>
+                    <div className="flex items-center gap-6 text-sm text-surface-500">
+                      <span>
+                        Modifié{" "}
+                        {formatDistanceToNow(new Date(form.updated_at), {
+                          addSuffix: true,
+                          locale: fr,
+                        })}
+                      </span>
+                      <span>
+                        Créé le {new Date(form.created_at).toLocaleDateString()}
+                      </span>
+                      {form.published_at && (
+                        <span>
+                          Publié le{" "}
+                          {new Date(form.published_at).toLocaleDateString()}
+                        </span>
+                      )}
                     </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Link to={`/forms/${form.id}/submissions`}>
+                      <Button
+                        variant="secondary"
+                        size="md"
+                        className="shadow-none hover:shadow-none"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Voir les réponses
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="secondary"
+                      size="md"
+                      className="shadow-none hover:shadow-none"
+                      onClick={() => {
+                        navigate(`/forms/${form.id}/edit`);
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Modifier
+                    </Button>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-          {/* Pagination */}
-          {totalItems > 0 && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleItemsPerPageChange}
-            />
-          )}
-        </CardContent>
-      </Card>
+      {/* Pagination */}
+      {totalItems > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
+      )}
     </div>
   );
 }

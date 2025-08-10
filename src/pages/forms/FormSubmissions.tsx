@@ -113,10 +113,10 @@ export function FormSubmissions() {
 
   if (loading && !form) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
+      <div className="space-modern">
+        <div>
+          <div className="h-8 loading-blur rounded-2xl w-1/3 mb-4"></div>
+          <div className="h-64 loading-blur rounded-2xl"></div>
         </div>
       </div>
     );
@@ -125,20 +125,20 @@ export function FormSubmissions() {
   if (!form) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Formulaire non trouvé</p>
+        <p className="text-surface-500">Formulaire non trouvé</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-modern">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Soumissions</h1>
-          <p className="text-gray-600">{form.title}</p>
+          <h1 className="text-2xl font-bold text-text-100">Soumissions</h1>
+          <p className="text-surface-400">{form.title}</p>
         </div>
-        <Button onClick={handleExport} variant="outline">
+        <Button onClick={handleExport} variant="secondary">
           <Download className="h-4 w-4 mr-2" />
           Exporter CSV
         </Button>
@@ -149,28 +149,28 @@ export function FormSubmissions() {
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600">{totalItems}</p>
-              <p className="text-sm text-gray-600">Total soumissions</p>
+              <p className="text-2xl font-bold text-accent-500">{totalItems}</p>
+              <p className="text-sm text-surface-400">Total soumissions</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-green-500">
                 {submissions.length > 0 ? submissions.length : 0}
               </p>
-              <p className="text-sm text-gray-600">Cette page</p>
+              <p className="text-sm text-surface-400">Cette page</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-purple-600">
+              <p className="text-2xl font-bold text-purple-500">
                 {Math.ceil(totalItems / itemsPerPage)}
               </p>
-              <p className="text-sm text-gray-600">Pages</p>
+              <p className="text-sm text-surface-400">Pages</p>
             </div>
           </CardContent>
         </Card>
@@ -179,33 +179,35 @@ export function FormSubmissions() {
       {/* Submissions Table */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-text-100">
             Liste des soumissions
           </h3>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="animate-pulse space-y-4">
+            <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-16 bg-gray-200 rounded"></div>
+                <div key={i} className="h-16 loading-blur rounded-2xl"></div>
               ))}
             </div>
           ) : submissions.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">Aucune soumission pour le moment</p>
+              <p className="text-surface-500">
+                Aucune soumission pour le moment
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 font-medium text-gray-700">
+                  <tr className="border-b border-surface-700/50">
+                    <th className="text-left py-3 px-4 font-medium text-surface-300">
                       Date
                     </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700">
+                    <th className="text-left py-3 px-4 font-medium text-surface-300">
                       IP
                     </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700">
+                    <th className="text-left py-3 px-4 font-medium text-surface-300">
                       Actions
                     </th>
                   </tr>
@@ -214,12 +216,12 @@ export function FormSubmissions() {
                   {submissions.map((submission) => (
                     <tr
                       key={submission.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
+                      className="border-b border-surface-700/50 hover:bg-surface-800/50 hover:backdrop-blur-sm transition-all duration-200"
                     >
-                      <td className="py-3 px-4 text-sm text-gray-900">
+                      <td className="py-3 px-4 text-sm text-text-100">
                         {formatDate(submission.submitted_at)}
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-600">
+                      <td className="py-3 px-4 text-sm text-surface-400">
                         {submission.ip_address}
                       </td>
                       <td className="py-3 px-4">
@@ -244,7 +246,7 @@ export function FormSubmissions() {
                             size="sm"
                             onClick={() => handleDeleteSubmission()}
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            <Trash2 className="h-4 w-4 text-red-400" />
                           </Button>
                         </div>
                       </td>

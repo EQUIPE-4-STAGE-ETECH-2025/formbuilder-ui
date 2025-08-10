@@ -1,5 +1,5 @@
-import { forwardRef } from 'react';
-import { clsx } from 'clsx';
+import { clsx } from "clsx";
+import { forwardRef } from "react";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -12,37 +12,39 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
 
     return (
-      <div className="space-y-1">
+      <div className="space-y-2">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor={inputId}
+            className="block text-sm font-medium text-text-100"
+          >
             {label}
           </label>
         )}
         <input
           id={inputId}
           className={clsx(
-            'block w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1',
-            error
-              ? 'border-red-300 bg-red-50 focus:border-red-500'
-              : 'border-gray-300 bg-white focus:border-blue-500 hover:border-gray-400',
+            "w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200",
+            error &&
+              "border-red-500 bg-red-900/20 focus:border-red-400 focus:ring-red-400",
             className
           )}
           ref={ref}
           {...props}
         />
         {error && (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-red-400" role="alert">
             {error}
           </p>
         )}
         {helper && !error && (
-          <p className="text-sm text-gray-500">{helper}</p>
+          <p className="text-sm text-surface-500">{helper}</p>
         )}
       </div>
     );
   }
 );
 
-Input.displayName = 'Input';
+Input.displayName = "Input";
 
 export { Input };

@@ -1,6 +1,7 @@
-import { AlertCircle, CheckCircle, Loader } from "lucide-react";
+import { AlertCircle, CheckCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
 import { formsAPI } from "../../services/api.mock";
 import { IForm, IFormField } from "../../types";
@@ -104,36 +105,47 @@ export function FormEmbed() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Chargement du formulaire...</p>
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-500 mx-auto mb-4"></div>
+            <p className="text-surface-400">Chargement du formulaire...</p>
+          </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="h-8 w-8 text-red-600 mx-auto mb-4" />
-          <p className="text-gray-600">{error}</p>
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-4" />
+            <p className="text-surface-400">{error}</p>
+          </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Merci !</h2>
-          <p className="text-gray-600">
-            Votre formulaire a été soumis avec succès.
-          </p>
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-text-100 mb-2">
+              Merci !
+            </h2>
+            <p className="text-surface-400">
+              Votre formulaire a été soumis avec succès.
+            </p>
+          </div>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -143,32 +155,40 @@ export function FormEmbed() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {form.title}
-            </h1>
-            {form.description && (
-              <p className="text-gray-600">{form.description}</p>
-            )}
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Note: IForm doesn't have schema property, so we'll show a placeholder */}
-            <div className="text-center py-8">
-              <p className="text-gray-500">
-                Formulaire en cours de chargement...
-              </p>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 py-8">
+        <div className="max-w-2xl mx-auto px-4">
+          <div className="bg-surface-900/50 backdrop-blur-sm rounded-2xl shadow-large border border-surface-800/50 p-8">
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-bold text-text-100 mb-2">
+                {form.title}
+              </h1>
+              {form.description && (
+                <p className="text-surface-400">{form.description}</p>
+              )}
             </div>
 
-            <Button type="submit" disabled={submitting} className="w-full">
-              {submitting ? "Envoi en cours..." : "Envoyer"}
-            </Button>
-          </form>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Note: IForm doesn't have schema property, so we'll show a placeholder */}
+              <div className="text-center py-8">
+                <p className="text-surface-500">
+                  Formulaire en cours de chargement...
+                </p>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full"
+                variant="accent"
+              >
+                {submitting ? "Envoi en cours..." : "Envoyer"}
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

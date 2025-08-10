@@ -104,3 +104,49 @@ export const LIMITS_CONFIG = {
     PRO: 500, // MB
   },
 } as const;
+
+// Configuration des couleurs pour les graphiques
+export const CHART_COLORS = {
+  // Couleurs principales pour les graphiques
+  primary: "#8b5cf6", // Violet
+  secondary: "#10b981", // Vert émeraude
+  accent: "#f59e0b", // Orange ambré
+  danger: "#ef4444", // Rouge
+  warning: "#f97316", // Orange
+  info: "#06b6d4", // Cyan
+  success: "#22c55e", // Vert
+  purple: "#a855f7", // Violet foncé
+  pink: "#ec4899", // Rose
+  indigo: "#6366f1", // Indigo
+
+  // Couleurs pour les états des formulaires
+  published: "#10b981", // Vert émeraude
+  draft: "#f59e0b", // Orange ambré
+  disabled: "#ef4444", // Rouge
+
+  // Couleurs pour les plans d'abonnement
+  free: "#6b7280", // Gris
+  premium: "#8b5cf6", // Violet
+  pro: "#f59e0b", // Orange ambré
+
+  // Couleurs pour les revenus
+  revenue: "#10b981", // Vert émeraude
+} as const;
+
+// Configuration des couleurs du thème sombre
+export const DARK_THEME_COLORS = {
+  background: "#0a0a0a",
+  surface: "#262626",
+  surfaceHover: "#404040",
+  text: "#ffffff",
+  textSecondary: "#a3a3a3",
+  border: "#525252",
+  grid: "#404040",
+} as const;
+
+// Configuration des couleurs d'accent
+export const ACCENT_COLORS = {
+  primary: "#0ea5e9", // Bleu original
+  secondary: "#0284c7",
+  hover: "#0369a1",
+} as const;

@@ -22,31 +22,31 @@ export function Header() {
   const isActive = (href: string) => location.pathname === href;
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <header>
+      <div className="container-modern">
+        <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/dashboard" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">F</span>
+            <Link to="/dashboard" className="flex items-center space-x-3 group">
+              <div className="w-10 h-10 bg-accent-600 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                <span className="text-white font-bold text-lg">F</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">
+              <span className="text-2xl font-bold text-text-100">
                 FormBuilder
               </span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden md:flex space-x-2">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
                   isActive(item.href)
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-700 hover:text-blue-600"
+                    ? "text-text-100"
+                    : "text-surface-400 hover:text-text-100"
                 }`}
               >
                 {item.name}
@@ -55,9 +55,9 @@ export function Header() {
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {/* Notifications */}
-            <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+            <button className="p-3 text-surface-400 hover:text-text-100 hover:bg-surface-800/50 hover:backdrop-blur-sm rounded-xl transition-all duration-200 focus-ring">
               <Bell className="h-5 w-5" />
             </button>
 
@@ -65,47 +65,47 @@ export function Header() {
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex items-center space-x-3 p-2 rounded-xl hover:bg-surface-800/50 hover:backdrop-blur-sm transition-all duration-200 focus-ring"
               >
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-accent-600 rounded-2xl flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
                     {user?.first_name?.[0]}
                     {user?.last_name?.[0]}
                   </span>
                 </div>
-                <span className="hidden md:block text-sm font-medium text-gray-700">
+                <span className="hidden md:block text-sm font-medium text-text-100">
                   {user?.first_name} {user?.last_name}
                 </span>
               </button>
 
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                  <div className="py-1">
+                <div className="absolute right-0 mt-3 w-56 bg-surface-900 rounded-2xl shadow-large border border-surface-800 z-50 animate-scale-in">
+                  <div className="py-2 px-1.5">
                     <Link
                       to="/profile"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center px-4 py-3 text-sm text-surface-300 hover:bg-surface-800 rounded-xl transition-colors duration-200"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
-                      <User className="h-4 w-4 mr-2" />
+                      <User className="h-4 w-4 mr-3" />
                       Profil
                     </Link>
                     <Link
                       to="/settings"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center px-4 py-3 text-sm text-surface-300 hover:bg-surface-800 rounded-xl transition-colors duration-200"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
-                      <Settings className="h-4 w-4 mr-2" />
+                      <Settings className="h-4 w-4 mr-3" />
                       Paramètres
                     </Link>
-                    <hr className="my-1" />
+                    <hr className="my-2 border-surface-700" />
                     <button
                       onClick={() => {
                         logout();
                         setIsUserMenuOpen(false);
                       }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      className="flex items-center w-full px-4 py-3 text-sm text-red-400 hover:bg-red-900/20 rounded-xl transition-colors duration-200"
                     >
-                      <LogOut className="h-4 w-4 mr-2" />
+                      <LogOut className="h-4 w-4 mr-3" />
                       Déconnexion
                     </button>
                   </div>
@@ -116,7 +116,7 @@ export function Header() {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-gray-400 hover:text-gray-600"
+              className="md:hidden p-3 text-surface-400 hover:text-text-100 hover:bg-surface-800/50 hover:backdrop-blur-sm rounded-xl transition-all duration-200 focus-ring"
             >
               {isMobileMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -129,16 +129,16 @@ export function Header() {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 py-4">
+          <div className="md:hidden border-t border-surface-800 py-6 animate-slide-up">
             <nav className="space-y-2">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`block px-3 py-2 text-base font-medium transition-colors ${
+                  className={`block px-4 py-3 text-base font-medium rounded-xl transition-all duration-200 ${
                     isActive(item.href)
-                      ? "text-blue-600 bg-blue-50"
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                      ? "text-text-100"
+                      : "text-surface-400 hover:text-text-100"
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >

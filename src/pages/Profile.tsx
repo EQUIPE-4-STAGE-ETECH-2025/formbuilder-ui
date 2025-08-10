@@ -1,4 +1,4 @@
-import { Lock, Mail, Save, Trash2, User } from "lucide-react";
+import { Lock, Save, Trash2, User } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "../components/ui/Button";
@@ -57,12 +57,12 @@ const AdminProfile = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-modern">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-text-100">
           Profil Administrateur
         </h1>
-        <p className="text-gray-600">
+        <p className="text-surface-400">
           Gérez vos informations d'administrateur système
         </p>
       </div>
@@ -70,8 +70,8 @@ const AdminProfile = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <User className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <User className="h-5 w-5 text-accent-500" />
+            <h3 className="text-lg font-semibold text-text-100">
               Informations administrateur
             </h3>
           </div>
@@ -106,63 +106,16 @@ const AdminProfile = () => {
               })}
               error={errors.email?.message}
             />
-            <Button type="submit" loading={loading} className="w-full">
+            <Button
+              type="submit"
+              loading={loading}
+              className="w-full"
+              variant="accent"
+            >
               <Save className="h-4 w-4 mr-2" />
               Sauvegarder les modifications
             </Button>
           </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Mail className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
-              Privilèges administrateur
-            </h3>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-              <div>
-                <p className="font-medium text-blue-900">
-                  Accès administrateur
-                </p>
-                <p className="text-sm text-blue-700">
-                  Accès complet à toutes les fonctionnalités
-                </p>
-              </div>
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                <User className="h-4 w-4 text-white" />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-              <div>
-                <p className="font-medium text-green-900">
-                  Gestion des utilisateurs
-                </p>
-                <p className="text-sm text-green-700">
-                  Suspension, suppression et modération
-                </p>
-              </div>
-              <div className="text-sm text-green-600">Actif</div>
-            </div>
-
-            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
-              <div>
-                <p className="font-medium text-purple-900">
-                  Statistiques globales
-                </p>
-                <p className="text-sm text-purple-700">
-                  Accès aux métriques de la plateforme
-                </p>
-              </div>
-              <div className="text-sm text-purple-600">Actif</div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
@@ -267,11 +220,11 @@ export function Profile() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-modern">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Profil</h1>
-        <p className="text-gray-600">
+        <h1 className="text-2xl font-bold text-text-100">Profil</h1>
+        <p className="text-surface-400">
           Gérez vos informations personnelles et paramètres de sécurité
         </p>
       </div>
@@ -281,8 +234,8 @@ export function Profile() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <User className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">
+              <User className="h-5 w-5 text-accent-500" />
+              <h3 className="text-lg font-semibold text-text-100">
                 Informations personnelles
               </h3>
             </div>
@@ -320,7 +273,12 @@ export function Profile() {
                 })}
                 error={profileErrors.email?.message}
               />
-              <Button type="submit" loading={loading} className="w-full">
+              <Button
+                type="submit"
+                loading={loading}
+                className="w-full"
+                variant="accent"
+              >
                 <Save className="h-4 w-4 mr-2" />
                 Sauvegarder les modifications
               </Button>
@@ -332,8 +290,8 @@ export function Profile() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <Lock className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">
+              <Lock className="h-5 w-5 text-accent-500" />
+              <h3 className="text-lg font-semibold text-text-100">
                 Changer le mot de passe
               </h3>
             </div>
@@ -368,7 +326,7 @@ export function Profile() {
                 label="Confirmer le nouveau mot de passe"
                 type="password"
                 {...registerPassword("confirmPassword", {
-                  required: "La confirmation est requise",
+                  required: "La confirmation du mot de passe est requise",
                   validate: (value) =>
                     value === newPassword ||
                     "Les mots de passe ne correspondent pas",
@@ -379,83 +337,39 @@ export function Profile() {
                 type="submit"
                 loading={passwordLoading}
                 className="w-full"
+                variant="accent"
               >
                 <Lock className="h-4 w-4 mr-2" />
-                Modifier le mot de passe
+                Changer le mot de passe
               </Button>
             </form>
           </CardContent>
         </Card>
       </div>
 
-      {/* Account Status */}
+      {/* Danger Zone */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <Mail className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
-              Statut du compte
+            <Trash2 className="h-5 w-5 text-red-500" />
+            <h3 className="text-lg font-semibold text-text-100">
+              Zone dangereuse
             </h3>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-              <div>
-                <p className="font-medium text-green-900">Email vérifié</p>
-                <p className="text-sm text-green-700">
-                  Votre adresse email a été confirmée
-                </p>
-              </div>
-              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                <Mail className="h-4 w-4 text-white" />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-              <div>
-                <p className="font-medium text-blue-900">
-                  Plan {user?.subscription?.plan || "Gratuit"}
-                </p>
-                <p className="text-sm text-blue-700">
-                  {user?.subscription?.currentForms || 0}/
-                  {user?.subscription?.maxForms || 0} formulaires utilisés
-                </p>
-              </div>
-              <div className="text-sm text-blue-600">
-                {user?.subscription?.currentSubmissions || 0}/
-                {user?.subscription?.maxSubmissionsPerMonth || 0} soumissions ce
-                mois
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Danger Zone */}
-      <Card className="border-orange-200">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Trash2 className="h-5 w-5 text-orange-600" />
-            <h3 className="text-lg font-semibold text-orange-900">
-              Gestion du compte
-            </h3>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="p-4 bg-orange-50 rounded-lg">
-              <h4 className="font-medium text-orange-900 mb-2">
+            <div>
+              <h4 className="text-sm font-medium text-text-100 mb-2">
                 Supprimer le compte
               </h4>
-              <p className="text-sm text-orange-700 mb-4">
-                Cette action est irréversible. Tous vos formulaires et données
-                seront définitivement supprimés.
+              <p className="text-sm text-surface-400 mb-4">
+                Cette action est irréversible. Toutes vos données seront
+                définitivement supprimées.
               </p>
               {!showDeleteConfirm ? (
                 <Button
-                  variant="outline"
-                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  variant="danger"
                   onClick={() => setShowDeleteConfirm(true)}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -463,21 +377,23 @@ export function Profile() {
                 </Button>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-red-900">
-                    Êtes-vous sûr de vouloir supprimer votre compte ?
+                  <p className="text-sm text-red-400">
+                    Êtes-vous sûr de vouloir supprimer votre compte ? Cette
+                    action ne peut pas être annulée.
                   </p>
                   <div className="flex gap-3">
                     <Button
                       variant="danger"
                       onClick={handleDeleteAccount}
-                      size="sm"
+                      className="flex-1"
                     >
-                      Oui, supprimer définitivement
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Oui, supprimer
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       onClick={() => setShowDeleteConfirm(false)}
-                      size="sm"
+                      className="flex-1"
                     >
                       Annuler
                     </Button>

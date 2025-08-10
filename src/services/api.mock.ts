@@ -116,7 +116,54 @@ const mockForms: IForm[] = [
     version: 2,
     fields: [],
     history: {
-      versions: [],
+      versions: [
+        {
+          id: "version-1",
+          form_id: "form-1",
+          version_number: 1,
+          schema: {
+            title: "Contact Lead Generation",
+            description: "Formulaire de contact pour prospects",
+            status: "draft",
+            fields: [],
+            settings: {
+              theme: {
+                primary_color: "#3B82F6",
+                background_color: "#FFFFFF",
+                text_color: "#1F2937",
+              },
+              success_message: "Merci pour votre message !",
+              notifications: {
+                email: true,
+              },
+            },
+          },
+          created_at: "2024-06-15T10:00:00Z",
+        },
+        {
+          id: "version-2",
+          form_id: "form-1",
+          version_number: 2,
+          schema: {
+            title: "Contact Lead Generation",
+            description: "Formulaire de contact pour prospects",
+            status: "published",
+            fields: [],
+            settings: {
+              theme: {
+                primary_color: "#3B82F6",
+                background_color: "#FFFFFF",
+                text_color: "#1F2937",
+              },
+              success_message: "Merci pour votre message !",
+              notifications: {
+                email: true,
+              },
+            },
+          },
+          created_at: "2024-07-10T15:30:00Z",
+        },
+      ],
       currentVersion: 2,
       maxVersions: 10,
     },
@@ -145,7 +192,31 @@ const mockForms: IForm[] = [
     version: 1,
     fields: [],
     history: {
-      versions: [],
+      versions: [
+        {
+          id: "version-3",
+          form_id: "form-2",
+          version_number: 1,
+          schema: {
+            title: "Inscription Newsletter",
+            description: "Collecte d'emails pour la newsletter",
+            status: "published",
+            fields: [],
+            settings: {
+              theme: {
+                primary_color: "#3B82F6",
+                background_color: "#FFFFFF",
+                text_color: "#1F2937",
+              },
+              success_message: "Merci pour votre inscription !",
+              notifications: {
+                email: true,
+              },
+            },
+          },
+          created_at: "2024-05-20T14:00:00Z",
+        },
+      ],
       currentVersion: 1,
       maxVersions: 10,
     },
