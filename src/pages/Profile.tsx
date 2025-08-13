@@ -351,7 +351,7 @@ export function Profile() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <Trash2 className="h-5 w-5 text-red-500" />
+            <Trash2 className="h-5 w-5 text-yellow-500" />
             <h3 className="text-lg font-semibold text-text-100">
               Zone dangereuse
             </h3>
@@ -369,7 +369,7 @@ export function Profile() {
               </p>
               {!showDeleteConfirm ? (
                 <Button
-                  variant="danger"
+                  variant="accent"
                   onClick={() => setShowDeleteConfirm(true)}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -377,7 +377,7 @@ export function Profile() {
                 </Button>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-sm text-red-400">
+                  <p className="text-sm text-yellow-400">
                     Êtes-vous sûr de vouloir supprimer votre compte ? Cette
                     action ne peut pas être annulée.
                   </p>

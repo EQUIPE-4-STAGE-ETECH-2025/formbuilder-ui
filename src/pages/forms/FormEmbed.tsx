@@ -122,7 +122,7 @@ export function FormEmbed() {
       <div className="min-h-screen flex flex-col">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-4" />
+            <AlertCircle className="h-8 w-8 text-yellow-400 mx-auto mb-4" />
             <p className="text-surface-400">{error}</p>
           </div>
         </div>
@@ -136,7 +136,7 @@ export function FormEmbed() {
       <div className="min-h-screen flex flex-col">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-4" />
+            <CheckCircle className="h-8 w-8 text-yellow-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-text-100 mb-2">
               Merci !
             </h2>
@@ -158,7 +158,7 @@ export function FormEmbed() {
     <div className="min-h-screen flex flex-col">
       <div className="flex-1 py-8">
         <div className="max-w-2xl mx-auto px-4">
-          <div className="bg-surface-900/50 backdrop-blur-sm rounded-2xl shadow-large border border-surface-800/50 p-8">
+          <div className="bg-surface-900 rounded-2xl shadow-large border border-surface-800/50 p-8">
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold text-text-100 mb-2">
                 {form.title}

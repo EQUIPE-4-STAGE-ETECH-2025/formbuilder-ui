@@ -26,17 +26,17 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        "border border-surface-700/50 bg-surface-900/50 backdrop-blur-sm text-surface-300 hover:bg-surface-800/50 hover:backdrop-blur-sm focus:ring-surface-800",
+        "border border-surface-700/50 bg-surface-900 text-surface-300 hover:bg-surface-800 focus:ring-surface-800",
       secondary:
-        "border border-surface-600/50 bg-transparent text-surface-200 hover:bg-surface-800/30 hover:backdrop-blur-sm focus:ring-surface-600",
+        "border border-surface-600/50 bg-surface-800 text-surface-200 hover:bg-surface-700 hover:backdrop-blur-sm focus:ring-surface-600",
       accent:
-        "border border-accent-600 bg-transparent text-accent-600 hover:bg-accent-600/10 focus:ring-accent-600",
+        "border border-[#FACC15] bg-[#FACC15] text-black hover:bg-[#eab308] focus:ring-[#FACC15]",
       outline:
-        "border border-surface-700/50 bg-transparent text-surface-300 hover:bg-surface-800/30 hover:backdrop-blur-sm focus:ring-surface-700",
+        "border border-surface-700/50 bg-surface-800 text-surface-300 hover:bg-surface-700 hover:backdrop-blur-sm focus:ring-surface-700",
       ghost:
         "text-surface-400 hover:bg-surface-800/30 hover:backdrop-blur-sm focus:ring-surface-800",
       danger:
-        "border border-red-600 bg-transparent text-red-600 hover:bg-red-600/10 focus:ring-red-600",
+        "border border-yellow-600 bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-600",
     };
 
     const sizes = {

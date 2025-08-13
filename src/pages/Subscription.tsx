@@ -79,7 +79,7 @@ export function Subscription() {
       case "plan-premium":
         return <Crown className="h-6 w-6 text-accent-500" />;
       case "plan-pro":
-        return <Zap className="h-6 w-6 text-purple-500" />;
+        return <Zap className="h-6 w-6 text-yellow-500" />;
       default:
         return <Star className="h-6 w-6 text-surface-500" />;
     }
@@ -92,7 +92,7 @@ export function Subscription() {
       case "plan-premium":
         return "border-accent-500 ring-2 ring-accent-500";
       case "plan-pro":
-        return "border-purple-500";
+        return "border-yellow-500";
       default:
         return "border-surface-700";
     }
@@ -208,7 +208,7 @@ export function Subscription() {
                 <ul className="space-y-2">
                   {plan.features?.map((feature, index) => (
                     <li key={index} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className="h-4 w-4 text-yellow-500" />
                       <span className="text-sm text-surface-400">
                         {feature}
                       </span>
@@ -303,7 +303,7 @@ export function Subscription() {
             <textarea
               placeholder="Votre message"
               rows={4}
-              className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+              className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
             />
             <Button type="submit" className="w-full" variant="accent">
               Envoyer le message

@@ -262,17 +262,19 @@ export function AdminDashboard() {
 
   const getStatusBadge = (status: string) => {
     return status === "active"
-      ? "bg-green-100 text-green-800"
-      : "bg-red-100 text-red-800";
+      ? "bg-yellow-100 text-yellow-800"
+      : "bg-yellow-100 text-yellow-800";
   };
 
   const getPlanBadge = (plan: string) => {
     const badges = {
-      free: "bg-gray-100 text-gray-800",
-      premium: "bg-blue-100 text-blue-800",
-      pro: "bg-purple-100 text-purple-800",
+      free: "bg-yellow-100 text-yellow-800",
+      premium: "bg-yellow-100 text-yellow-800",
+      pro: "bg-yellow-100 text-yellow-800",
     };
-    return badges[plan as keyof typeof badges] || "bg-gray-100 text-gray-800";
+    return (
+      badges[plan as keyof typeof badges] || "bg-yellow-100 text-yellow-800"
+    );
   };
 
   return (
@@ -310,7 +312,7 @@ export function AdminDashboard() {
                   {stats.activeUsers}
                 </p>
               </div>
-              <Users className="h-8 w-8 text-green-500" />
+              <Users className="h-8 w-8 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
@@ -324,7 +326,7 @@ export function AdminDashboard() {
                   {stats.totalForms}
                 </p>
               </div>
-              <FileText className="h-8 w-8 text-purple-500" />
+              <FileText className="h-8 w-8 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
@@ -338,7 +340,7 @@ export function AdminDashboard() {
                   {stats.totalSubmissions.toLocaleString()}
                 </p>
               </div>
-              <TrendingUp className="h-8 w-8 text-orange-500" />
+              <TrendingUp className="h-8 w-8 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
@@ -352,7 +354,7 @@ export function AdminDashboard() {
                   {stats.revenueThisMonth.toLocaleString()}€
                 </p>
               </div>
-              <TrendingUp className="h-8 w-8 text-emerald-500" />
+              <TrendingUp className="h-8 w-8 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
@@ -728,7 +730,7 @@ export function AdminDashboard() {
                               <hr className="my-1 border-surface-700" />
                               <button
                                 onClick={() => handleDeleteUser(user.id)}
-                                className="flex items-center w-full px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 transition-colors duration-200"
+                                className="flex items-center w-full px-4 py-2 text-sm text-yellow-400 hover:bg-yellow-900/20 transition-colors duration-200"
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Supprimer
@@ -773,7 +775,7 @@ export function AdminDashboard() {
                 className="flex items-center justify-between p-4 bg-surface-800 rounded-xl"
               >
                 <div className="flex items-center gap-3">
-                  <AlertTriangle className="h-5 w-5 text-orange-500" />
+                  <AlertTriangle className="h-5 w-5 text-yellow-500" />
                   <div>
                     <p className="font-medium text-text-100">{log.action}</p>
                     <p className="text-sm text-surface-400">

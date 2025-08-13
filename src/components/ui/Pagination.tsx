@@ -56,7 +56,7 @@ export function Pagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-6 py-5 border-t border-surface-700/50 bg-surface-900/50 backdrop-blur-sm">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-6 py-5 border-t border-surface-700/50 bg-surface-900">
       {/* Items per page selector */}
       <div className="flex items-center gap-3 text-sm text-surface-400">
         <span className="font-medium">Afficher</span>
@@ -90,7 +90,7 @@ export function Pagination({
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="px-3 py-2 hover:bg-surface-800/50 hover:backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-2 hover:bg-surface-800 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -110,7 +110,7 @@ export function Pagination({
                   "px-3 py-2 min-w-[40px] font-medium transition-all duration-200",
                   currentPage === page
                     ? "bg-accent-600 text-white hover:bg-accent-700"
-                    : "text-surface-300 hover:bg-surface-800/50 hover:backdrop-blur-sm hover:text-text-100"
+                    : "text-surface-300 hover:bg-surface-800 hover:text-text-100"
                 )}
               >
                 {page}
@@ -124,7 +124,7 @@ export function Pagination({
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="px-3 py-2 hover:bg-surface-800/50 hover:backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-2 hover:bg-surface-800 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

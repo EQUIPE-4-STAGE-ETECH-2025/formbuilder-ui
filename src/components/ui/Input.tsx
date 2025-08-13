@@ -24,16 +24,16 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           id={inputId}
           className={clsx(
-            "w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200",
+            "w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200",
             error &&
-              "border-red-500 bg-red-900/20 focus:border-red-400 focus:ring-red-400",
+              "border-yellow-500 bg-yellow-900/20 focus:border-yellow-400 focus:ring-yellow-400",
             className
           )}
           ref={ref}
           {...props}
         />
         {error && (
-          <p className="text-sm text-red-400" role="alert">
+          <p className="text-sm text-yellow-400" role="alert">
             {error}
           </p>
         )}

@@ -182,7 +182,7 @@ export function Dropdown({
           createPortal(
             <div
               ref={dropdownRef}
-              className="fixed bg-surface-900 rounded-2xl shadow-large border border-surface-800 z-[9999] overflow-hidden animate-scale-in"
+              className="fixed bg-surface-900 border border-surface-700/50 rounded-2xl shadow-large z-[9999] overflow-hidden animate-scale-in"
               style={{
                 top: position.top,
                 left: position.left,
@@ -224,7 +224,7 @@ export function Dropdown({
         createPortal(
           <div
             ref={dropdownRef}
-            className="fixed bg-surface-900 rounded-2xl shadow-large border border-surface-800 z-[9999] overflow-hidden animate-scale-in"
+            className="fixed bg-surface-900 border border-surface-700/50 rounded-2xl shadow-large z-[9999] overflow-hidden animate-scale-in"
             style={{
               top: position.top,
               left: position.left,
@@ -238,7 +238,7 @@ export function Dropdown({
                   onClick={() => handleActionClick(action)}
                   className={`flex items-center w-full px-4 py-3 text-sm transition-colors duration-200 rounded-xl ${
                     action.variant === "danger"
-                      ? "text-red-400 hover:bg-red-900/20"
+                      ? "text-yellow-400 hover:bg-yellow-900/20"
                       : "text-surface-300 hover:bg-surface-800"
                   }`}
                 >

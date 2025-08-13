@@ -46,27 +46,27 @@ export default {
           900: "#262626",
           950: "#171717",
         },
-        // Couleurs d'accent modernes (ancien bleu)
+        // Couleurs d'accent modernes (jaune)
         accent: {
-          50: "#f0f9ff",
-          100: "#e0f2fe",
-          200: "#bae6fd",
-          300: "#7dd3fc",
-          400: "#38bdf8",
-          500: "#0ea5e9",
-          600: "#0284c7",
-          700: "#0369a1",
-          800: "#075985",
-          900: "#0c4a6e",
+          50: "#fefce8",
+          100: "#fef9c3",
+          200: "#fef08a",
+          300: "#fde047",
+          400: "#facc15",
+          500: "#eab308",
+          600: "#ca8a04",
+          700: "#a16207",
+          800: "#854d0e",
+          900: "#713f12",
         },
-        // Couleurs pour la lueur bleue (style Bolt.new)
+        // Couleurs pour la lueur jaune (style moderne)
         glow: {
-          50: "rgba(14, 165, 233, 0.05)",
-          100: "rgba(14, 165, 233, 0.08)",
-          200: "rgba(14, 165, 233, 0.12)",
-          300: "rgba(14, 165, 233, 0.16)",
-          400: "rgba(14, 165, 233, 0.20)",
-          500: "rgba(14, 165, 233, 0.25)",
+          50: "rgba(250, 204, 21, 0.05)",
+          100: "rgba(250, 204, 21, 0.08)",
+          200: "rgba(250, 204, 21, 0.12)",
+          300: "rgba(250, 204, 21, 0.16)",
+          400: "rgba(250, 204, 21, 0.20)",
+          500: "rgba(250, 204, 21, 0.25)",
         },
         // Couleurs de texte (style Cursor)
         text: {
@@ -81,6 +81,12 @@ export default {
           800: "#404040",
           900: "#262626",
           950: "#171717",
+        },
+        // Couleurs spécifiques pour la grille Now.TS
+        grid: {
+          dot: "rgba(255, 255, 255, 0.15)",
+          dotHover: "rgba(255, 255, 255, 0.25)",
+          background: "#1F1B1A",
         },
       },
       fontFamily: {
@@ -103,7 +109,7 @@ export default {
           "0 4px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3)",
         large:
           "0 10px 40px -10px rgba(0, 0, 0, 0.5), 0 2px 10px -2px rgba(0, 0, 0, 0.3)",
-        glow: "0 0 20px rgba(14, 165, 233, 0.3)",
+        glow: "0 0 20px rgba(250, 204, 21, 0.3)",
       },
       animation: {
         "fade-in": "fadeIn 0.5s ease-in-out",
@@ -125,8 +131,8 @@ export default {
           "100%": { transform: "scale(1)", opacity: "1" },
         },
         glow: {
-          "0%": { boxShadow: "0 0 20px rgba(14, 165, 233, 0.3)" },
-          "100%": { boxShadow: "0 0 30px rgba(14, 165, 233, 0.5)" },
+          "0%": { boxShadow: "0 0 20px rgba(250, 204, 21, 0.3)" },
+          "100%": { boxShadow: "0 0 30px rgba(250, 204, 21, 0.5)" },
         },
       },
     },

@@ -1,18 +1,23 @@
-import { Download, Eye, Trash2 } from "lucide-react";
+import { Download } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
-import { Card, CardContent, CardHeader } from "../../components/ui/Card";
+import { Card, CardContent } from "../../components/ui/Card";
 import { Pagination } from "../../components/ui/Pagination";
 import { useToast } from "../../hooks/useToast";
-import { formsAPI, submissionsAPI } from "../../services/api.mock";
-import { IForm, ISubmission } from "../../types";
+import {
+  formsAPI,
+  formVersionsAPI,
+  submissionsAPI,
+} from "../../services/api.mock";
+import { IForm, IFormVersion, ISubmission } from "../../types";
 
 export function FormSubmissions() {
   const { id } = useParams();
   const { addToast } = useToast();
   const [form, setForm] = useState<IForm | null>(null);
   const [submissions, setSubmissions] = useState<ISubmission[]>([]);
+  const [formVersion, setFormVersion] = useState<IFormVersion | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -23,6 +28,16 @@ export function FormSubmissions() {
       const response = await formsAPI.getById(id!);
       if (response.success && response.data) {
         setForm(response.data);
+
+        // Récupérer la version actuelle du formulaire depuis formVersionsAPI
+        const versionResponse = await formVersionsAPI.getByFormId(id!);
+        if (versionResponse.success && versionResponse.data) {
+          // Prendre la version la plus récente (version_number la plus élevée)
+          const latestVersion = versionResponse.data.reduce((latest, current) =>
+            current.version_number > latest.version_number ? current : latest
+          );
+          setFormVersion(latestVersion);
+        }
       }
     } catch {
       console.error("Error fetching form");
@@ -74,24 +89,6 @@ export function FormSubmissions() {
     }
   };
 
-  const handleDeleteSubmission = async () => {
-    try {
-      // In real app, would call API to delete submission
-      addToast({
-        type: "success",
-        title: "Soumission supprimée",
-        message: "La soumission a été supprimée avec succès",
-      });
-      fetchSubmissions(); // Refresh the list
-    } catch {
-      addToast({
-        type: "error",
-        title: "Erreur",
-        message: "Impossible de supprimer la soumission",
-      });
-    }
-  };
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -110,6 +107,39 @@ export function FormSubmissions() {
       minute: "2-digit",
     });
   };
+
+  // Fonction pour obtenir le label d'un champ par son ID
+  const getFieldLabel = (fieldId: string): string => {
+    if (!formVersion?.schema?.fields) return fieldId;
+    const field = formVersion.schema.fields.find((f) => f.id === fieldId);
+    return field?.label || fieldId;
+  };
+
+  // Fonction pour obtenir la valeur d'un champ de soumission
+  const getSubmissionValue = (
+    submission: ISubmission,
+    fieldId: string
+  ): string => {
+    const value = submission.data[fieldId];
+    if (value === undefined || value === null) return "-";
+    return String(value);
+  };
+
+  // Fonction pour obtenir les clés des champs depuis les soumissions
+  const getFieldKeys = (): string[] => {
+    if (submissions.length === 0) return [];
+
+    // Extraire toutes les clés uniques des données de soumission
+    const allKeys = new Set<string>();
+    submissions.forEach((submission) => {
+      Object.keys(submission.data).forEach((key) => allKeys.add(key));
+    });
+
+    return Array.from(allKeys).sort();
+  };
+
+  // Obtenir les clés des champs (fallback si formVersion n'est pas disponible)
+  const fieldKeys = getFieldKeys();
 
   if (loading && !form) {
     return (
@@ -133,10 +163,12 @@ export function FormSubmissions() {
   return (
     <div className="space-modern">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-text-100">Soumissions</h1>
-          <p className="text-surface-400">{form.title}</p>
+          <h1 className="text-3xl font-bold text-text-100">
+            Soumissions du formulaire
+          </h1>
+          <p className="text-surface-400 mt-2">{form.title}</p>
         </div>
         <Button onClick={handleExport} variant="secondary">
           <Download className="h-4 w-4 mr-2" />
@@ -144,46 +176,9 @@ export function FormSubmissions() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-accent-500">{totalItems}</p>
-              <p className="text-sm text-surface-400">Total soumissions</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-500">
-                {submissions.length > 0 ? submissions.length : 0}
-              </p>
-              <p className="text-sm text-surface-400">Cette page</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-purple-500">
-                {Math.ceil(totalItems / itemsPerPage)}
-              </p>
-              <p className="text-sm text-surface-400">Pages</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Submissions Table */}
       <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold text-text-100">
-            Liste des soumissions
-          </h3>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           {loading ? (
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
@@ -191,8 +186,26 @@ export function FormSubmissions() {
               ))}
             </div>
           ) : submissions.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-surface-500">
+            <div className="text-center py-12">
+              <div className="text-surface-500 mb-4">
+                <svg
+                  className="w-16 h-16 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-text-100 mb-2">
+                Aucune soumission trouvée
+              </h3>
+              <p className="text-surface-400">
                 Aucune soumission pour le moment
               </p>
             </div>
@@ -200,56 +213,47 @@ export function FormSubmissions() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-surface-700/50">
-                    <th className="text-left py-3 px-4 font-medium text-surface-300">
+                  <tr>
+                    <th className="text-left py-4 px-6 font-medium text-surface-300 text-sm">
                       Date
                     </th>
-                    <th className="text-left py-3 px-4 font-medium text-surface-300">
+                    <th className="text-left py-4 px-6 font-medium text-surface-300 text-sm">
                       IP
                     </th>
-                    <th className="text-left py-3 px-4 font-medium text-surface-300">
-                      Actions
-                    </th>
+                    {/* Colonnes dynamiques pour les champs du formulaire */}
+                    {fieldKeys.map((fieldKey) => (
+                      <th
+                        key={fieldKey}
+                        className="text-left py-4 px-6 font-medium text-surface-300 text-sm"
+                      >
+                        {getFieldLabel(fieldKey)}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {submissions.map((submission) => (
-                    <tr
-                      key={submission.id}
-                      className="border-b border-surface-700/50 hover:bg-surface-800/50 hover:backdrop-blur-sm transition-all duration-200"
-                    >
-                      <td className="py-3 px-4 text-sm text-text-100">
+                    <tr key={submission.id}>
+                      <td className="py-4 px-6 text-sm text-surface-500">
                         {formatDate(submission.submitted_at)}
                       </td>
-                      <td className="py-3 px-4 text-sm text-surface-400">
+                      <td className="py-4 px-6 text-sm text-surface-500">
                         {submission.ip_address}
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              // In real app, would show submission details
-                              addToast({
-                                type: "info",
-                                title: "Détails",
-                                message:
-                                  "Fonctionnalité en cours de développement",
-                              });
-                            }}
+                      {/* Cellules dynamiques pour les valeurs des champs */}
+                      {fieldKeys.map((fieldKey) => (
+                        <td
+                          key={fieldKey}
+                          className="py-4 px-6 text-sm text-surface-500"
+                        >
+                          <div
+                            className="max-w-xs truncate"
+                            title={getSubmissionValue(submission, fieldKey)}
                           >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteSubmission()}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-400" />
-                          </Button>
-                        </div>
-                      </td>
+                            {getSubmissionValue(submission, fieldKey)}
+                          </div>
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>

@@ -7,7 +7,7 @@ export function Footer() {
             &copy; 2025{" "}
             <a
               href="/"
-              className="text-blue-400 hover:text-blue-300 transition-colors"
+              className="text-yellow-400 hover:text-yellow-300 transition-colors"
             >
               FormBuilder
             </a>

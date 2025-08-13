@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar, Edit, Eye, PlusCircle, Search, Zap } from "lucide-react";
+import { Calendar, Edit, Eye, FileText, Plus, Search, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
@@ -43,13 +43,13 @@ export function FormsList() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "published":
-        return "border-green-500 text-green-500 bg-green-500/10";
+        return "border-yellow-500 text-yellow-500 bg-yellow-500/10";
       case "draft":
         return "border-yellow-500 text-yellow-500 bg-yellow-500/10";
       case "disabled":
-        return "border-red-500 text-red-500 bg-red-500/10";
+        return "border-yellow-500 text-yellow-500 bg-yellow-500/10";
       default:
-        return "border-gray-500 text-gray-500 bg-gray-500/10";
+        return "border-yellow-500 text-yellow-500 bg-yellow-500/10";
     }
   };
 
@@ -147,7 +147,7 @@ export function FormsList() {
         </div>
         <Link to="/forms/new">
           <Button variant="accent">
-            <PlusCircle className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
             Nouveau formulaire
           </Button>
         </Link>
@@ -165,7 +165,7 @@ export function FormsList() {
                 placeholder="Rechercher un formulaire..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-text-100 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                className="w-full pl-10 pr-4 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-text-100 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
               />
             </div>
 
@@ -236,7 +236,7 @@ export function FormsList() {
             </p>
             <Link to="/forms/new">
               <Button variant="accent">
-                <PlusCircle className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-2" />
                 Créer votre premier formulaire
               </Button>
             </Link>
@@ -253,6 +253,7 @@ export function FormsList() {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
+                      <FileText className="h-5 w-5 text-accent-400" />
                       <h3 className="text-lg font-semibold text-text-100">
                         {form.title}
                       </h3>

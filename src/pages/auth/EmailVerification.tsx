@@ -83,7 +83,7 @@ export function EmailVerification() {
       case "success":
         return (
           <>
-            <div className="mx-auto w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center">
+            <div className="mx-auto w-16 h-16 bg-yellow-600 rounded-2xl flex items-center justify-center">
               <CheckCircle className="h-8 w-8 text-white" />
             </div>
             <h2 className="mt-6 text-3xl font-bold text-text-100">
@@ -114,7 +114,7 @@ export function EmailVerification() {
       default:
         return (
           <>
-            <div className="mx-auto w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center">
+            <div className="mx-auto w-16 h-16 bg-yellow-600 rounded-2xl flex items-center justify-center">
               <XCircle className="h-8 w-8 text-white" />
             </div>
             <h2 className="mt-6 text-3xl font-bold text-text-100">
@@ -171,7 +171,7 @@ export function EmailVerification() {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">{renderContent()}</div>
 
-          <div className="bg-surface-900/50 backdrop-blur-sm border border-surface-700/50 rounded-2xl p-8">
+          <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-8">
             <div className="text-center space-y-4">
               {email && (
                 <p className="text-sm text-surface-400">

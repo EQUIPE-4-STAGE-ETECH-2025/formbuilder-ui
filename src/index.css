@@ -9,7 +9,7 @@
 .dragging {
   transform: rotate(1deg) scale(1.02);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(14, 165, 233, 0.1);
+    0 0 0 1px rgba(250, 204, 21, 0.1);
   z-index: 1000;
 }
 
@@ -47,20 +47,20 @@
   overflow: hidden;
   background: linear-gradient(
     135deg,
-    rgba(14, 165, 233, 0.05) 0%,
-    rgba(14, 165, 233, 0.02) 100%
+    rgba(250, 204, 21, 0.05) 0%,
+    rgba(250, 204, 21, 0.02) 100%
   );
 }
 
 /* Styles pour l'état de drag */
 .dragging-over {
-  background-color: rgba(14, 165, 233, 0.1);
-  border-color: rgba(14, 165, 233, 0.3);
+  background-color: rgba(250, 204, 21, 0.1);
+  border-color: rgba(250, 204, 21, 0.3);
 }
 
 /* Amélioration de l'accessibilité */
 .drag-handle:focus {
-  outline: 2px solid rgba(14, 165, 233, 0.5);
+  outline: 2px solid rgba(250, 204, 21, 0.5);
   outline-offset: 2px;
 }
 
@@ -92,67 +92,28 @@
 
   body {
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-    background: radial-gradient(
-      ellipse at top center,
-      #0f172a 0%,
-      #0a0a0a 50%,
-      #000000 100%
-    );
+    background: #1f1b1a;
     color: #ffffff;
     line-height: 1.6;
     position: relative;
+    min-height: 100vh;
   }
 
-  /* Lueur bleue globale sur tout le site - côté gauche */
+  /* Motif de grille avec points gris clairs comme sur Now.TS */
   body::before {
     content: "";
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: radial-gradient(
-        ellipse 800px 600px at left center,
-        rgba(14, 165, 233, 0.15) 0%,
-        transparent 60%
-      ),
-      radial-gradient(
-        ellipse 1200px 800px at left center,
-        rgba(14, 165, 233, 0.1) 0%,
-        transparent 70%
-      ),
-      radial-gradient(
-        ellipse 1600px 1000px at left center,
-        rgba(14, 165, 233, 0.06) 0%,
-        transparent 80%
-      );
-    pointer-events: none;
-    z-index: -1;
-  }
-
-  /* Lueur bleue supplémentaire pour couvrir tout le site - côté droit */
-  body::after {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: radial-gradient(
-        ellipse 800px 600px at right center,
-        rgba(14, 165, 233, 0.15) 0%,
-        transparent 60%
-      ),
-      radial-gradient(
-        ellipse 1200px 800px at right center,
-        rgba(14, 165, 233, 0.1) 0%,
-        transparent 70%
-      ),
-      radial-gradient(
-        ellipse 1600px 1000px at right center,
-        rgba(14, 165, 233, 0.06) 0%,
-        transparent 80%
-      );
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      rgba(255, 255, 255, 0.15) 1px,
+      transparent 0
+    );
+    background-size: 20px 20px;
+    background-position: 0 0;
     pointer-events: none;
     z-index: -1;
   }
@@ -195,8 +156,38 @@
   input:focus-visible,
   textarea:focus-visible,
   select:focus-visible {
-    outline: 2px solid #0ea5e9;
+    outline: 2px solid #facc15;
     outline-offset: 2px;
+  }
+
+  /* Désactiver le style d'autofill des navigateurs */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  textarea:-webkit-autofill:active,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus,
+  select:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px #262626 inset;
+    -webkit-text-fill-color: #ffffff;
+    -webkit-background-clip: content-box;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Style spécifique pour les inputs avec classe .input-modern */
+  .input-modern:-webkit-autofill,
+  .input-modern:-webkit-autofill:hover,
+  .input-modern:-webkit-autofill:focus,
+  .input-modern:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px #1e1e1e inset;
+    -webkit-text-fill-color: #e5e5e5;
+    -webkit-background-clip: content-box;
+    transition: background-color 5000s ease-in-out 0s;
   }
 
   /* Custom checkbox styles for dark mode */
@@ -215,8 +206,8 @@
   }
 
   input[type="checkbox"]:checked {
-    background-color: #0ea5e9;
-    border-color: #0ea5e9;
+    background-color: #facc15;
+    border-color: #facc15;
   }
 
   input[type="checkbox"]:checked::after {
@@ -227,7 +218,7 @@
     transform: translate(-50%, -50%);
     width: 0.5rem;
     height: 0.5rem;
-    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m12.207 4.793-1.414-1.414L6.5 7.086 4.207 4.793l-1.414 1.414L6.5 9.914z'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m12.207 4.793-1.414-1.414L6.5 7.086 4.207 4.793l-1.414 1.414L6.5 9.914z'/%3e%3csvg%3e");
     background-size: contain;
     background-repeat: no-repeat;
   }
@@ -235,7 +226,7 @@
   input[type="checkbox"]:focus {
     outline: none;
     ring: 2px;
-    ring-color: #0ea5e9;
+    ring-color: #facc15;
     ring-offset: 2px;
     ring-offset-color: #0a0a0a;
   }
@@ -245,8 +236,8 @@
   }
 
   input[type="checkbox"]:checked:hover {
-    background-color: #0284c7;
-    border-color: #0284c7;
+    background-color: #eab308;
+    border-color: #eab308;
   }
 
   /* Custom radio button styles for dark mode */
@@ -265,8 +256,8 @@
   }
 
   input[type="radio"]:checked {
-    background-color: #0ea5e9;
-    border-color: #0ea5e9;
+    background-color: #facc15;
+    border-color: #facc15;
   }
 
   input[type="radio"]:checked::after {
@@ -284,7 +275,7 @@
   input[type="radio"]:focus {
     outline: none;
     ring: 2px;
-    ring-color: #0ea5e9;
+    ring-color: #facc15;
     ring-offset: 2px;
     ring-offset-color: #0a0a0a;
   }
@@ -294,8 +285,8 @@
   }
 
   input[type="radio"]:checked:hover {
-    background-color: #0284c7;
-    border-color: #0284c7;
+    background-color: #eab308;
+    border-color: #eab308;
   }
 }
 
@@ -336,6 +327,70 @@
            focus:border-accent-500 focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 focus:ring-offset-background-950
            transition-all duration-200 ease-in-out
            placeholder:text-surface-500 text-surface-400;
+  }
+
+  /* Styles pour désactiver l'autofill sur les composants Input et Dropdown */
+  .input-modern:-webkit-autofill,
+  .input-modern:-webkit-autofill:hover,
+  .input-modern:-webkit-autofill:focus,
+  .input-modern:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px #1e1e1e inset;
+    -webkit-text-fill-color: #e5e5e5;
+    -webkit-background-clip: content-box;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Styles pour les inputs avec classes Tailwind spécifiques */
+  input[class*="bg-surface-900"]:-webkit-autofill,
+  input[class*="bg-surface-900"]:-webkit-autofill:hover,
+  input[class*="bg-surface-900"]:-webkit-autofill:focus,
+  input[class*="bg-surface-900"]:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px rgba(38, 38, 38, 0.5) inset;
+    -webkit-text-fill-color: #a3a3a3;
+    -webkit-background-clip: content-box;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Styles pour les inputs avec erreur */
+  input[class*="bg-yellow-900"]:-webkit-autofill,
+  input[class*="bg-yellow-900"]:-webkit-autofill:hover,
+  input[class*="bg-yellow-900"]:-webkit-autofill:focus,
+  input[class*="bg-yellow-900"]:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px rgba(133, 77, 14, 0.2) inset;
+    -webkit-text-fill-color: #facc15;
+    -webkit-background-clip: content-box;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Correction de la couleur du curseur et de la sélection de texte */
+  input,
+  textarea,
+  select {
+    caret-color: #facc15;
+  }
+
+  /* Styles pour la sélection de texte */
+  input::selection,
+  textarea::selection,
+  select::selection {
+    background-color: #facc15;
+    color: #ffffff;
+  }
+
+  input::-moz-selection,
+  textarea::-moz-selection,
+  select::-moz-selection {
+    background-color: #facc15;
+    color: #ffffff;
+  }
+
+  /* S'assurer que les styles de focus sont préservés */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    border-color: #facc15;
+    box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.2);
   }
 
   /* Modern navigation styles - dark mode */
@@ -394,6 +449,59 @@
 * {
   transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out,
     border-color 0.2s ease-in-out;
+}
+
+/* Classes utilitaires pour la grille Now.TS */
+.grid-pattern {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.15) 1px,
+    transparent 0
+  );
+  background-size: 20px 20px;
+  background-position: 0 0;
+}
+
+.grid-pattern-fine {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.12) 1px,
+    transparent 0
+  );
+  background-size: 16px 16px;
+  background-position: 0 0;
+}
+
+.grid-pattern-coarse {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.18) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+  background-position: 0 0;
+}
+
+/* Effet de grille avec animation subtile */
+.grid-pattern-animated {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.15) 1px,
+    transparent 0
+  );
+  background-size: 20px 20px;
+  background-position: 0 0;
+  animation: gridFloat 20s ease-in-out infinite;
+}
+
+@keyframes gridFloat {
+  0%,
+  100% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 10px 10px;
+  }
 }
 
 /* Loading animation - modern style */
@@ -531,29 +639,29 @@
   background-color: rgba(38, 38, 38, 0.8);
 }
 
-/* Classes utilitaires pour la lueur bleue */
+/* Classes utilitaires pour la lueur jaune */
 .bg-glow-50 {
-  background-color: rgba(14, 165, 233, 0.05);
+  background-color: rgba(250, 204, 21, 0.05);
 }
 
 .bg-glow-100 {
-  background-color: rgba(14, 165, 233, 0.08);
+  background-color: rgba(250, 204, 21, 0.08);
 }
 
 .bg-glow-200 {
-  background-color: rgba(14, 165, 233, 0.12);
+  background-color: rgba(250, 204, 21, 0.12);
 }
 
 .bg-glow-300 {
-  background-color: rgba(14, 165, 233, 0.16);
+  background-color: rgba(250, 204, 21, 0.16);
 }
 
 .bg-glow-400 {
-  background-color: rgba(14, 165, 233, 0.2);
+  background-color: rgba(250, 204, 21, 0.2);
 }
 
 .bg-glow-500 {
-  background-color: rgba(14, 165, 233, 0.25);
+  background-color: rgba(250, 204, 21, 0.25);
 }
 
 /* Effet de lueur bleue pour les cartes et composants */
@@ -570,7 +678,7 @@
   bottom: 0;
   background: radial-gradient(
     ellipse at center,
-    rgba(14, 165, 233, 0.1) 0%,
+    rgba(250, 204, 21, 0.1) 0%,
     transparent 70%
   );
   border-radius: inherit;

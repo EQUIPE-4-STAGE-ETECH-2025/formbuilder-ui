@@ -146,7 +146,7 @@ export const DARK_THEME_COLORS = {
 
 // Configuration des couleurs d'accent
 export const ACCENT_COLORS = {
-  primary: "#0ea5e9", // Bleu original
-  secondary: "#0284c7",
-  hover: "#0369a1",
+  primary: "#FACC15", // Jaune principal
+  secondary: "#eab308", // Jaune plus foncé
+  hover: "#ca8a04", // Jaune encore plus foncé
 } as const;

@@ -19,7 +19,7 @@ export function ProtectedRoute({
   if (loading) {
     return (
       <div className="min-h-screen bg-background-950 flex items-center justify-center">
-        <div className="text-center bg-surface-900/50 backdrop-blur-sm border border-surface-700/50 rounded-2xl p-8">
+        <div className="text-center bg-surface-900 border border-surface-700/50 rounded-2xl p-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto"></div>
           <p className="mt-4 text-text-100">Chargement...</p>
         </div>

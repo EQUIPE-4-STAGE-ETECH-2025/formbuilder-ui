@@ -4,7 +4,7 @@ import React from "react";
 interface IModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: string | React.ReactNode;
   children: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
 }
@@ -36,7 +36,7 @@ export const Modal: React.FC<IModalProps> = ({
 
         {/* Modal */}
         <div
-          className={`relative w-full ${sizeClasses[size]} bg-surface-900/50 backdrop-blur-sm rounded-2xl shadow-large border border-surface-800/50`}
+          className={`relative w-full ${sizeClasses[size]} bg-surface-900 rounded-2xl shadow-large border border-surface-800/50`}
         >
           {/* Header - affiché seulement si un titre est fourni */}
           {title && (

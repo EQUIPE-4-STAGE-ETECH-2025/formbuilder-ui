@@ -1,13 +1,26 @@
-import { Bell, LogOut, Menu, Settings, User, X } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, LogOut, Menu, Settings, User, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
+
+  // Détection du scroll pour l'effet sticky
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 10);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navigation = [
     ...(user?.role === "ADMIN"
@@ -22,13 +35,19 @@ export function Header() {
   const isActive = (href: string) => location.pathname === href;
 
   return (
-    <header>
+    <header
+      className={`sticky top-0 z-50 transition-all duration-200 ${
+        isScrolled
+          ? "bg-surface-900 border-b border-surface-700/50 shadow-lg"
+          : "bg-surface-900/0 backdrop-blur-none border-b border-transparent"
+      }`}
+    >
       <div className="container-modern">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/dashboard" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-accent-600 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+              <div className="w-10 h-10 bg-yellow-500 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                 <span className="text-white font-bold text-lg">F</span>
               </div>
               <span className="text-2xl font-bold text-text-100">
@@ -56,18 +75,58 @@ export function Header() {
 
           {/* Right side */}
           <div className="flex items-center space-x-3">
-            {/* Notifications */}
-            <button className="p-3 text-surface-400 hover:text-text-100 hover:bg-surface-800/50 hover:backdrop-blur-sm rounded-xl transition-all duration-200 focus-ring">
-              <Bell className="h-5 w-5" />
-            </button>
+            {/* Language Selector */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setIsLanguageMenuOpen(!isLanguageMenuOpen);
+                  setIsUserMenuOpen(false);
+                }}
+                className="flex items-center space-x-2 px-3 py-2 text-surface-400 hover:text-text-100 hover:bg-surface-800 rounded-xl transition-all duration-200 focus-ring"
+              >
+                <span className="text-sm font-medium">Français</span>
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform duration-200 ${
+                    isLanguageMenuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {isLanguageMenuOpen && (
+                <div className="absolute right-0 mt-2 w-36 bg-surface-900 border border-surface-700/50 rounded-xl shadow-large z-50 animate-scale-in">
+                  <div className="py-1 px-1">
+                    <button
+                      onClick={() => {
+                        // TODO: Implémenter le changement de langue vers le français
+                        setIsLanguageMenuOpen(false);
+                      }}
+                      className="flex items-center w-full px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 rounded-lg transition-colors duration-200"
+                    >
+                      <span className="font-bold text-xs mr-2">FR</span>
+                      <span>Français</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        // TODO: Implémenter le changement de langue vers l'anglais
+                        setIsLanguageMenuOpen(false);
+                      }}
+                      className="flex items-center w-full px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 rounded-lg transition-colors duration-200"
+                    >
+                      <span className="font-bold text-xs mr-2">US</span>
+                      <span>English</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* User Menu */}
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center space-x-3 p-2 rounded-xl hover:bg-surface-800/50 hover:backdrop-blur-sm transition-all duration-200 focus-ring"
+                className="flex items-center space-x-3 p-2 rounded-xl hover:bg-surface-800 transition-all duration-200 focus-ring"
               >
-                <div className="w-10 h-10 bg-accent-600 rounded-2xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-yellow-500 rounded-2xl flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
                     {user?.first_name?.[0]}
                     {user?.last_name?.[0]}
@@ -79,7 +138,7 @@ export function Header() {
               </button>
 
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-3 w-56 bg-surface-900 rounded-2xl shadow-large border border-surface-800 z-50 animate-scale-in">
+                <div className="absolute right-0 mt-3 w-56 bg-surface-900 border border-surface-700/50 rounded-2xl shadow-large z-50 animate-scale-in">
                   <div className="py-2 px-1.5">
                     <Link
                       to="/profile"
@@ -103,7 +162,7 @@ export function Header() {
                         logout();
                         setIsUserMenuOpen(false);
                       }}
-                      className="flex items-center w-full px-4 py-3 text-sm text-red-400 hover:bg-red-900/20 rounded-xl transition-colors duration-200"
+                      className="flex items-center w-full px-4 py-3 text-sm text-yellow-400 hover:bg-yellow-900/20 rounded-xl transition-colors duration-200"
                     >
                       <LogOut className="h-4 w-4 mr-3" />
                       Déconnexion
@@ -116,7 +175,7 @@ export function Header() {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-3 text-surface-400 hover:text-text-100 hover:bg-surface-800/50 hover:backdrop-blur-sm rounded-xl transition-all duration-200 focus-ring"
+              className="md:hidden p-3 text-surface-400 hover:text-text-100 hover:bg-surface-800 rounded-xl transition-all duration-200 focus-ring"
             >
               {isMobileMenuOpen ? (
                 <X className="h-6 w-6" />

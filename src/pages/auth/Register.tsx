@@ -79,7 +79,7 @@ export function Register() {
             </p>
           </div>
 
-          <div className="bg-surface-900/50 backdrop-blur-sm border border-surface-700/50 rounded-2xl p-8">
+          <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-8">
             <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -98,12 +98,12 @@ export function Register() {
                         required: "Le prénom est requis",
                       })}
                       type="text"
-                      className="block w-full pl-10 pr-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                      className="block w-full pl-10 pr-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                       placeholder="Anna"
                     />
                   </div>
                   {errors.first_name && (
-                    <p className="mt-1 text-sm text-red-400">
+                    <p className="mt-1 text-sm text-yellow-400">
                       {errors.first_name.message}
                     </p>
                   )}
@@ -125,12 +125,12 @@ export function Register() {
                         required: "Le nom est requis",
                       })}
                       type="text"
-                      className="block w-full pl-10 pr-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                      className="block w-full pl-10 pr-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                       placeholder="Martin"
                     />
                   </div>
                   {errors.last_name && (
-                    <p className="mt-1 text-sm text-red-400">
+                    <p className="mt-1 text-sm text-yellow-400">
                       {errors.last_name.message}
                     </p>
                   )}
@@ -157,12 +157,12 @@ export function Register() {
                       },
                     })}
                     type="email"
-                    className="block w-full pl-10 pr-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                    className="block w-full pl-10 pr-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                     placeholder="votre@email.com"
                   />
                 </div>
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-400">
+                  <p className="mt-1 text-sm text-yellow-400">
                     {errors.email.message}
                   </p>
                 )}
@@ -189,7 +189,7 @@ export function Register() {
                       },
                     })}
                     type={showPassword ? "text" : "password"}
-                    className="block w-full pl-10 pr-10 py-3 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                    className="block w-full pl-10 pr-10 py-3 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                     placeholder="••••••••"
                   />
                   <button
@@ -205,7 +205,7 @@ export function Register() {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-400">
+                  <p className="mt-1 text-sm text-yellow-400">
                     {errors.password.message}
                   </p>
                 )}
@@ -230,7 +230,7 @@ export function Register() {
                         "Les mots de passe ne correspondent pas",
                     })}
                     type={showConfirmPassword ? "text" : "password"}
-                    className="block w-full pl-10 pr-10 py-3 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                    className="block w-full pl-10 pr-10 py-3 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                     placeholder="••••••••"
                   />
                   <button
@@ -246,7 +246,7 @@ export function Register() {
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-400">
+                  <p className="mt-1 text-sm text-yellow-400">
                     {errors.confirmPassword.message}
                   </p>
                 )}

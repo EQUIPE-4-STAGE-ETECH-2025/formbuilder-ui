@@ -77,17 +77,20 @@ const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
   };
 
   const colors = {
-    success: "bg-green-900/20 backdrop-blur-sm border-green-700/50 text-green-200",
-    error: "bg-red-900/20 backdrop-blur-sm border-red-700/50 text-red-200",
-    warning: "bg-yellow-900/20 backdrop-blur-sm border-yellow-700/50 text-yellow-200",
-    info: "bg-blue-900/20 backdrop-blur-sm border-blue-700/50 text-blue-200",
+    success:
+      "bg-yellow-900/20 backdrop-blur-sm border-yellow-700/50 text-yellow-200",
+    error:
+      "bg-yellow-900/20 backdrop-blur-sm border-yellow-700/50 text-yellow-200",
+    warning:
+      "bg-yellow-900/20 backdrop-blur-sm border-yellow-700/50 text-yellow-200",
+    info: "bg-yellow-900/20 backdrop-blur-sm border-yellow-700/50 text-yellow-200",
   };
 
   const iconColors = {
-    success: "text-green-400",
-    error: "text-red-400",
+    success: "text-yellow-400",
+    error: "text-yellow-400",
     warning: "text-yellow-400",
-    info: "text-blue-400",
+    info: "text-yellow-400",
   };
 
   const Icon = icons[toast.type];

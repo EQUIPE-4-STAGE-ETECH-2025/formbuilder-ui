@@ -59,20 +59,14 @@ const DraggableField = ({
   onRemove,
   disabled = false,
 }: IDraggableFieldProps & { disabled?: boolean }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: field.id, disabled });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useSortable({ id: field.id, disabled });
 
   const style = {
     transform: transform
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
       : undefined,
-    transition: isDragging ? "none" : transition,
+    transition: "none",
   } as React.CSSProperties;
 
   return (
@@ -98,7 +92,7 @@ const DraggableField = ({
             <div
               {...attributes}
               {...listeners}
-              className="flex-shrink-0 mt-2 p-2 cursor-grab active:cursor-grabbing hover:bg-surface-700/50 rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
+              className="flex-shrink-0 mt-2 p-2 cursor-grab active:cursor-grabbing hover:bg-surface-700 rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
               tabIndex={0}
               role="button"
               aria-label="Déplacer ce champ"
@@ -136,7 +130,15 @@ const DraggableField = ({
                       })
                     }
                     disabled={disabled}
-                    className="disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-4 h-4 border border-surface-700/50 rounded bg-surface-900 text-accent-500 focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200 checked:bg-accent-500 checked:border-accent-500 [&:checked]:bg-accent-500 [&:checked]:border-accent-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      backgroundImage: field.is_required
+                        ? "url(\"data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M11.207 5.793a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 8.586l3.293-3.293a1 1 0 011.414 0z'/%3e%3c/svg%3e\")"
+                        : "none",
+                      backgroundSize: "12px",
+                      backgroundPosition: "center",
+                      backgroundRepeat: "no-repeat",
+                    }}
                   />
                   <span className="ml-2 text-sm text-surface-300">
                     Champ obligatoire
@@ -164,7 +166,7 @@ const DraggableField = ({
                       })
                     }
                     placeholder="Option 1&#10;Option 2&#10;Option 3"
-                    className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     rows={3}
                     disabled={disabled}
                   />
@@ -176,7 +178,7 @@ const DraggableField = ({
             <button
               onClick={() => onRemove(field.id)}
               disabled={disabled}
-              className="flex-shrink-0 p-2 text-red-400 hover:bg-red-900/20 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-shrink-0 p-2 text-yellow-400 hover:bg-yellow-900/20 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -257,7 +259,7 @@ export function FormBuilder() {
         fields: [],
         settings: {
           theme: {
-            primary_color: "#0ea5e9",
+            primary_color: "#FACC15",
             background_color: "#020617",
             text_color: "#ffffff",
           },
@@ -420,16 +422,13 @@ export function FormBuilder() {
     if (active.id === over.id) return;
 
     try {
-      const sortedFields = [...form.fields].sort((a, b) => a.order - b.order);
-
-      const oldIndex = sortedFields.findIndex(
-        (field) => field.id === active.id
-      );
-      const newIndex = sortedFields.findIndex((field) => field.id === over.id);
+      // Utiliser directement l'index dans le tableau form.fields
+      const oldIndex = form.fields.findIndex((field) => field.id === active.id);
+      const newIndex = form.fields.findIndex((field) => field.id === over.id);
 
       if (oldIndex === -1 || newIndex === -1) return;
 
-      const reorderedFields = arrayMove(sortedFields, oldIndex, newIndex);
+      const reorderedFields = arrayMove(form.fields, oldIndex, newIndex);
 
       // Mettre à jour les propriétés order et position
       const updatedFields = reorderedFields.map((field, index) => ({
@@ -489,14 +488,14 @@ export function FormBuilder() {
               <label className="block text-sm font-medium text-text-100 mb-2">
                 {field.label}
                 {field.is_required && (
-                  <span className="text-red-400 ml-1">*</span>
+                  <span className="text-yellow-400 ml-1">*</span>
                 )}
               </label>
               {field.type === "text" && (
                 <input
                   type="text"
                   placeholder={field.placeholder}
-                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                   disabled
                 />
               )}
@@ -504,7 +503,7 @@ export function FormBuilder() {
                 <input
                   type="email"
                   placeholder={field.placeholder}
-                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                   disabled
                 />
               )}
@@ -512,14 +511,14 @@ export function FormBuilder() {
                 <input
                   type="number"
                   placeholder={field.placeholder}
-                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                   disabled
                 />
               )}
               {field.type === "date" && (
                 <input
                   type="date"
-                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                   disabled
                 />
               )}
@@ -527,7 +526,7 @@ export function FormBuilder() {
                 <textarea
                   placeholder={field.placeholder}
                   rows={3}
-                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                   disabled
                 />
               )}
@@ -548,7 +547,18 @@ export function FormBuilder() {
               )}
               {field.type === "checkbox" && (
                 <label className="flex items-center">
-                  <input type="checkbox" disabled />
+                  <input
+                    type="checkbox"
+                    disabled
+                    className="w-4 h-4 border border-surface-700/50 rounded bg-surface-900 text-accent-500 focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200 checked:bg-accent-500 checked:border-accent-500 [&:checked]:bg-accent-500 [&:checked]:border-accent-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      backgroundImage:
+                        "url(\"data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M11.207 5.793a1 1 0 010 1.414l-4 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l3.293-3.293a1 1 0 011.414 0z'/%3e%3c/svg%3e\")",
+                      backgroundSize: "12px",
+                      backgroundPosition: "center",
+                      backgroundRepeat: "no-repeat",
+                    }}
+                  />
                   <span className="ml-2 text-sm text-surface-300">
                     {field.label}
                   </span>
@@ -607,7 +617,7 @@ export function FormBuilder() {
                   type="text"
                   value={publishUrl}
                   readOnly
-                  className="flex-1 px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-sm font-mono text-surface-400"
+                  className="flex-1 px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-sm font-mono text-surface-400"
                 />
                 <Button
                   variant="secondary"
@@ -632,7 +642,7 @@ export function FormBuilder() {
                 <textarea
                   value={iframeSnippet}
                   readOnly
-                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-sm font-mono text-text-100"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-sm font-mono text-text-100"
                   rows={3}
                 />
                 <Button
@@ -784,7 +794,7 @@ export function FormBuilder() {
             Sauvegarder
           </Button>
           {form.id !== "new" && (
-            <Button variant="danger" onClick={handleDelete} loading={saving}>
+            <Button variant="accent" onClick={handleDelete} loading={saving}>
               <Trash2 className="h-4 w-4 mr-2" />
               Supprimer
             </Button>
@@ -819,7 +829,7 @@ export function FormBuilder() {
                 type="text"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="block w-full px-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                className="block w-full px-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                 placeholder="Ex: Formulaire de contact, Sondage client..."
               />
             </div>
@@ -837,7 +847,7 @@ export function FormBuilder() {
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
                 }
-                className="block w-full px-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                className="block w-full px-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                 placeholder="Ex: Collectez les informations de vos visiteurs..."
               />
             </div>
@@ -846,14 +856,14 @@ export function FormBuilder() {
       </Card>
 
       {/* Tabs Navigation */}
-      <div className="bg-surface-900/50 backdrop-blur-sm border border-surface-700/50 rounded-2xl p-3 mb-6">
+      <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-3 mb-6">
         <nav className="flex flex-wrap gap-2">
           <button
             onClick={() => setActiveTab("build")}
             className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ease-out ${
               activeTab === "build"
                 ? "bg-accent-500/10 text-accent-400 shadow-md shadow-accent-500/10 border border-accent-500/20"
-                : "text-surface-400 hover:text-surface-300 hover:bg-surface-800/50 border border-transparent"
+                : "text-surface-400 hover:text-surface-300 hover:bg-surface-800 border border-transparent"
             }`}
           >
             <Wrench className="h-4 w-4" />
@@ -864,7 +874,7 @@ export function FormBuilder() {
             className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ease-out ${
               activeTab === "preview"
                 ? "bg-accent-500/10 text-accent-400 shadow-md shadow-accent-500/10 border border-accent-500/20"
-                : "text-surface-400 hover:text-surface-300 hover:bg-surface-800/50 border border-transparent"
+                : "text-surface-400 hover:text-surface-300 hover:bg-surface-800 border border-transparent"
             }`}
           >
             <Eye className="h-4 w-4" />
@@ -876,7 +886,7 @@ export function FormBuilder() {
               className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ease-out ${
                 activeTab === "embed"
                   ? "bg-accent-500/10 text-accent-400 shadow-md shadow-accent-500/10 border border-accent-500/20"
-                  : "text-surface-400 hover:text-surface-300 hover:bg-surface-800/50 border border-transparent"
+                  : "text-surface-400 hover:text-surface-300 hover:bg-surface-800 border border-transparent"
               }`}
             >
               <ExternalLink className="h-4 w-4" />
@@ -889,7 +899,7 @@ export function FormBuilder() {
               className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ease-out ${
                 activeTab === "history"
                   ? "bg-accent-500/10 text-accent-400 shadow-md shadow-accent-500/10 border border-accent-500/20"
-                  : "text-surface-400 hover:text-surface-300 hover:bg-surface-800/50 border border-transparent"
+                  : "text-surface-400 hover:text-surface-300 hover:bg-surface-800 border border-transparent"
               }`}
             >
               <Clock className="h-4 w-4" />
@@ -932,7 +942,7 @@ export function FormBuilder() {
                     key={fieldType.type}
                     onClick={() => addField(fieldType.type)}
                     disabled={saving}
-                    className="w-full flex items-center gap-3 p-3 text-left text-surface-300 hover:bg-surface-800/50 hover:backdrop-blur-sm rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center gap-3 p-3 text-left text-surface-300 hover:bg-surface-800 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Icon className="h-4 w-4" />
                     <span className="text-sm">{fieldType.label}</span>

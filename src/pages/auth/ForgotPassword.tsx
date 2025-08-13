@@ -51,7 +51,7 @@ export function ForgotPassword() {
         <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-md w-full space-y-8">
             <div className="text-center">
-              <div className="mx-auto w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center">
+              <div className="mx-auto w-16 h-16 bg-yellow-600 rounded-2xl flex items-center justify-center">
                 <Mail className="h-8 w-8 text-white" />
               </div>
               <h2 className="mt-6 text-3xl font-bold text-text-100">
@@ -65,7 +65,7 @@ export function ForgotPassword() {
               </p>
             </div>
 
-            <div className="bg-surface-900/50 backdrop-blur-sm border border-surface-700/50 rounded-2xl p-8">
+            <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-8">
               <div className="text-center space-y-4">
                 <p className="text-surface-400">
                   Cliquez sur le lien dans l'email pour créer un nouveau mot de
@@ -103,7 +103,7 @@ export function ForgotPassword() {
             </p>
           </div>
 
-          <div className="bg-surface-900/50 backdrop-blur-sm border border-surface-700/50 rounded-2xl p-8">
+          <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-8">
             <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <div>
                 <label
@@ -125,12 +125,12 @@ export function ForgotPassword() {
                       },
                     })}
                     type="email"
-                    className="block w-full pl-10 pr-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900/50 backdrop-blur-sm text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                    className="block w-full pl-10 pr-3 py-3 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
                     placeholder="votre@email.com"
                   />
                 </div>
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-400">
+                  <p className="mt-1 text-sm text-yellow-400">
                     {errors.email.message}
                   </p>
                 )}

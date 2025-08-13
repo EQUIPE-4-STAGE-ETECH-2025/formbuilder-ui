@@ -199,6 +199,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
+                      <GitBranch className="h-5 w-5 text-accent-400" />
                       <h3 className="text-lg font-semibold text-text-100">
                         Version numéro {version.version_number}
                       </h3>
@@ -252,7 +253,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
                         <Button
                           variant="secondary"
                           size="md"
-                          className="shadow-none hover:shadow-none text-red-400 hover:text-red-300"
+                          className="shadow-none hover:shadow-none text-yellow-400 hover:text-yellow-300"
                           onClick={() => handleDeleteVersion(version)}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
@@ -273,6 +274,12 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
         isOpen={showVersionModal}
         onClose={() => setShowVersionModal(false)}
         size="lg"
+        title={
+          <div className="flex items-center gap-2">
+            <GitBranch className="h-5 w-5 text-accent-400" />
+            <span>Version numéro {selectedVersion?.version_number}</span>
+          </div>
+        }
       >
         {selectedVersion && (
           <div className="space-y-4">
@@ -311,7 +318,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
             {selectedVersion.schema.description && (
               <div>
                 <h4 className="font-medium mb-2 text-text-100">Description</h4>
-                <p className="text-sm text-surface-300 bg-surface-800/50 backdrop-blur-sm p-3 rounded-xl">
+                <p className="text-sm text-surface-300 bg-surface-800 p-3 rounded-xl">
                   {selectedVersion.schema.description}
                 </p>
               </div>
@@ -323,15 +330,15 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
                 {selectedVersion.schema.fields.map((field) => (
                   <div
                     key={field.id}
-                    className="flex items-center justify-between p-2 bg-surface-800/50 backdrop-blur-sm rounded-lg"
+                    className="flex items-center justify-between p-2 bg-surface-800 rounded-lg"
                   >
                     <div className="flex items-center gap-2">
-                      <FileText className="w-3 h-3 text-surface-400" />
+                      <FileText className="w-3 h-3 text-accent-400" />
                       <span className="text-sm font-medium text-text-100">
                         {field.label}
                       </span>
                       {field.is_required && (
-                        <span className="text-red-400 text-xs">*</span>
+                        <span className="text-yellow-400 text-xs">*</span>
                       )}
                     </div>
                     <span className="text-xs text-surface-500 capitalize">
