@@ -40,19 +40,6 @@ export function FormsList() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "published":
-        return "border-yellow-500 text-yellow-500 bg-yellow-500/10";
-      case "draft":
-        return "border-yellow-500 text-yellow-500 bg-yellow-500/10";
-      case "disabled":
-        return "border-yellow-500 text-yellow-500 bg-yellow-500/10";
-      default:
-        return "border-yellow-500 text-yellow-500 bg-yellow-500/10";
-    }
-  };
-
   const getStatusText = (status: string) => {
     switch (status) {
       case "published":
@@ -245,10 +232,7 @@ export function FormsList() {
       ) : (
         <div className="space-y-4">
           {paginatedForms.map((form) => (
-            <Card
-              key={form.id}
-              className="hover:border-accent-500/30 transition-all duration-200"
-            >
+            <Card key={form.id} className="transition-all duration-200">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
@@ -257,16 +241,16 @@ export function FormsList() {
                       <h3 className="text-lg font-semibold text-text-100">
                         {form.title}
                       </h3>
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusBadge(
-                          form.status
-                        )}`}
-                      >
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-accent-500/20 text-accent-400 border border-accent-500/30">
                         {getStatusText(form.status)}
                       </span>
                     </div>
                     <p className="text-surface-400 mb-4">{form.description}</p>
                     <div className="flex items-center gap-6 text-sm text-surface-500">
+                      <span className="flex items-center gap-1">
+                        {form.submissionCount || 0} Soumission
+                        {(form.submissionCount || 0) > 1 ? "s" : ""}
+                      </span>
                       <span>
                         Modifié{" "}
                         {formatDistanceToNow(new Date(form.updated_at), {

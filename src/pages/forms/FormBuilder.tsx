@@ -165,7 +165,7 @@ const DraggableField = ({
                         },
                       })
                     }
-                    placeholder="Option 1&#10;Option 2&#10;Option 3"
+                    placeholder={`Option 1\nOption 2\nOption 3`}
                     className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     rows={3}
                     disabled={disabled}
@@ -448,7 +448,11 @@ export function FormBuilder() {
 
   const getPublishUrl = () => {
     if (!form || form.id === "new") return "";
-    return `${window.location.origin}/embed/${form.id}?token=jwt_token_here`;
+    // Générer un token mockée pour le développement
+    const mockToken = btoa(
+      JSON.stringify({ formId: form.id, exp: Date.now() + 86400000 })
+    );
+    return `${window.location.origin}/embed/${form.id}?token=${mockToken}`;
   };
 
   const getIframeSnippet = () => {
@@ -642,7 +646,7 @@ export function FormBuilder() {
                 <textarea
                   value={iframeSnippet}
                   readOnly
-                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-sm font-mono text-text-100"
+                  className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-sm font-mono text-surface-400"
                   rows={3}
                 />
                 <Button

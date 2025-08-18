@@ -76,34 +76,17 @@ const ToastItem = ({ toast, onRemove }: ToastItemProps) => {
     info: Info,
   };
 
-  const colors = {
-    success:
-      "bg-yellow-900/20 backdrop-blur-sm border-yellow-700/50 text-yellow-200",
-    error:
-      "bg-yellow-900/20 backdrop-blur-sm border-yellow-700/50 text-yellow-200",
-    warning:
-      "bg-yellow-900/20 backdrop-blur-sm border-yellow-700/50 text-yellow-200",
-    info: "bg-yellow-900/20 backdrop-blur-sm border-yellow-700/50 text-yellow-200",
-  };
-
-  const iconColors = {
-    success: "text-yellow-400",
-    error: "text-yellow-400",
-    warning: "text-yellow-400",
-    info: "text-yellow-400",
-  };
-
   const Icon = icons[toast.type];
 
   return (
     <div
       className={clsx(
         "flex items-start gap-3 rounded-lg border p-4 shadow-lg transition-all duration-300 max-w-md backdrop-blur-md",
-        colors[toast.type],
+        "bg-yellow-500/20 backdrop-blur-sm border-yellow-500/50 text-yellow-100",
         isVisible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
       )}
     >
-      <Icon className={clsx("h-5 w-5 mt-0.5", iconColors[toast.type])} />
+      <Icon className={clsx("h-5 w-5 mt-0.5", "text-yellow-500")} />
       <div className="flex-1">
         <h4 className="font-medium">{toast.title}</h4>
         {toast.message && (

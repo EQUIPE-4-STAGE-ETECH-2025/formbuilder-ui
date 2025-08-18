@@ -24,7 +24,11 @@ export function Header() {
 
   const navigation = [
     ...(user?.role === "ADMIN"
-      ? [{ name: "Administration", href: "/admin" }]
+      ? [
+          { name: "Dashboard", href: "/admin" },
+          { name: "Utilisateurs", href: "/admin/users" },
+          { name: "Journal d'audit", href: "/admin/audit-log" },
+        ]
       : [
           { name: "Dashboard", href: "/dashboard" },
           { name: "Formulaires", href: "/forms" },
@@ -84,6 +88,7 @@ export function Header() {
                 }}
                 className="flex items-center space-x-2 px-3 py-2 text-surface-400 hover:text-text-100 hover:bg-surface-800 rounded-xl transition-all duration-200 focus-ring"
               >
+                <span className="fi fi-fr w-5 h-4"></span>
                 <span className="text-sm font-medium">Français</span>
                 <ChevronDown
                   className={`h-4 w-4 transition-transform duration-200 ${
@@ -102,7 +107,7 @@ export function Header() {
                       }}
                       className="flex items-center w-full px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 rounded-lg transition-colors duration-200"
                     >
-                      <span className="font-bold text-xs mr-2">FR</span>
+                      <span className="fi fi-fr w-5 h-4 mr-2"></span>
                       <span>Français</span>
                     </button>
                     <button
@@ -112,7 +117,7 @@ export function Header() {
                       }}
                       className="flex items-center w-full px-3 py-2 text-sm text-surface-300 hover:bg-surface-800 rounded-lg transition-colors duration-200"
                     >
-                      <span className="font-bold text-xs mr-2">US</span>
+                      <span className="fi fi-us w-5 h-4 mr-2"></span>
                       <span>English</span>
                     </button>
                   </div>

@@ -114,7 +114,59 @@ const mockForms: IForm[] = [
     updated_at: "2024-07-10T15:30:00Z",
     submissionCount: 2,
     version: 2,
-    fields: [],
+    fields: [
+      {
+        id: "field-1",
+        form_version_id: "version-2",
+        label: "Nom complet",
+        type: "text",
+        is_required: true,
+        placeholder: "Votre nom",
+        options: {
+          placeholder: "Votre nom",
+        },
+        position: 1,
+        order: 1,
+        validation_rules: {
+          required: true,
+          min_length: 2,
+        },
+      },
+      {
+        id: "field-2",
+        form_version_id: "version-2",
+        label: "Email",
+        type: "email",
+        is_required: true,
+        placeholder: "votre@email.com",
+        options: {
+          placeholder: "votre@email.com",
+        },
+        position: 2,
+        order: 2,
+        validation_rules: {
+          required: true,
+          pattern: "^[^@]+@[^@]+\\.[^@]+$",
+        },
+      },
+      {
+        id: "field-3",
+        form_version_id: "version-2",
+        label: "Message",
+        type: "textarea",
+        is_required: false,
+        placeholder: "Votre message",
+        options: {
+          placeholder: "Votre message",
+        },
+        position: 3,
+        order: 3,
+        validation_rules: {
+          required: false,
+          max_length: 1000,
+        },
+      },
+    ],
     history: {
       versions: [
         {
@@ -125,7 +177,42 @@ const mockForms: IForm[] = [
             title: "Contact Lead Generation",
             description: "Formulaire de contact pour prospects",
             status: "draft",
-            fields: [],
+            fields: [
+              {
+                id: "field-1",
+                form_version_id: "version-1",
+                label: "Nom complet",
+                type: "text",
+                is_required: true,
+                placeholder: "Votre nom",
+                options: {
+                  placeholder: "Votre nom",
+                },
+                position: 1,
+                order: 1,
+                validation_rules: {
+                  required: true,
+                  min_length: 2,
+                },
+              },
+              {
+                id: "field-2",
+                form_version_id: "version-1",
+                label: "Email",
+                type: "email",
+                is_required: true,
+                placeholder: "votre@email.com",
+                options: {
+                  placeholder: "votre@email.com",
+                },
+                position: 2,
+                order: 2,
+                validation_rules: {
+                  required: true,
+                  pattern: "^[^@]+@[^@]+\\.[^@]+$",
+                },
+              },
+            ],
             settings: {
               theme: {
                 primary_color: "#3B82F6",
@@ -148,7 +235,59 @@ const mockForms: IForm[] = [
             title: "Contact Lead Generation",
             description: "Formulaire de contact pour prospects",
             status: "published",
-            fields: [],
+            fields: [
+              {
+                id: "field-1",
+                form_version_id: "version-2",
+                label: "Nom complet",
+                type: "text",
+                is_required: true,
+                placeholder: "Votre nom",
+                options: {
+                  placeholder: "Votre nom",
+                },
+                position: 1,
+                order: 1,
+                validation_rules: {
+                  required: true,
+                  min_length: 2,
+                },
+              },
+              {
+                id: "field-2",
+                form_version_id: "version-2",
+                label: "Email",
+                type: "email",
+                is_required: true,
+                placeholder: "votre@email.com",
+                options: {
+                  placeholder: "votre@email.com",
+                },
+                position: 2,
+                order: 2,
+                validation_rules: {
+                  required: true,
+                  pattern: "^[^@]+@[^@]+\\.[^@]+$",
+                },
+              },
+              {
+                id: "field-3",
+                form_version_id: "version-2",
+                label: "Message",
+                type: "textarea",
+                is_required: false,
+                placeholder: "Votre message",
+                options: {
+                  placeholder: "Votre message",
+                },
+                position: 3,
+                order: 3,
+                validation_rules: {
+                  required: false,
+                  max_length: 1000,
+                },
+              },
+            ],
             settings: {
               theme: {
                 primary_color: "#3B82F6",
@@ -190,7 +329,68 @@ const mockForms: IForm[] = [
     updated_at: "2024-07-12T09:15:00Z",
     submissionCount: 0,
     version: 1,
-    fields: [],
+    fields: [
+      {
+        id: "field-newsletter-1",
+        form_version_id: "version-3",
+        label: "Prénom",
+        type: "text",
+        is_required: true,
+        placeholder: "Votre prénom",
+        options: {
+          placeholder: "Votre prénom",
+        },
+        position: 1,
+        order: 1,
+        validation_rules: {
+          required: true,
+          min_length: 2,
+        },
+      },
+      {
+        id: "field-newsletter-2",
+        form_version_id: "version-3",
+        label: "Email",
+        type: "email",
+        is_required: true,
+        placeholder: "votre@email.com",
+        options: {
+          placeholder: "votre@email.com",
+        },
+        position: 2,
+        order: 2,
+        validation_rules: {
+          required: true,
+          pattern: "^[^@]+@[^@]+\\.[^@]+$",
+        },
+      },
+      {
+        id: "field-newsletter-3",
+        form_version_id: "version-3",
+        label: "Fréquence de réception",
+        type: "select",
+        is_required: false,
+        placeholder: "Choisissez une fréquence",
+        options: {
+          placeholder: "Choisissez une fréquence",
+          choices: ["Quotidienne", "Hebdomadaire", "Mensuelle"],
+        },
+        position: 3,
+        order: 3,
+        validation_rules: {},
+      },
+      {
+        id: "field-newsletter-4",
+        form_version_id: "version-3",
+        label: "J'accepte de recevoir des emails promotionnels",
+        type: "checkbox",
+        is_required: false,
+        options: {},
+        position: 4,
+        order: 4,
+        validation_rules: {},
+      },
+    ],
     history: {
       versions: [
         {
@@ -201,7 +401,68 @@ const mockForms: IForm[] = [
             title: "Inscription Newsletter",
             description: "Collecte d'emails pour la newsletter",
             status: "published",
-            fields: [],
+            fields: [
+              {
+                id: "field-newsletter-1",
+                form_version_id: "version-3",
+                label: "Prénom",
+                type: "text",
+                is_required: true,
+                placeholder: "Votre prénom",
+                options: {
+                  placeholder: "Votre prénom",
+                },
+                position: 1,
+                order: 1,
+                validation_rules: {
+                  required: true,
+                  min_length: 2,
+                },
+              },
+              {
+                id: "field-newsletter-2",
+                form_version_id: "version-3",
+                label: "Email",
+                type: "email",
+                is_required: true,
+                placeholder: "votre@email.com",
+                options: {
+                  placeholder: "votre@email.com",
+                },
+                position: 2,
+                order: 2,
+                validation_rules: {
+                  required: true,
+                  pattern: "^[^@]+@[^@]+\\.[^@]+$",
+                },
+              },
+              {
+                id: "field-newsletter-3",
+                form_version_id: "version-3",
+                label: "Fréquence de réception",
+                type: "select",
+                is_required: false,
+                placeholder: "Choisissez une fréquence",
+                options: {
+                  placeholder: "Choisissez une fréquence",
+                  choices: ["Quotidienne", "Hebdomadaire", "Mensuelle"],
+                },
+                position: 3,
+                order: 3,
+                validation_rules: {},
+              },
+              {
+                id: "field-newsletter-4",
+                form_version_id: "version-3",
+                label: "J'accepte de recevoir des emails promotionnels",
+                type: "checkbox",
+                is_required: false,
+                options: {},
+                position: 4,
+                order: 4,
+                validation_rules: {},
+              },
+            ],
             settings: {
               theme: {
                 primary_color: "#3B82F6",

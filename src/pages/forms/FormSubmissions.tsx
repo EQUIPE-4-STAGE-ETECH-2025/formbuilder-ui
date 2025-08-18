@@ -232,30 +232,35 @@ export function FormSubmissions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {submissions.map((submission) => (
-                    <tr key={submission.id}>
-                      <td className="py-4 px-6 text-sm text-surface-500">
-                        {formatDate(submission.submitted_at)}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-surface-500">
-                        {submission.ip_address}
-                      </td>
-                      {/* Cellules dynamiques pour les valeurs des champs */}
-                      {fieldKeys.map((fieldKey) => (
-                        <td
-                          key={fieldKey}
-                          className="py-4 px-6 text-sm text-surface-500"
-                        >
-                          <div
-                            className="max-w-xs truncate"
-                            title={getSubmissionValue(submission, fieldKey)}
-                          >
-                            {getSubmissionValue(submission, fieldKey)}
-                          </div>
+                  {submissions
+                    .slice(
+                      (currentPage - 1) * itemsPerPage,
+                      currentPage * itemsPerPage
+                    )
+                    .map((submission) => (
+                      <tr key={submission.id}>
+                        <td className="py-4 px-6 text-sm text-surface-500">
+                          {formatDate(submission.submitted_at)}
                         </td>
-                      ))}
-                    </tr>
-                  ))}
+                        <td className="py-4 px-6 text-sm text-surface-500">
+                          {submission.ip_address}
+                        </td>
+                        {/* Cellules dynamiques pour les valeurs des champs */}
+                        {fieldKeys.map((fieldKey) => (
+                          <td
+                            key={fieldKey}
+                            className="py-4 px-6 text-sm text-surface-500"
+                          >
+                            <div
+                              className="max-w-xs truncate"
+                              title={getSubmissionValue(submission, fieldKey)}
+                            >
+                              {getSubmissionValue(submission, fieldKey)}
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>

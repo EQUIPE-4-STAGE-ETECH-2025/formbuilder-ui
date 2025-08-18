@@ -33,9 +33,9 @@ const submissionsData = [
 ];
 
 const formsStatusData = [
-  { name: "Publiés", value: 8, color: "#eab308" }, // accent-500 (jaune principal)
-  { name: "Brouillons", value: 3, color: "#facc15" }, // accent-400 (jaune plus vif)
-  { name: "Désactivés", value: 1, color: "#fde047" }, // accent-300 (jaune le plus vif)
+  { name: "Publiés", value: 8 },
+  { name: "Brouillons", value: 3 },
+  { name: "Désactivés", value: 1 },
 ];
 
 const topFormsData = [
@@ -425,12 +425,12 @@ export function Dashboard() {
                       animationDuration={1200}
                       animationEasing="ease-out"
                     >
-                      {formsStatusData.map((entry, index) => (
+                      {formsStatusData.map((_, index) => (
                         <Cell
                           key={`cell-${index}`}
-                          fill={entry.color}
+                          fill="#eab308"
                           fillOpacity={0.5}
-                          stroke={entry.color}
+                          stroke="#eab308"
                           strokeWidth={2.5}
                           strokeOpacity={1}
                           onMouseEnter={(e) => {
@@ -450,8 +450,8 @@ export function Dashboard() {
                         borderRadius: "12px",
                         boxShadow: "0 8px 32px -8px rgba(0, 0, 0, 0.5)",
                         color: "#ffffff",
-                        fontSize: "12px",
-                        fontWeight: "400",
+                        fontSize: "13px",
+                        fontWeight: "500",
                         padding: "12px 16px",
                       }}
                       labelStyle={{
@@ -463,7 +463,7 @@ export function Dashboard() {
                         color: "#ffffff",
                       }}
                       formatter={(value, name) => [
-                        <span className="text-surface-400">
+                        <span className="text-accent-500">
                           {name} : {value}
                         </span>,
                         null,
@@ -474,20 +474,25 @@ export function Dashboard() {
               </div>
               {/* Legend */}
               <div className="ml-2 flex flex-col gap-3">
-                {formsStatusData.map((entry, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center space-x-2 p-2 bg-surface-800 border border-surface-700/50 rounded-lg hover:bg-surface-700 transition-all duration-200"
-                  >
+                {formsStatusData.map((entry, index) => {
+                  const total = formsStatusData.reduce(
+                    (sum, item) => sum + item.value,
+                    0
+                  );
+                  const percentage = Math.round((entry.value / total) * 100);
+
+                  return (
                     <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: entry.color }}
-                    ></div>
-                    <span className="text-xs text-surface-400">
-                      {entry.name}
-                    </span>
-                  </div>
-                ))}
+                      key={index}
+                      className="p-2 bg-surface-900 border border-surface-700/50 rounded-lg hover:bg-surface-700 transition-all duration-200"
+                    >
+                      <span className="text-xs text-surface-500">
+                        <span className="text-accent-400">{percentage}%</span>{" "}
+                        {entry.name}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </CardContent>

@@ -1,4 +1,4 @@
-import { Lock, Save, Trash2, User } from "lucide-react";
+import { Lock, Save, Settings, Trash2, User } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "../components/ui/Button";
@@ -59,10 +59,10 @@ const AdminProfile = () => {
   return (
     <div className="space-modern">
       <div>
-        <h1 className="text-2xl font-bold text-text-100">
+        <h1 className="text-3xl font-bold text-text-100">
           Profil Administrateur
         </h1>
-        <p className="text-surface-400">
+        <p className="text-surface-400 mt-2">
           Gérez vos informations d'administrateur système
         </p>
       </div>
@@ -76,9 +76,12 @@ const AdminProfile = () => {
             </h3>
           </div>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+        <CardContent className="flex flex-col h-full">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col h-full"
+          >
+            <div className="space-y-4 flex-1">
               <Input
                 label="Prénom"
                 {...register("firstName", {
@@ -93,28 +96,30 @@ const AdminProfile = () => {
                 })}
                 error={errors.lastName?.message}
               />
+              <Input
+                label="Email administrateur"
+                type="email"
+                {...register("email", {
+                  required: "L'email est requis",
+                  pattern: {
+                    value: /\S+@\S+\.\S+/,
+                    message: "Email invalide",
+                  },
+                })}
+                error={errors.email?.message}
+              />
             </div>
-            <Input
-              label="Email administrateur"
-              type="email"
-              {...register("email", {
-                required: "L'email est requis",
-                pattern: {
-                  value: /\S+@\S+\.\S+/,
-                  message: "Email invalide",
-                },
-              })}
-              error={errors.email?.message}
-            />
-            <Button
-              type="submit"
-              loading={loading}
-              className="w-full"
-              variant="accent"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Sauvegarder les modifications
-            </Button>
+            <div className="mt-6">
+              <Button
+                type="submit"
+                loading={loading}
+                className="w-full"
+                variant="accent"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Sauvegarder les modifications
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -223,15 +228,15 @@ export function Profile() {
     <div className="space-modern">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-text-100">Profil</h1>
-        <p className="text-surface-400">
+        <h1 className="text-3xl font-bold text-text-100">Profil utilisateur</h1>
+        <p className="text-surface-400 mt-2">
           Gérez vos informations personnelles et paramètres de sécurité
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-stretch">
         {/* Profile Information */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <div className="flex items-center gap-3">
               <User className="h-5 w-5 text-accent-500" />
@@ -240,12 +245,12 @@ export function Profile() {
               </h3>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col h-full">
             <form
               onSubmit={handleProfileSubmit(onProfileSubmit)}
-              className="space-y-4"
+              className="flex flex-col h-full"
             >
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4 flex-1">
                 <Input
                   label="Prénom"
                   {...registerProfile("firstName", {
@@ -260,34 +265,36 @@ export function Profile() {
                   })}
                   error={profileErrors.lastName?.message}
                 />
+                <Input
+                  label="Email"
+                  type="email"
+                  {...registerProfile("email", {
+                    required: "L'email est requis",
+                    pattern: {
+                      value: /\S+@\S+\.\S+/,
+                      message: "Email invalide",
+                    },
+                  })}
+                  error={profileErrors.email?.message}
+                />
               </div>
-              <Input
-                label="Email"
-                type="email"
-                {...registerProfile("email", {
-                  required: "L'email est requis",
-                  pattern: {
-                    value: /\S+@\S+\.\S+/,
-                    message: "Email invalide",
-                  },
-                })}
-                error={profileErrors.email?.message}
-              />
-              <Button
-                type="submit"
-                loading={loading}
-                className="w-full"
-                variant="accent"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Sauvegarder les modifications
-              </Button>
+              <div className="mt-6">
+                <Button
+                  type="submit"
+                  loading={loading}
+                  className="w-full"
+                  variant="accent"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Sauvegarder les modifications
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
 
         {/* Password Change */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <div className="flex items-center gap-3">
               <Lock className="h-5 w-5 text-accent-500" />
@@ -296,74 +303,78 @@ export function Profile() {
               </h3>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col h-full">
             <form
               onSubmit={handlePasswordSubmit(onPasswordSubmit)}
-              className="space-y-4"
+              className="flex flex-col h-full"
             >
-              <Input
-                label="Mot de passe actuel"
-                type="password"
-                {...registerPassword("currentPassword", {
-                  required: "Le mot de passe actuel est requis",
-                })}
-                error={passwordErrors.currentPassword?.message}
-              />
-              <Input
-                label="Nouveau mot de passe"
-                type="password"
-                {...registerPassword("newPassword", {
-                  required: "Le nouveau mot de passe est requis",
-                  minLength: {
-                    value: 8,
-                    message:
-                      "Le mot de passe doit contenir au moins 8 caractères",
-                  },
-                })}
-                error={passwordErrors.newPassword?.message}
-              />
-              <Input
-                label="Confirmer le nouveau mot de passe"
-                type="password"
-                {...registerPassword("confirmPassword", {
-                  required: "La confirmation du mot de passe est requise",
-                  validate: (value) =>
-                    value === newPassword ||
-                    "Les mots de passe ne correspondent pas",
-                })}
-                error={passwordErrors.confirmPassword?.message}
-              />
-              <Button
-                type="submit"
-                loading={passwordLoading}
-                className="w-full"
-                variant="accent"
-              >
-                <Lock className="h-4 w-4 mr-2" />
-                Changer le mot de passe
-              </Button>
+              <div className="space-y-4 flex-1">
+                <Input
+                  label="Mot de passe actuel"
+                  type="password"
+                  {...registerPassword("currentPassword", {
+                    required: "Le mot de passe actuel est requis",
+                  })}
+                  error={passwordErrors.currentPassword?.message}
+                />
+                <Input
+                  label="Nouveau mot de passe"
+                  type="password"
+                  {...registerPassword("newPassword", {
+                    required: "Le nouveau mot de passe est requis",
+                    minLength: {
+                      value: 8,
+                      message:
+                        "Le mot de passe doit contenir au moins 8 caractères",
+                    },
+                  })}
+                  error={passwordErrors.newPassword?.message}
+                />
+                <Input
+                  label="Confirmer le nouveau mot de passe"
+                  type="password"
+                  {...registerPassword("confirmPassword", {
+                    required: "La confirmation du mot de passe est requise",
+                    validate: (value) =>
+                      value === newPassword ||
+                      "Les mots de passe ne correspondent pas",
+                  })}
+                  error={passwordErrors.confirmPassword?.message}
+                />
+              </div>
+              <div className="mt-6">
+                <Button
+                  type="submit"
+                  loading={passwordLoading}
+                  className="w-full"
+                  variant="accent"
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  Changer le mot de passe
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
       </div>
 
-      {/* Danger Zone */}
+      {/* Account Settings */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <Trash2 className="h-5 w-5 text-yellow-500" />
+            <Settings className="h-5 w-5 text-accent-500" />
             <h3 className="text-lg font-semibold text-text-100">
-              Zone dangereuse
+              Paramètres de compte
             </h3>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
-              <h4 className="text-sm font-medium text-text-100 mb-2">
+              <h4 className="text-base font-medium text-text-100 mb-2">
                 Supprimer le compte
               </h4>
-              <p className="text-sm text-surface-400 mb-4">
+              <p className="text-base text-surface-400 mb-4">
                 Cette action est irréversible. Toutes vos données seront
                 définitivement supprimées.
               </p>

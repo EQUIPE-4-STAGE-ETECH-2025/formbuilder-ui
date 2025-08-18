@@ -1,14 +1,14 @@
 import { clsx } from "clsx";
 import { forwardRef } from "react";
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface IProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "accent" | "outline" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
   children: React.ReactNode;
 }
 
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+const Button = forwardRef<HTMLButtonElement, IProps>(
   (
     {
       className,
@@ -30,13 +30,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       secondary:
         "border border-surface-600/50 bg-surface-800 text-surface-200 hover:bg-surface-700 hover:backdrop-blur-sm focus:ring-surface-600",
       accent:
-        "border border-[#FACC15] bg-[#FACC15] text-black hover:bg-[#eab308] focus:ring-[#FACC15]",
+        "border border-accent-500 bg-accent-500 text-black hover:bg-accent-600 focus:ring-accent-500",
       outline:
         "border border-surface-700/50 bg-surface-800 text-surface-300 hover:bg-surface-700 hover:backdrop-blur-sm focus:ring-surface-700",
       ghost:
         "text-surface-400 hover:bg-surface-800/30 hover:backdrop-blur-sm focus:ring-surface-800",
       danger:
-        "border border-yellow-600 bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-600",
+        "border border-red-600 bg-red-600 text-white hover:bg-red-700 focus:ring-red-600",
     };
 
     const sizes = {

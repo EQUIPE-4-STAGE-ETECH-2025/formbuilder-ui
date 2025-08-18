@@ -56,7 +56,7 @@ export function Pagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-6 py-5 border-t border-surface-700/50 bg-surface-900">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-6 py-5 border border-surface-700/50 bg-surface-900 rounded-2xl">
       {/* Items per page selector */}
       <div className="flex items-center gap-3 text-sm text-surface-400">
         <span className="font-medium">Afficher</span>
@@ -102,19 +102,18 @@ export function Pagination({
                 <MoreHorizontal className="h-4 w-4" />
               </span>
             ) : (
-              <Button
-                variant={currentPage === page ? "accent" : "ghost"}
-                size="sm"
+              <button
+                type="button"
                 onClick={() => onPageChange(page as number)}
                 className={clsx(
-                  "px-3 py-2 min-w-[40px] font-medium transition-all duration-200",
+                  "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-0 select-none rounded-xl active:scale-[0.98] px-3 py-2 min-w-[40px] text-sm",
                   currentPage === page
-                    ? "bg-accent-600 text-white hover:bg-accent-700"
+                    ? "bg-accent-500 text-white hover:bg-accent-500"
                     : "text-surface-300 hover:bg-surface-800 hover:text-text-100"
                 )}
               >
                 {page}
-              </Button>
+              </button>
             )}
           </div>
         ))}

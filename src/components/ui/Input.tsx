@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
-  helper?: string;
+  helper?: React.ReactNode;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -38,7 +38,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           </p>
         )}
         {helper && !error && (
-          <p className="text-sm text-surface-500">{helper}</p>
+          <div className="text-sm text-surface-500">{helper}</div>
         )}
       </div>
     );

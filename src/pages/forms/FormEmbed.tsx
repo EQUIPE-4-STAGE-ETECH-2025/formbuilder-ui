@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
+import { Dropdown } from "../../components/ui/Dropdown";
 import { formsAPI } from "../../services/api.mock";
 import { IForm, IFormField } from "../../types";
 
@@ -14,6 +15,10 @@ export function FormEmbed() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<
+    Record<string, string | boolean | number>
+  >({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const token = searchParams.get("token");
 
@@ -72,22 +77,38 @@ export function FormEmbed() {
     return null;
   };
 
+  const handleFieldChange = (
+    fieldId: string,
+    value: string | boolean | number
+  ) => {
+    setFormData((prev) => ({ ...prev, [fieldId]: value }));
+    // Clear error when field is modified
+    if (fieldErrors[fieldId]) {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldId];
+        return newErrors;
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!form) return;
+
     // Validate all fields
     const errors: Record<string, string> = {};
-    // Note: IForm doesn't have schema property, so we'll use a mock structure
-    const mockFields: IFormField[] = [];
-    mockFields.forEach((field) => {
-      const error = validateField(field, "");
+    form.fields.forEach((field) => {
+      const value = formData[field.id];
+      const error = validateField(field, value);
       if (error) {
         errors[field.id] = error;
       }
     });
 
     if (Object.keys(errors).length > 0) {
-      // In a real app, we would set validation errors here
+      setFieldErrors(errors);
       return;
     }
 
@@ -95,6 +116,7 @@ export function FormEmbed() {
     try {
       // In real app, would submit to API
       await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Form submitted with data:", formData);
       setSubmitted(true);
     } catch {
       setError("Erreur lors de la soumission");
@@ -141,7 +163,8 @@ export function FormEmbed() {
               Merci !
             </h2>
             <p className="text-surface-400">
-              Votre formulaire a été soumis avec succès.
+              {form?.settings?.success_message ||
+                "Votre formulaire a été soumis avec succès."}
             </p>
           </div>
         </div>
@@ -169,12 +192,138 @@ export function FormEmbed() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Note: IForm doesn't have schema property, so we'll show a placeholder */}
-              <div className="text-center py-8">
-                <p className="text-surface-500">
-                  Formulaire en cours de chargement...
-                </p>
-              </div>
+              {form.fields.map((field) => (
+                <div key={field.id}>
+                  <label className="block text-sm font-medium text-text-100 mb-2">
+                    {field.label}
+                    {field.is_required && (
+                      <span className="text-yellow-400 ml-1">*</span>
+                    )}
+                  </label>
+
+                  {field.type === "text" && (
+                    <input
+                      type="text"
+                      value={(formData[field.id] as string) || ""}
+                      onChange={(e) =>
+                        handleFieldChange(field.id, e.target.value)
+                      }
+                      placeholder={field.placeholder}
+                      className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-100 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                    />
+                  )}
+
+                  {field.type === "email" && (
+                    <input
+                      type="email"
+                      value={(formData[field.id] as string) || ""}
+                      onChange={(e) =>
+                        handleFieldChange(field.id, e.target.value)
+                      }
+                      placeholder={field.placeholder}
+                      className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-100 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                    />
+                  )}
+
+                  {field.type === "number" && (
+                    <input
+                      type="number"
+                      value={(formData[field.id] as number) || ""}
+                      onChange={(e) =>
+                        handleFieldChange(field.id, e.target.value)
+                      }
+                      placeholder={field.placeholder}
+                      className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-100 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                    />
+                  )}
+
+                  {field.type === "date" && (
+                    <input
+                      type="date"
+                      value={(formData[field.id] as string) || ""}
+                      onChange={(e) =>
+                        handleFieldChange(field.id, e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-100 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                    />
+                  )}
+
+                  {field.type === "textarea" && (
+                    <textarea
+                      value={(formData[field.id] as string) || ""}
+                      onChange={(e) =>
+                        handleFieldChange(field.id, e.target.value)
+                      }
+                      placeholder={field.placeholder}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-100 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                    />
+                  )}
+
+                  {field.type === "select" && (
+                    <Dropdown
+                      value={(formData[field.id] as string) || ""}
+                      options={
+                        field.options?.choices?.map((choice: string) => ({
+                          value: choice,
+                          label: choice,
+                        })) || []
+                      }
+                      placeholder={
+                        field.placeholder || "Sélectionner une option"
+                      }
+                      onChange={(value) => handleFieldChange(field.id, value)}
+                      className="w-full"
+                    />
+                  )}
+
+                  {field.type === "checkbox" && (
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={(formData[field.id] as boolean) || false}
+                        onChange={(e) =>
+                          handleFieldChange(field.id, e.target.checked)
+                        }
+                        className="w-4 h-4 border border-surface-700/50 rounded bg-surface-900 text-accent-500 focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                      />
+                      <span className="ml-2 text-sm text-surface-300">
+                        {field.placeholder || field.label}
+                      </span>
+                    </label>
+                  )}
+
+                  {field.type === "radio" && (
+                    <div className="space-y-2">
+                      {field.options?.choices?.map(
+                        (option: string, index: number) => (
+                          <label key={index} className="flex items-center">
+                            <input
+                              type="radio"
+                              name={field.id}
+                              value={option}
+                              checked={formData[field.id] === option}
+                              onChange={(e) =>
+                                handleFieldChange(field.id, e.target.value)
+                              }
+                              className="w-4 h-4 border border-surface-700/50 bg-surface-900 text-accent-500 focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 focus:ring-offset-background-950"
+                            />
+                            <span className="ml-2 text-sm text-surface-300">
+                              {option}
+                            </span>
+                          </label>
+                        )
+                      )}
+                    </div>
+                  )}
+
+                  {fieldErrors[field.id] && (
+                    <p className="mt-1 text-sm text-red-400">
+                      {fieldErrors[field.id]}
+                    </p>
+                  )}
+                </div>
+              ))}
 
               <Button
                 type="submit"

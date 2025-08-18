@@ -189,7 +189,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
           {versions.map((version) => (
             <Card
               key={version.id}
-              className={`hover:border-accent-500/30 transition-all duration-200 ${
+              className={`transition-all duration-200 ${
                 version.version_number === currentVersion
                   ? "border-accent-500/30 bg-accent-900/10"
                   : ""
@@ -356,17 +356,25 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
       <Modal
         isOpen={showRestoreModal}
         onClose={() => setShowRestoreModal(false)}
-        title="Restaurer la version"
+        size="lg"
+        title={
+          <div className="flex items-center gap-2">
+            <RotateCcw className="h-5 w-5 text-accent-400" />
+            <span>Restaurer la version</span>
+          </div>
+        }
       >
         {selectedVersion && (
           <div className="space-y-4">
-            <p className="text-surface-300">
-              Êtes-vous sûr de vouloir restaurer la version{" "}
-              {selectedVersion.version_number} ? Cette action créera une
-              nouvelle version avec le contenu de la version sélectionnée.
-            </p>
+            <div>
+              <p className="text-base text-surface-300">
+                Êtes-vous sûr de vouloir restaurer la version numéro{" "}
+                {selectedVersion.version_number} ? Cette action créera une
+                nouvelle version avec le contenu de la version sélectionnée.
+              </p>
+            </div>
 
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end space-x-3 pt-4">
               <Button
                 variant="secondary"
                 onClick={() => setShowRestoreModal(false)}
@@ -389,16 +397,25 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        title="Supprimer la version"
+        size="lg"
+        title={
+          <div className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-accent-400" />
+            <span>Supprimer la version</span>
+          </div>
+        }
       >
         {selectedVersion && (
           <div className="space-y-4">
-            <p className="text-surface-300">
-              Êtes-vous sûr de vouloir supprimer la version{" "}
-              {selectedVersion.version_number} ? Cette action est irréversible.
-            </p>
+            <div>
+              <p className="text-base text-surface-300">
+                Êtes-vous sûr de vouloir supprimer la version numéro{" "}
+                {selectedVersion.version_number} ? Cette action est irréversible
+                et supprimera complètement cette version de l'historique.
+              </p>
+            </div>
 
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end space-x-3 pt-4">
               <Button
                 variant="secondary"
                 onClick={() => setShowDeleteModal(false)}
@@ -408,7 +425,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
               <Button
                 onClick={confirmDelete}
                 disabled={deleting}
-                variant="danger"
+                variant="accent"
               >
                 {deleting ? "Suppression..." : "Supprimer"}
               </Button>

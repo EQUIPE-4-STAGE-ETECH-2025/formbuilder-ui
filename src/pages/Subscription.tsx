@@ -1,8 +1,7 @@
-import { Check, Crown, Star, Zap } from "lucide-react";
+import { Check, ChevronDown, Crown, Star, Zap } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../components/ui/Card";
-import { Input } from "../components/ui/Input";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { plansAPI } from "../services/api.mock";
@@ -13,6 +12,7 @@ export function Subscription() {
   const { addToast } = useToast();
   const [plans, setPlans] = useState<IPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openFAQ, setOpenFAQ] = useState<string | null>(null);
 
   const fetchPlans = useCallback(async () => {
     try {
@@ -110,6 +110,10 @@ export function Subscription() {
     }
   };
 
+  const toggleFAQ = (faqId: string) => {
+    setOpenFAQ(openFAQ === faqId ? null : faqId);
+  };
+
   if (loading) {
     return (
       <div className="space-modern">
@@ -181,11 +185,11 @@ export function Subscription() {
               key={plan.id}
               className={`relative ${getPlanColor(plan.id)} ${
                 isPopular ? "shadow-large" : ""
-              }`}
+              } flex flex-col`}
             >
               {isPopular && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-accent-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+                  <span className="bg-accent-500 text-white px-4 py-1 rounded-full text-sm font-medium">
                     Populaire
                   </span>
                 </div>
@@ -204,8 +208,8 @@ export function Subscription() {
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-4">
-                <ul className="space-y-2">
+              <CardContent className="flex flex-col flex-1 space-y-8">
+                <ul className="space-y-2 flex-1">
                   {plan.features?.map((feature, index) => (
                     <li key={index} className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-yellow-500" />
@@ -217,7 +221,7 @@ export function Subscription() {
                 </ul>
 
                 <Button
-                  className="w-full"
+                  className="w-full mt-auto"
                   variant={getButtonVariant(plan.id, isCurrentPlan)}
                   onClick={() => handleSubscribe(plan.id)}
                   disabled={isCurrentPlan}
@@ -231,86 +235,82 @@ export function Subscription() {
       </div>
 
       {/* FAQ */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold text-text-100">
-            Questions fréquentes
-          </h3>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-medium text-text-100 mb-2">
-              Puis-je changer de plan à tout moment ?
-            </h4>
-            <p className="text-sm text-surface-400">
-              Oui, vous pouvez mettre à niveau ou rétrograder votre plan à tout
-              moment.
-            </p>
-          </div>
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-text-100 mt-20 mb-4">
+          Questions fréquentes
+        </h1>
+        <p className="text-lg text-surface-400 max-w-2xl mx-auto">
+          Tout ce que vous devez savoir sur nos produits et la facturation
+        </p>
+      </div>
 
-          <div>
-            <h4 className="font-medium text-text-100 mb-2">
-              Que se passe-t-il si je dépasse mes limites ?
-            </h4>
-            <p className="text-sm text-surface-400">
-              Vos formulaires continueront de fonctionner, mais vous recevrez
-              des notifications pour vous encourager à passer à un plan
-              supérieur.
-            </p>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-text-100 mb-2">
-              Y a-t-il des frais cachés ?
-            </h4>
-            <p className="text-sm text-surface-400">
-              Non, tous les prix sont affichés clairement. Aucun frais caché.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Contact Form */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold text-text-100">
-            Besoin d'aide ?
-          </h3>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-surface-400 mb-4">
-            Notre équipe est là pour vous aider à choisir le bon plan.
-          </p>
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              addToast({
-                type: "success",
-                title: "Message envoyé",
-                message: "Nous vous répondrons dans les plus brefs délais",
-              });
-            }}
+      <div className="space-y-4 max-w-3xl mx-auto">
+        {[
+          {
+            id: "change-plan",
+            question: "Puis-je changer de plan à tout moment ?",
+            answer:
+              "Oui, vous pouvez mettre à niveau ou rétrograder votre plan à tout moment. Les changements prennent effet immédiatement et sont proratisés.",
+          },
+          {
+            id: "limits",
+            question: "Que se passe-t-il si je dépasse mes limites ?",
+            answer:
+              "Vos formulaires continueront de fonctionner, mais vous recevrez des notifications pour vous encourager à passer à un plan supérieur.",
+          },
+          {
+            id: "hidden-fees",
+            question: "Y a-t-il des frais cachés ?",
+            answer:
+              "Non, tous les prix sont affichés clairement. Aucun frais caché.",
+          },
+          {
+            id: "form-creation",
+            question: "Combien de formulaires puis-je créer ?",
+            answer:
+              "Cela dépend de votre plan : 3 pour le gratuit, 20 pour le Premium, et illimité pour le Pro. Vous pouvez toujours mettre à niveau si vous avez besoin de plus.",
+          },
+          {
+            id: "submissions",
+            question: "Que se passe-t-il avec mes soumissions existantes ?",
+            answer:
+              "Toutes vos soumissions sont conservées lors du changement de plan. Vous gardez l'accès à toutes vos données existantes.",
+          },
+          {
+            id: "support",
+            question: "Quel type de support est inclus ?",
+            answer:
+              "Le plan gratuit inclut un support communautaire, tandis que les plans Premium et Pro bénéficient d'un support prioritaire par email et chat.",
+          },
+        ].map((faq) => (
+          <div
+            key={faq.id}
+            className="bg-surface-900 border border-surface-700/50 rounded-xl p-4 cursor-pointer hover:bg-surface-800/50 transition-all duration-200"
+            onClick={() => toggleFAQ(faq.id)}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input type="text" placeholder="Votre nom" className="w-full" />
-              <Input
-                type="email"
-                placeholder="Votre email"
-                className="w-full"
-              />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <ChevronDown
+                  className={`h-4 w-4 text-surface-400 transition-transform duration-200 ${
+                    openFAQ === faq.id ? "rotate-180" : ""
+                  }`}
+                />
+                <h4 className="font-medium text-text-100 text-left">
+                  {faq.question}
+                </h4>
+              </div>
             </div>
-            <textarea
-              placeholder="Votre message"
-              rows={4}
-              className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
-            />
-            <Button type="submit" className="w-full" variant="accent">
-              Envoyer le message
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+
+            {openFAQ === faq.id && (
+              <div className="mt-4 pl-7">
+                <p className="text-sm text-surface-400 text-left leading-relaxed">
+                  {faq.answer}
+                </p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

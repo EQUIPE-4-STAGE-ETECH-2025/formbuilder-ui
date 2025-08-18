@@ -14,6 +14,8 @@ import { useAuth } from "./hooks/useAuth";
 // Pages
 
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
+import { AuditLog } from "./pages/admin/AuditLog";
+import { UserManagement } from "./pages/admin/UserManagement";
 import { EmailVerification } from "./pages/auth/EmailVerification";
 import { ForgotPassword } from "./pages/auth/ForgotPassword";
 import { Login } from "./pages/auth/Login";
@@ -58,6 +60,22 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute adminOnly>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/audit-log"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <AuditLog />
                   </ProtectedRoute>
                 }
               />

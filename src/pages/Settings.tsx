@@ -1,8 +1,9 @@
-import { Bell, Key, Shield, Webhook } from "lucide-react";
+import { Bell, Key, RefreshCw, Save, Shield, Webhook } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
+import { Toggle } from "../components/ui/Toggle";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 
@@ -44,13 +45,13 @@ const AdminSettings = () => {
   return (
     <div className="space-modern">
       <div>
-        <h1 className="text-2xl font-bold text-text-100">Paramètres Système</h1>
-        <p className="text-surface-400">
+        <h1 className="text-3xl font-bold text-text-100">Paramètres Système</h1>
+        <p className="text-surface-400 mt-2">
           Configuration globale de la plateforme
         </p>
       </div>
 
-      <Card>
+      <Card className="flex flex-col">
         <CardHeader>
           <div className="flex items-center gap-3">
             <Shield className="h-5 w-5 text-accent-500" />
@@ -59,111 +60,69 @@ const AdminSettings = () => {
             </h3>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-text-100">Mode maintenance</p>
-              <p className="text-sm text-surface-400">
-                Désactiver l'accès utilisateur temporairement
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.maintenanceMode}
-                onChange={(e) =>
-                  handleSettingChange("maintenanceMode", e.target.checked)
-                }
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-surface-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-text-100">
-                Inscription utilisateur
-              </p>
-              <p className="text-sm text-surface-400">
-                Permettre aux nouveaux utilisateurs de s'inscrire
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.userRegistration}
-                onChange={(e) =>
-                  handleSettingChange("userRegistration", e.target.checked)
-                }
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-surface-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-text-100">Notifications email</p>
-              <p className="text-sm text-surface-400">
-                Envoyer des notifications par email
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.emailNotifications}
-                onChange={(e) =>
-                  handleSettingChange("emailNotifications", e.target.checked)
-                }
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-surface-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-text-100">Journal d'audit</p>
-              <p className="text-sm text-surface-400">
-                Enregistrer toutes les actions administrateur
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.auditLogging}
-                onChange={(e) =>
-                  handleSettingChange("auditLogging", e.target.checked)
-                }
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-surface-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-            </label>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-text-100 mb-2">
-              Rétention des données (jours)
-            </label>
-            <Input
-              type="number"
-              value={settings.dataRetention}
-              onChange={(e) =>
-                handleSettingChange("dataRetention", e.target.value)
+        <CardContent className="flex flex-col h-full">
+          <div className="space-y-4 flex-1">
+            <Toggle
+              label="Mode maintenance"
+              description="Désactiver l'accès utilisateur temporairement"
+              checked={settings.maintenanceMode}
+              onChange={(checked) =>
+                handleSettingChange("maintenanceMode", checked)
               }
-              className="w-32"
             />
-          </div>
 
-          <Button
-            onClick={handleSaveSettings}
-            loading={loading}
-            className="w-full"
-            variant="accent"
-          >
-            Sauvegarder les paramètres
-          </Button>
+            <Toggle
+              label="Inscription utilisateur"
+              description="Permettre aux nouveaux utilisateurs de s'inscrire"
+              checked={settings.userRegistration}
+              onChange={(checked) =>
+                handleSettingChange("userRegistration", checked)
+              }
+            />
+
+            <Toggle
+              label="Notifications email"
+              description="Envoyer des notifications par email"
+              checked={settings.emailNotifications}
+              onChange={(checked) =>
+                handleSettingChange("emailNotifications", checked)
+              }
+            />
+
+            <Toggle
+              label="Journal d'audit"
+              description="Enregistrer toutes les actions administrateur"
+              checked={settings.auditLogging}
+              onChange={(checked) =>
+                handleSettingChange("auditLogging", checked)
+              }
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-text-100 mb-2">
+                Rétention des données (jours)
+              </label>
+              <Input
+                type="number"
+                value={settings.dataRetention}
+                onChange={(e) =>
+                  handleSettingChange("dataRetention", e.target.value)
+                }
+                className="w-32"
+              />
+            </div>
+          </div>
+          <div className="mt-6">
+            <Button
+              onClick={handleSaveSettings}
+              loading={loading}
+              className="w-full"
+              variant="accent"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Sauvegarder les paramètres
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -181,6 +140,7 @@ export function Settings() {
     marketing: false,
   });
   const [apiKey, setApiKey] = useState("sk_test_1234567890abcdef");
+  const [webhookEnabled, setWebhookEnabled] = useState(false);
 
   // Show admin settings for admin users
   if (user?.role === "ADMIN") {
@@ -236,15 +196,17 @@ export function Settings() {
   return (
     <div className="space-modern">
       <div>
-        <h1 className="text-2xl font-bold text-text-100">Paramètres</h1>
-        <p className="text-surface-400">
+        <h1 className="text-3xl font-bold text-text-100">
+          Paramètres utilisateur
+        </h1>
+        <p className="text-surface-400 mt-2">
           Gérez vos préférences et paramètres de compte
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Notifications */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <div className="flex items-center gap-3">
               <Bell className="h-5 w-5 text-accent-500" />
@@ -253,124 +215,97 @@ export function Settings() {
               </h3>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-text-100">Notifications email</p>
-                <p className="text-sm text-surface-400">
-                  Recevoir des notifications par email
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notifications.email}
-                  onChange={(e) =>
-                    handleNotificationChange("email", e.target.checked)
-                  }
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-surface-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-              </label>
-            </div>
+          <CardContent className="flex flex-col h-full">
+            <div className="space-y-4 flex-1">
+              <Toggle
+                label="Notifications email"
+                description="Recevoir des notifications par email"
+                checked={notifications.email}
+                onChange={(checked) =>
+                  handleNotificationChange("email", checked)
+                }
+              />
 
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-text-100">
-                  Notifications navigateur
-                </p>
-                <p className="text-sm text-surface-400">
-                  Afficher les notifications dans le navigateur
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notifications.browser}
-                  onChange={(e) =>
-                    handleNotificationChange("browser", e.target.checked)
-                  }
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-surface-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-              </label>
-            </div>
+              <Toggle
+                label="Notifications navigateur"
+                description="Afficher les notifications dans le navigateur"
+                checked={notifications.browser}
+                onChange={(checked) =>
+                  handleNotificationChange("browser", checked)
+                }
+              />
 
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-text-100">Emails marketing</p>
-                <p className="text-sm text-surface-400">
-                  Recevoir des offres et nouveautés
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notifications.marketing}
-                  onChange={(e) =>
-                    handleNotificationChange("marketing", e.target.checked)
-                  }
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-surface-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-              </label>
+              <Toggle
+                label="Emails marketing"
+                description="Recevoir des offres et nouveautés"
+                checked={notifications.marketing}
+                onChange={(checked) =>
+                  handleNotificationChange("marketing", checked)
+                }
+              />
             </div>
-
-            <Button
-              onClick={handleSaveSettings}
-              loading={loading}
-              className="w-full"
-              variant="accent"
-            >
-              Sauvegarder les préférences
-            </Button>
+            <div className="mt-6">
+              <Button
+                onClick={handleSaveSettings}
+                loading={loading}
+                className="w-full"
+                variant="accent"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Sauvegarder les préférences
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
         {/* API Settings */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <div className="flex items-center gap-3">
               <Key className="h-5 w-5 text-accent-500" />
               <h3 className="text-lg font-semibold text-text-100">Clé API</h3>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-text-100 mb-2">
-                Votre clé API
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  value={apiKey}
-                  readOnly
-                  className="flex-1 font-mono text-sm"
-                />
-                <Button
-                  onClick={generateNewApiKey}
-                  loading={apiKeyLoading}
-                  variant="secondary"
-                >
-                  Régénérer
-                </Button>
+          <CardContent className="flex flex-col h-full">
+            <div className="space-y-4 flex-1">
+              <div>
+                <label className="block text-sm font-medium text-text-100 mb-2">
+                  Votre clé API
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={apiKey}
+                    readOnly
+                    className="flex-1 font-mono text-sm"
+                  />
+                  <Button
+                    onClick={generateNewApiKey}
+                    loading={apiKeyLoading}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Régénérer
+                  </Button>
+                </div>
+                <p className="text-xs text-surface-500 mt-3">
+                  Utilisez cette clé pour intégrer vos formulaires
+                </p>
               </div>
-              <p className="text-xs text-surface-500 mt-1">
-                Utilisez cette clé pour intégrer vos formulaires
-              </p>
-            </div>
 
-            <div className="p-4 bg-surface-800 rounded-xl">
-              <h4 className="font-medium text-text-100 mb-2">
-                Exemple d'intégration
-              </h4>
-              <pre className="text-xs text-surface-400 bg-surface-900 p-3 rounded-lg overflow-x-auto">
-                {`<script>
+              <div className="p-4 bg-surface-800 rounded-xl">
+                <h4 className="font-medium text-text-100 mb-2">
+                  Exemple d'intégration
+                </h4>
+                <pre className="text-xs text-surface-400 bg-surface-900 p-3 rounded-lg overflow-x-auto">
+                  {`<script>
   FormBuilder.init({
     apiKey: '${apiKey}',
     formId: 'your-form-id'
   });
 </script>`}
-              </pre>
+                </pre>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -395,23 +330,18 @@ export function Settings() {
                 className="w-full"
               />
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-text-100">
-                  Activer les webhooks
-                </p>
-                <p className="text-sm text-surface-400">
-                  Recevoir les soumissions en temps réel
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" />
-                <div className="w-11 h-6 bg-surface-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-600/50 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
-              </label>
+            <Toggle
+              label="Activer les webhooks"
+              description="Recevoir les soumissions en temps réel"
+              checked={webhookEnabled}
+              onChange={setWebhookEnabled}
+            />
+            <div className="mt-6">
+              <Button variant="accent" className="w-full">
+                <Save className="h-4 w-4 mr-2" />
+                Sauvegarder le webhook
+              </Button>
             </div>
-            <Button variant="accent" className="w-full">
-              Sauvegarder le webhook
-            </Button>
           </div>
         </CardContent>
       </Card>
