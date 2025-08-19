@@ -63,4 +63,21 @@ export const authService = {
             return { success: false };
         }
     },
+    
+    logout: async (): Promise<{ success: boolean; error?: string }> => {
+        const token = localStorage.getItem("auth_token");
+        if (!token) return { success: false, error: "Token manquant" };
+    
+        try {
+          const response = await fetch(`${API_URL}api/auth/logout`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await response.json();
+          if (!response.ok) return { success: false, error: data.error || "Erreur lors de la déconnexion" };
+          return { success: true };
+        } catch {
+          return { success: false, error: "Impossible de se déconnecter. Vérifiez votre connexion." };
+        }
+      },
 };

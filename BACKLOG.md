@@ -51,7 +51,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
     -   API de réinitialisation avec token (`POST /api/auth/reset-password`)
     -   Validation des tokens de réinitialisation
 
--   [ ] **AUTH-006** : Implémenter la déconnexion (`POST /api/auth/logout`)
+-   [x] **AUTH-006** : Implémenter la déconnexion (`POST /api/auth/logout`)
     -   Invalidation du token côté serveur
     -   Nettoyage côté client
     -   Redirection vers la page de connexion

@@ -2,7 +2,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { authAPI } from "../services/api.mock";
 import { IUser } from "../types";
 import { AuthContext } from "./AuthContext";
-import { authService } from "../services/api/auth/authService"; 
+import { authService } from "../services/api/auth/authService";
 
 interface IAuthProviderProps {
   children: ReactNode;
@@ -61,9 +61,15 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("auth_token");
+  const logout = async () => {
+    try {
+      setLoading(true);
+      await authService.logout();
+    } finally {
+      setUser(null);
+      localStorage.removeItem("auth_token");
+      setLoading(false);
+    }
   };
 
   const register = async (userData: {
