@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem("auth_token");
 
       if (token) {
-        const response = await authAPI.me();
+        const response = await authService.me();
         if (response.success && response.data) {
           setUser(response.data);
         } else {

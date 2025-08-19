@@ -28,7 +28,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
     -   Hachage du mot de passe avec Argon2
     -   Mettre à jour `src/pages/auth/Register.tsx` pour utiliser le nouveau service
 
--   [ ] **AUTH-003** : Implémenter l'API de vérification du profil (`GET /api/auth/me`)
+-   [x] **AUTH-003** : Implémenter l'API de vérification du profil (`GET /api/auth/me`)
 
     -   Migrer `authAPI.me()` depuis `api.mock.ts` vers `src/services/api/auth/authService.ts`
     -   Remplacer la logique mockée par de vrais appels API
