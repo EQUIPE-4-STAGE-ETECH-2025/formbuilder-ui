@@ -9,8 +9,8 @@ interface IAuthContext {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   register: (userData: {
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     password: string;
   }) => Promise<boolean>;

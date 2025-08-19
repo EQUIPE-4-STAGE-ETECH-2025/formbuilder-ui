@@ -1,14 +1,14 @@
 // Interfaces pour les objets - Conformes au schéma Supabase
 export interface IUser {
   id: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  password_hash: string;
-  is_email_verified: boolean;
+  passwordHash: string;
+  isEmailVerified: boolean;
   role: "USER" | "ADMIN";
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   // Propriétés supplémentaires pour l'interface utilisateur
   subscription?: {
     plan: string;

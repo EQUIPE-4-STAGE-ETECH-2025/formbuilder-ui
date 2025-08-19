@@ -1,5 +1,4 @@
 import React, { ReactNode, useEffect, useState } from "react";
-import { authAPI } from "../services/api.mock";
 import { IUser } from "../types";
 import { AuthContext } from "./AuthContext";
 import { authService } from "../services/api/auth/authService";
@@ -73,8 +72,8 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
   };
 
   const register = async (userData: {
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     password: string;
   }): Promise<boolean> => {
@@ -83,8 +82,8 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
       setError(null);
 
       const response = await authService.register({
-        firstName: userData.first_name,
-        lastName: userData.last_name,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
         email: userData.email,
         password: userData.password,
       });
