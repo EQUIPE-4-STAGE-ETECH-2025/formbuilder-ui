@@ -10,7 +10,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 ### 1.1 Service d'authentification
 
--   [ ] **AUTH-001** : Implémenter l'API de connexion (`POST /api/auth/login`)
+-   [x] **AUTH-001** : Implémenter l'API de connexion (`POST /api/auth/login`)
 
     -   Migrer `authAPI.login()` depuis `api.mock.ts` vers `src/services/api/auth/authService.ts`
     -   Remplacer la logique mockée par de vrais appels API

@@ -2,6 +2,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { authAPI } from "../services/api.mock";
 import { IUser } from "../types";
 import { AuthContext } from "./AuthContext";
+import { authService } from "../services/api/auth/authService"; 
 
 interface IAuthProviderProps {
   children: ReactNode;
@@ -42,7 +43,7 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      const response = await authAPI.login(email, password);
+      const response = await authService.login(email, password);
 
       if (response.success && response.data) {
         setUser(response.data.user);
