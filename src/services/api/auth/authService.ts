@@ -11,10 +11,19 @@ interface ILoginResponse {
     error?: string;
 }
 
+interface IRegisterResponse {
+    success: boolean;
+    data?: {
+      user: IUser;
+      token: string;
+    };
+    error?: string;
+}
+
 export const authService = {
     login: async (email: string, password: string): Promise<ILoginResponse> => {
         try {
-            const response = await fetch(`${API_URL}api/auth/login`, {
+            const response = await fetch(`${API_URL}/api/auth/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -46,12 +55,35 @@ export const authService = {
         }
     },
 
+    register: async (userData: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        password: string;
+      }): Promise<IRegisterResponse> => {
+        try {
+          const response = await fetch(`${API_URL}/api/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(userData),
+          });
+    
+          const data = await response.json();
+    
+          if (!response.ok) return { success: false, error: data.error || "Erreur lors de l'inscription" };
+    
+          return { success: true, data: { user: data.user, token: data.token } };
+        } catch {
+          return { success: false, error: "Impossible de s'inscrire. Vérifiez votre connexion." };
+        }
+      },
+
     me: async (): Promise<{ success: boolean; data?: IUser }> => {
         const token = localStorage.getItem("auth_token");
         if (!token) return { success: false };
 
         try {
-            const response = await fetch(`${API_URL}api/auth/me`, {
+            const response = await fetch(`${API_URL}/api/auth/me`, {
                 headers: {
                     "Authorization": `Bearer ${token}`,
                 },
@@ -69,7 +101,7 @@ export const authService = {
         if (!token) return { success: false, error: "Token manquant" };
     
         try {
-          const response = await fetch(`${API_URL}api/auth/logout`, {
+          const response = await fetch(`${API_URL}/api/auth/logout`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
           });

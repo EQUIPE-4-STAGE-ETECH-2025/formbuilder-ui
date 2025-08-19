@@ -82,9 +82,16 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      const response = await authAPI.register(userData);
+      const response = await authService.register({
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        email: userData.email,
+        password: userData.password,
+      });
 
-      if (response.success) {
+      if (response.success && response.data) {
+        setUser(response.data.user);
+        localStorage.setItem("auth_token", response.data.token);
         return true;
       } else {
         setError(response.error || "Erreur lors de l'inscription");

@@ -47,7 +47,7 @@ export function Register() {
         title: "Inscription réussie",
         message: "Vérifiez votre email pour confirmer votre compte",
       });
-      navigate("/login");
+      navigate("/dashboard");
     } else {
       addToast({
         type: "error",

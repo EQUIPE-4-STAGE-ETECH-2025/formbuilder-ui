@@ -19,7 +19,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
     -   Gérer les erreurs de connexion (identifiants invalides, compte suspendu)
     -   Mettre à jour `src/contexts/AuthProvider.tsx` pour utiliser le nouveau service
 
--   [ ] **AUTH-002** : Implémenter l'API d'inscription (`POST /api/auth/register`)
+-   [x] **AUTH-002** : Implémenter l'API d'inscription (`POST /api/auth/register`)
 
     -   Migrer `authAPI.register()` depuis `api.mock.ts` vers `src/services/api/auth/authService.ts`
     -   Remplacer la logique mockée par de vrais appels API
