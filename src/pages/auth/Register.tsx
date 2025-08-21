@@ -35,8 +35,8 @@ export function Register() {
     clearError();
 
     const success = await registerUser({
-      first_name: data.first_name,
-      last_name: data.last_name,
+      firstName: data.first_name,
+      lastName: data.last_name,
       email: data.email,
       password: data.password,
     });
@@ -47,7 +47,7 @@ export function Register() {
         title: "Inscription réussie",
         message: "Vérifiez votre email pour confirmer votre compte",
       });
-      navigate("/dashboard");
+      navigate("/login");
     } else {
       addToast({
         type: "error",
