@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect, useState } from "react";
-import { IUser } from "../types";
+import { ILoginResult, IUser } from "../types";
 import { AuthContext } from "./AuthContext";
 import { authService } from "../services/api/auth/authService";
 
@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<ILoginResult> => {
     try {
       setLoading(true);
       setError(null);
@@ -47,14 +47,15 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
       if (response.success && response.data) {
         setUser(response.data.user);
         localStorage.setItem("auth_token", response.data.token);
-        return true;
       } else {
         setError(response.error || "Erreur de connexion");
-        return false;
       }
+
+      return response;
     } catch {
-      setError("Erreur lors de la connexion");
-      return false;
+      const err = { success: false, error: "Erreur lors de la connexion" };
+      setError(err.error);
+      return err;
     } finally {
       setLoading(false);
     }
@@ -88,9 +89,7 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
         password: userData.password,
       });
 
-      if (response.success && response.data) {
-        setUser(response.data.user);
-        localStorage.setItem("auth_token", response.data.token);
+      if (response.success) {
         return true;
       } else {
         setError(response.error || "Erreur lors de l'inscription");
