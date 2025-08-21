@@ -37,7 +37,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
     -   Gestion de l'expiration du token
     -   Mettre à jour `src/contexts/AuthProvider.tsx` pour utiliser le nouveau service
 
--   [ ] **AUTH-004** : Implémenter la vérification d'email (`GET /api/auth/verify-email`)
+-   [x] **AUTH-004** : Implémenter la vérification d'email (`GET /api/auth/verify-email`)
 
     -   Remplacer la logique mockée dans `src/pages/auth/EmailVerification.tsx`
     -   Validation du token de vérification
