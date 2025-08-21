@@ -11,7 +11,7 @@ export function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const { login, loading, error, clearError } = useAuth();
+  const { login, loading, clearError } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -19,16 +19,18 @@ export function Login() {
     e.preventDefault();
     clearError();
 
-    const success = await login(email, password);
+    const result = await login(email, password);
 
-    if (success) {
+    if (result.success && result.data) {
       navigate("/dashboard");
     } else {
       addToast({
         type: "error",
         title: "Erreur de connexion",
-        message: error || "Identifiants invalides",
-      });
+        message: result.error === "Email non vérifié."
+            ? "Veuillez vérifier votre email avant de vous connecter."
+            : result.error || "Identifiants invalides",
+    });
     }
   };
 
@@ -117,7 +119,7 @@ export function Login() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 border border-surface-700/50 rounded bg-surface-900 text-accent-500 focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200 checked:bg-accent-500 checked:border-accent-500 [&:checked]:bg-accent-500 [&:checked]:border-accent-500"
+                    className="w-4 h-4 border border-surface-700/50 rounded bg-surface-900 text-accent-500 focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200 checked:bg-accent-500 checked:border-accent-500"
                     style={{
                       backgroundImage: rememberMe
                         ? "url(\"data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M11.207 5.793a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 8.586l3.293-3.293a1 1 0 011.414 0z'/%3e%3c/svg%3e\")"
