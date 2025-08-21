@@ -1,12 +1,12 @@
 import { createContext } from "react";
-import { IUser } from "../types";
+import { ILoginResult, IUser } from "../types";
 
 interface IAuthContext {
   user: IUser | null;
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<ILoginResult>;
   logout: () => void;
   register: (userData: {
     firstName: string;

@@ -19,6 +19,26 @@ export interface IUser {
   };
 }
 
+export interface ILoginSuccess {
+    token: string;
+    user: IUser;
+}
+
+export interface ILoginResult {
+    success: boolean;
+    data?: ILoginSuccess;
+    error?: string;
+}
+
+export interface IRegisterResponse {
+    success: boolean;
+    data?: {
+        user: IUser;
+        token: string;
+    };
+    error?: string;
+}
+
 export interface IForm {
   id: string;
   user_id: string;
