@@ -120,4 +120,44 @@ export const authService = {
             return { success: false, error: "Impossible d'envoyer l'email. Vérifiez votre connexion." };
         }
     },
+
+    forgotPassword: async (email: string): Promise<{ success: boolean; error?: string }> => {
+        try {
+            const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return { success: false, error: data.error || "Erreur lors de la demande de réinitialisation" };
+            }
+
+            return { success: true };
+        } catch {
+            return { success: false, error: "Impossible d'envoyer la demande. Vérifiez votre connexion." };
+        }
+    },
+
+    resetPassword: async (token: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+        try {
+            const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token, newPassword }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return { success: false, error: data.error || "Erreur lors de la réinitialisation du mot de passe" };
+            }
+
+            return { success: true };
+        } catch {
+            return { success: false, error: "Impossible de réinitialiser le mot de passe. Vérifiez votre connexion." };
+        }
+    },
 };
