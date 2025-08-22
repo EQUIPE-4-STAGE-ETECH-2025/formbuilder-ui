@@ -28,6 +28,7 @@ import { FormSubmissions } from "./pages/forms/FormSubmissions";
 import { Profile } from "./pages/Profile";
 import { Settings } from "./pages/Settings";
 import { Subscription } from "./pages/Subscription";
+import { ResetPassword } from "./pages/auth/ResetPassword";
 
 // Composant principal
 const App: React.FC = () => {
@@ -42,7 +43,8 @@ const App: React.FC = () => {
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/verify-email" element={<EmailVerification />} />
-
+              <Route path="/reset-password" element={<ResetPassword />} />
+              
               {/* Route d'intégration (publique) */}
               <Route path="/embed/:id" element={<FormEmbed />} />
 
