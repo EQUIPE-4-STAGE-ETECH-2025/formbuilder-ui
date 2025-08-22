@@ -44,7 +44,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
     -   Mise à jour du statut `is_email_verified`
     -   Gestion des erreurs de vérification
 
--   [ ] **AUTH-005** : Implémenter la réinitialisation de mot de passe
+-   [x] **AUTH-005** : Implémenter la réinitialisation de mot de passe
 
     -   Remplacer la logique mockée dans `src/pages/auth/ForgotPassword.tsx`
     -   API de demande de réinitialisation (`POST /api/auth/forgot-password`)

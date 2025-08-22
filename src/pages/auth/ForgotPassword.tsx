@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
 import { useToast } from "../../hooks/useToast";
+import { authService } from "../../services/api";
 
 interface ForgotPasswordForm {
   email: string;
@@ -22,18 +23,26 @@ export function ForgotPassword() {
     getValues,
   } = useForm<ForgotPasswordForm>();
 
-  const onSubmit = async () => {
+  const onSubmit = async (data: ForgotPasswordForm) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      setEmailSent(true);
-      addToast({
-        type: "success",
-        title: "Email envoyé",
-        message:
-          "Vérifiez votre boîte mail pour réinitialiser votre mot de passe",
-      });
+      const res = await authService.forgotPassword(data.email);
+
+      if (res.success) {
+        setEmailSent(true);
+        addToast({
+          type: "success",
+          title: "Email envoyé",
+          message:
+            "Vérifiez votre boîte mail pour réinitialiser votre mot de passe",
+        });
+      } else {
+        addToast({
+          type: "error",
+          title: "Erreur",
+          message: res.error || "Impossible d'envoyer l'email",
+        });
+      }
     } catch {
       addToast({
         type: "error",
@@ -67,7 +76,7 @@ export function ForgotPassword() {
 
             <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-8">
               <div className="text-center space-y-4">
-                <p className="text-surface-400">
+                <p className="text-surface-400 pb-8">
                   Cliquez sur le lien dans l'email pour créer un nouveau mot de
                   passe. Si vous ne voyez pas l'email, vérifiez votre dossier
                   spam.
