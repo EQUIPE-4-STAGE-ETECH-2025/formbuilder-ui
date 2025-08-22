@@ -180,12 +180,15 @@ export function Register() {
                     <Lock className="h-5 w-5 text-surface-500" />
                   </div>
                   <input
-                    {...register("password", {
-                      required: "Le mot de passe est requis",
+                    {...register('password', {
+                      required: 'Mot de passe requis',
                       minLength: {
                         value: 8,
-                        message:
-                          "Le mot de passe doit contenir au moins 8 caractères",
+                        message: 'Le mot de passe doit faire au moins 8 caractères',
+                      },
+                      pattern: {
+                        value: /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).+$/,
+                        message: 'Le mot de passe doit contenir une majuscule, un chiffre et un caractère spécial',
                       },
                     })}
                     type={showPassword ? "text" : "password"}
