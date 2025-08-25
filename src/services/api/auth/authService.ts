@@ -160,4 +160,27 @@ export const authService = {
             return { success: false, error: "Impossible de réinitialiser le mot de passe. Vérifiez votre connexion." };
         }
     },
+
+    changePassword: async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+        const token = localStorage.getItem("auth_token");
+        if (!token) return { success: false, error: "Token manquant" };
+    
+        try {
+            const response = await fetch(`${API_URL}/api/auth/change-password`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ currentPassword, newPassword }),
+            });
+    
+            const data = await response.json();
+            if (!response.ok) return { success: false, error: data.error || "Erreur lors de la modification du mot de passe" };
+    
+            return { success: true };
+        } catch {
+            return { success: false, error: "Impossible de modifier le mot de passe. Vérifiez votre connexion." };
+        }
+    },    
 };

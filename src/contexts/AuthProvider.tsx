@@ -103,6 +103,11 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     }
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    const result = await authService.changePassword(currentPassword, newPassword);
+    return result;
+  };
+
   const clearError = () => {
     setError(null);
   };
@@ -116,6 +121,7 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     logout,
     register,
     clearError,
+    changePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

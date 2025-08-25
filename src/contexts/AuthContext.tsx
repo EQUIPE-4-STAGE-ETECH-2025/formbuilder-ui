@@ -15,6 +15,10 @@ interface IAuthContext {
     password: string;
   }) => Promise<boolean>;
   clearError: () => void;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{
+    success: boolean;
+    error?: string;
+  }>;
 }
 
 export const AuthContext = createContext<IAuthContext | undefined>(undefined);
