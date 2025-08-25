@@ -1,4 +1,4 @@
-import { Lock, Save, Settings, Trash2, User } from "lucide-react";
+import { Eye, EyeOff, Lock, Save, Settings, Trash2, User } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "../components/ui/Button";
@@ -133,6 +133,11 @@ export function Profile() {
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { changePassword } = useAuth();
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
 
   const {
     register: registerProfile,
@@ -182,23 +187,26 @@ export function Profile() {
     }
   };
 
-  const onPasswordSubmit = async () => {
+  const onPasswordSubmit = async (formData: PasswordForm) => {
     setPasswordLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      addToast({
-        type: "success",
-        title: "Mot de passe modifié",
-        message: "Votre mot de passe a été mis à jour",
-      });
-      resetPassword();
-    } catch {
-      addToast({
-        type: "error",
-        title: "Erreur",
-        message: "Impossible de modifier le mot de passe",
-      });
+      const { currentPassword, newPassword } = formData;
+      const result = await changePassword(currentPassword, newPassword);
+
+      if (result.success) {
+        addToast({
+          type: "success",
+          title: "Mot de passe modifié",
+          message: "Votre mot de passe a été mis à jour",
+        });
+        resetPassword();
+      } else {
+        addToast({
+          type: "error",
+          title: "Erreur",
+          message: result.error || "Impossible de modifier le mot de passe",
+        });
+      }
     } finally {
       setPasswordLoading(false);
     }
@@ -309,39 +317,70 @@ export function Profile() {
               className="flex flex-col h-full"
             >
               <div className="space-y-4 flex-1">
-                <Input
-                  label="Mot de passe actuel"
-                  type="password"
-                  {...registerPassword("currentPassword", {
-                    required: "Le mot de passe actuel est requis",
-                  })}
-                  error={passwordErrors.currentPassword?.message}
-                />
-                <Input
-                  label="Nouveau mot de passe"
-                  type="password"
-                  {...registerPassword("newPassword", {
-                    required: "Le nouveau mot de passe est requis",
-                    minLength: {
-                      value: 8,
-                      message:
-                        "Le mot de passe doit contenir au moins 8 caractères",
-                    },
-                  })}
-                  error={passwordErrors.newPassword?.message}
-                />
-                <Input
-                  label="Confirmer le nouveau mot de passe"
-                  type="password"
-                  {...registerPassword("confirmPassword", {
-                    required: "La confirmation du mot de passe est requise",
-                    validate: (value) =>
-                      value === newPassword ||
-                      "Les mots de passe ne correspondent pas",
-                  })}
-                  error={passwordErrors.confirmPassword?.message}
-                />
+                {/* Mot de passe actuel */}
+                <div className="relative">
+                  <Input
+                    label="Mot de passe actuel"
+                    type={showCurrent ? "text" : "password"}
+                    {...registerPassword("currentPassword", {
+                      required: "Le mot de passe actuel est requis",
+                    })}
+                    error={passwordErrors.currentPassword?.message}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrent(!showCurrent)}
+                    className="absolute right-3 top-[38px] text-surface-400 hover:text-surface-300"
+                  >
+                    {showCurrent ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+
+                {/* Nouveau mot de passe */}
+                <div className="relative">
+                  <Input
+                    label="Nouveau mot de passe"
+                    type={showNew ? "text" : "password"}
+                    {...registerPassword("newPassword", {
+                      required: "Le nouveau mot de passe est requis",
+                      minLength: {
+                        value: 8,
+                        message: "Le mot de passe doit contenir au moins 8 caractères",
+                      },
+                    })}
+                    error={passwordErrors.newPassword?.message}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNew(!showNew)}
+                    className="absolute right-3 top-[38px] text-surface-400 hover:text-surface-300"
+                  >
+                    {showNew ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+
+                {/* Confirmer le mot de passe */}
+                <div className="relative">
+                  <Input
+                    label="Confirmer le nouveau mot de passe"
+                    type={showConfirm ? "text" : "password"}
+                    {...registerPassword("confirmPassword", {
+                      required: "La confirmation du mot de passe est requise",
+                      validate: (value) =>
+                        value === newPassword || "Les mots de passe ne correspondent pas",
+                    })}
+                    error={passwordErrors.confirmPassword?.message}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-3 top-[38px] text-surface-400 hover:text-surface-300"
+                  >
+                    {showConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
               </div>
+
               <div className="mt-6">
                 <Button
                   type="submit"
@@ -356,65 +395,65 @@ export function Profile() {
             </form>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Account Settings */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Settings className="h-5 w-5 text-accent-500" />
-            <h3 className="text-lg font-semibold text-text-100">
-              Paramètres de compte
-            </h3>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-base font-medium text-text-100 mb-2">
-                Supprimer le compte
-              </h4>
-              <p className="text-base text-surface-400 mb-4">
-                Cette action est irréversible. Toutes vos données seront
-                définitivement supprimées.
-              </p>
-              {!showDeleteConfirm ? (
-                <Button
-                  variant="accent"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Supprimer mon compte
-                </Button>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm text-yellow-400">
-                    Êtes-vous sûr de vouloir supprimer votre compte ? Cette
-                    action ne peut pas être annulée.
-                  </p>
-                  <div className="flex gap-3">
-                    <Button
-                      variant="danger"
-                      onClick={handleDeleteAccount}
-                      className="flex-1"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Oui, supprimer
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => setShowDeleteConfirm(false)}
-                      className="flex-1"
-                    >
-                      Annuler
-                    </Button>
-                  </div>
-                </div>
-              )}
+        {/* Account Settings */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Settings className="h-5 w-5 text-accent-500" />
+              <h3 className="text-lg font-semibold text-text-100">
+                Paramètres de compte
+              </h3>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-base font-medium text-text-100 mb-2">
+                  Supprimer le compte
+                </h4>
+                <p className="text-base text-surface-400 mb-4">
+                  Cette action est irréversible. Toutes vos données seront
+                  définitivement supprimées.
+                </p>
+                {!showDeleteConfirm ? (
+                  <Button
+                    variant="accent"
+                    onClick={() => setShowDeleteConfirm(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Supprimer mon compte
+                  </Button>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-yellow-400">
+                      Êtes-vous sûr de vouloir supprimer votre compte ? Cette
+                      action ne peut pas être annulée.
+                    </p>
+                    <div className="flex gap-3">
+                      <Button
+                        variant="danger"
+                        onClick={handleDeleteAccount}
+                        className="flex-1"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Oui, supprimer
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="flex-1"
+                      >
+                        Annuler
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
