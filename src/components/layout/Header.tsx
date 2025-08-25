@@ -133,12 +133,12 @@ export function Header() {
               >
                 <div className="w-10 h-10 bg-yellow-500 rounded-2xl flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
-                    {user?.first_name?.[0]}
-                    {user?.last_name?.[0]}
+                    {user?.firstName?.[0]}
+                    {user?.lastName?.[0]}
                   </span>
                 </div>
                 <span className="hidden md:block text-sm font-medium text-text-100">
-                  {user?.first_name} {user?.last_name}
+                  {user?.firstName} {user?.lastName}
                 </span>
               </button>
 

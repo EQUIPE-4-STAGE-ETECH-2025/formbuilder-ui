@@ -30,8 +30,8 @@ const AdminProfile = () => {
     formState: { errors },
   } = useForm<ProfileForm>({
     defaultValues: {
-      firstName: user?.first_name || "",
-      lastName: user?.last_name || "",
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
       email: user?.email || "",
     },
   });
@@ -140,8 +140,8 @@ export function Profile() {
     formState: { errors: profileErrors },
   } = useForm<ProfileForm>({
     defaultValues: {
-      firstName: user?.first_name || "",
-      lastName: user?.last_name || "",
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
       email: user?.email || "",
     },
   });

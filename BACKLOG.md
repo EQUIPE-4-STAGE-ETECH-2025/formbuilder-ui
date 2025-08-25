@@ -10,7 +10,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 ### 1.1 Service d'authentification
 
--   [ ] **AUTH-001** : Implémenter l'API de connexion (`POST /api/auth/login`)
+-   [x] **AUTH-001** : Implémenter l'API de connexion (`POST /api/auth/login`)
 
     -   Migrer `authAPI.login()` depuis `api.mock.ts` vers `src/services/api/auth/authService.ts`
     -   Remplacer la logique mockée par de vrais appels API
@@ -19,7 +19,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
     -   Gérer les erreurs de connexion (identifiants invalides, compte suspendu)
     -   Mettre à jour `src/contexts/AuthProvider.tsx` pour utiliser le nouveau service
 
--   [ ] **AUTH-002** : Implémenter l'API d'inscription (`POST /api/auth/register`)
+-   [x] **AUTH-002** : Implémenter l'API d'inscription (`POST /api/auth/register`)
 
     -   Migrer `authAPI.register()` depuis `api.mock.ts` vers `src/services/api/auth/authService.ts`
     -   Remplacer la logique mockée par de vrais appels API
@@ -28,7 +28,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
     -   Hachage du mot de passe avec Argon2
     -   Mettre à jour `src/pages/auth/Register.tsx` pour utiliser le nouveau service
 
--   [ ] **AUTH-003** : Implémenter l'API de vérification du profil (`GET /api/auth/me`)
+-   [x] **AUTH-003** : Implémenter l'API de vérification du profil (`GET /api/auth/me`)
 
     -   Migrer `authAPI.me()` depuis `api.mock.ts` vers `src/services/api/auth/authService.ts`
     -   Remplacer la logique mockée par de vrais appels API
@@ -37,21 +37,21 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
     -   Gestion de l'expiration du token
     -   Mettre à jour `src/contexts/AuthProvider.tsx` pour utiliser le nouveau service
 
--   [ ] **AUTH-004** : Implémenter la vérification d'email (`GET /api/auth/verify-email`)
+-   [x] **AUTH-004** : Implémenter la vérification d'email (`GET /api/auth/verify-email`)
 
     -   Remplacer la logique mockée dans `src/pages/auth/EmailVerification.tsx`
     -   Validation du token de vérification
     -   Mise à jour du statut `is_email_verified`
     -   Gestion des erreurs de vérification
 
--   [ ] **AUTH-005** : Implémenter la réinitialisation de mot de passe
+-   [x] **AUTH-005** : Implémenter la réinitialisation de mot de passe
 
     -   Remplacer la logique mockée dans `src/pages/auth/ForgotPassword.tsx`
     -   API de demande de réinitialisation (`POST /api/auth/forgot-password`)
     -   API de réinitialisation avec token (`POST /api/auth/reset-password`)
     -   Validation des tokens de réinitialisation
 
--   [ ] **AUTH-006** : Implémenter la déconnexion (`POST /api/auth/logout`)
+-   [x] **AUTH-006** : Implémenter la déconnexion (`POST /api/auth/logout`)
     -   Invalidation du token côté serveur
     -   Nettoyage côté client
     -   Redirection vers la page de connexion

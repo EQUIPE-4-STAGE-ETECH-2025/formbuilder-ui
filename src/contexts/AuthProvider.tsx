@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect, useState } from "react";
-import { authAPI } from "../services/api.mock";
-import { IUser } from "../types";
+import { ILoginResult, IUser } from "../types";
 import { AuthContext } from "./AuthContext";
+import { authService } from "../services/api/auth/authService";
 
 interface IAuthProviderProps {
   children: ReactNode;
@@ -22,7 +22,7 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem("auth_token");
 
       if (token) {
-        const response = await authAPI.me();
+        const response = await authService.me();
         if (response.success && response.data) {
           setUser(response.data);
         } else {
@@ -37,37 +37,44 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<ILoginResult> => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await authAPI.login(email, password);
+      const response = await authService.login(email, password);
 
       if (response.success && response.data) {
         setUser(response.data.user);
         localStorage.setItem("auth_token", response.data.token);
-        return true;
       } else {
         setError(response.error || "Erreur de connexion");
-        return false;
       }
+
+      return response;
     } catch {
-      setError("Erreur lors de la connexion");
-      return false;
+      const err = { success: false, error: "Erreur lors de la connexion" };
+      setError(err.error);
+      return err;
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("auth_token");
+  const logout = async () => {
+    try {
+      setLoading(true);
+      await authService.logout();
+    } finally {
+      setUser(null);
+      localStorage.removeItem("auth_token");
+      setLoading(false);
+    }
   };
 
   const register = async (userData: {
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     password: string;
   }): Promise<boolean> => {
@@ -75,7 +82,12 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      const response = await authAPI.register(userData);
+      const response = await authService.register({
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        password: userData.password,
+      });
 
       if (response.success) {
         return true;

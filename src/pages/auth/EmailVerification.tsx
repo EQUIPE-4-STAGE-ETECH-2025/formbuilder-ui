@@ -1,9 +1,10 @@
 import { CheckCircle, Loader, Mail, XCircle } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
 import { useToast } from "../../hooks/useToast";
+import { authService } from "../../services/api/auth/authService";
 
 export function EmailVerification() {
   const [searchParams] = useSearchParams();
@@ -12,55 +13,58 @@ export function EmailVerification() {
   >("loading");
   const [loading, setLoading] = useState(false);
   const { addToast } = useToast();
+  const [toastShown, setToastShown] = useState(false);
 
   const token = searchParams.get("token");
-  const email = searchParams.get("email");
-
-  const verifyEmail = useCallback(async () => {
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Simulate different outcomes based on token
-      if (token === "expired") {
-        setStatus("expired");
-      } else if (token === "invalid") {
-        setStatus("error");
-      } else {
-        setStatus("success");
-      }
-    } catch {
-      setStatus("error");
-    }
-  }, [token]);
+  const email = searchParams.get("email") || "";
 
   useEffect(() => {
-    if (token) {
-      verifyEmail();
-    } else {
-      setStatus("error");
-    }
-  }, [token, verifyEmail]);
+    if (!token || toastShown) return;
+  
+    let cancelled = false;
+  
+    const verify = async () => {
+      try {
+        const res = await authService.verifyEmail(token);
+  
+        if (cancelled) return;
+  
+        if (res.success) {
+          setStatus("success");
+          if (!toastShown) {
+            addToast({
+              type: "success",
+              title: "Email vérifié",
+              message: "Votre compte est activé !",
+            });
+            setToastShown(true);
+          }
+        } else {
+          setStatus(res.error?.includes("expiré") ? "expired" : "error");
+        }
+      } catch {
+        if (!cancelled) setStatus("error");
+      }
+    };
+  
+    verify();
+  
+    return () => {
+      cancelled = true;
+    };
+  }, [token, addToast, toastShown]);
+   
+
 
   const resendVerification = async () => {
     setLoading(true);
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      addToast({
-        type: "success",
-        title: "Email envoyé",
-        message: "Un nouveau lien de vérification a été envoyé",
-      });
-    } catch {
-      addToast({
-        type: "error",
-        title: "Erreur",
-        message: "Impossible d'envoyer l'email de vérification",
-      });
-    } finally {
-      setLoading(false);
+    const res = await authService.resendVerification(email);
+    if (res.success) {
+      addToast({ type: "success", title: "Email envoyé", message: "Un nouveau lien de vérification a été envoyé." });
+    } else {
+      addToast({ type: "error", title: "Erreur", message: res.error });
     }
+    setLoading(false);
   };
 
   const renderContent = () => {
@@ -133,7 +137,7 @@ export function EmailVerification() {
       case "success":
         return (
           <Link to="/login">
-            <Button className="w-full" size="lg" variant="accent">
+            <Button className="w-full mt-2" size="lg" variant="accent">
               Se connecter
             </Button>
           </Link>
@@ -142,7 +146,7 @@ export function EmailVerification() {
       case "expired":
       case "error":
         return (
-          <div className="space-y-3">
+          <div className="space-y-3 g-2">
             <Button
               onClick={resendVerification}
               loading={loading}
