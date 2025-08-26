@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
+import { userService } from "../services/api/user/userService";
 
 interface ProfileForm {
   firstName: string;
@@ -36,25 +37,33 @@ const AdminProfile = () => {
     },
   });
 
-  const onSubmit = async () => {
+  const onSubmit = async (formData: { firstName: string; lastName: string }) => {
+    if (!user) return;
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      addToast({
-        type: "success",
-        title: "Profil administrateur mis à jour",
-        message: "Vos informations ont été sauvegardées",
+      const result = await userService.updateProfile(user.id, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
       });
-    } catch {
-      addToast({
-        type: "error",
-        title: "Erreur",
-        message: "Impossible de mettre à jour le profil",
-      });
+  
+      if (result.success) {
+        addToast({
+          type: "success",
+          title: "Profil mis à jour",
+          message: "Vos informations ont été sauvegardées",
+        });
+      } else {
+        addToast({
+          type: "error",
+          title: "Erreur",
+          message: result.error || "Impossible de mettre à jour le profil",
+        });
+      }
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="space-modern">
@@ -99,14 +108,8 @@ const AdminProfile = () => {
               <Input
                 label="Email administrateur"
                 type="email"
-                {...register("email", {
-                  required: "L'email est requis",
-                  pattern: {
-                    value: /\S+@\S+\.\S+/,
-                    message: "Email invalide",
-                  },
-                })}
-                error={errors.email?.message}
+                value={user?.email || ""}
+                disabled
               />
             </div>
             <div className="mt-6">
@@ -166,22 +169,28 @@ export function Profile() {
     return <AdminProfile />;
   }
 
-  const onProfileSubmit = async () => {
+  const onProfileSubmit = async (formData: { firstName: string; lastName: string }) => {
+    if (!user) return;
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      addToast({
-        type: "success",
-        title: "Profil mis à jour",
-        message: "Vos informations ont été sauvegardées",
+      const result = await userService.updateProfile(user.id, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
       });
-    } catch {
-      addToast({
-        type: "error",
-        title: "Erreur",
-        message: "Impossible de mettre à jour le profil",
-      });
+
+      if (result.success) {
+        addToast({
+          type: "success",
+          title: "Profil mis à jour",
+          message: "Vos informations ont été sauvegardées",
+        });
+      } else {
+        addToast({
+          type: "error",
+          title: "Erreur",
+          message: result.error || "Impossible de mettre à jour le profil",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -276,14 +285,8 @@ export function Profile() {
                 <Input
                   label="Email"
                   type="email"
-                  {...registerProfile("email", {
-                    required: "L'email est requis",
-                    pattern: {
-                      value: /\S+@\S+\.\S+/,
-                      message: "Email invalide",
-                    },
-                  })}
-                  error={profileErrors.email?.message}
+                  value={user?.email || ""}
+                  disabled
                 />
               </div>
               <div className="mt-6">
