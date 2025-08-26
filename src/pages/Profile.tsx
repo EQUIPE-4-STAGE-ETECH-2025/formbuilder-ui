@@ -7,6 +7,7 @@ import { Input } from "../components/ui/Input";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { userService } from "../services/api/user/userService";
+import { useNavigate } from "react-router-dom";
 
 interface ProfileForm {
   firstName: string;
@@ -131,7 +132,7 @@ const AdminProfile = () => {
 };
 
 export function Profile() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { addToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -140,6 +141,8 @@ export function Profile() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const navigate = useNavigate();
+
 
 
   const {
@@ -222,24 +225,29 @@ export function Profile() {
   };
 
   const handleDeleteAccount = async () => {
+    if (!user) return;
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      addToast({
-        type: "success",
-        title: "Compte supprimé",
-        message: "Votre compte a été supprimé définitivement",
-      });
-      // In real app, would logout and redirect
-    } catch {
-      addToast({
-        type: "error",
-        title: "Erreur",
-        message: "Impossible de supprimer le compte",
-      });
+      const result = await userService.deleteUser(user.id);
+      if (result.success) {
+        addToast({
+          type: "success",
+          title: "Compte supprimé",
+          message: "Votre compte a été supprimé définitivement",
+        });
+        await logout();
+        navigate("/login");
+      } else {
+        addToast({
+          type: "error",
+          title: "Erreur",
+          message: result.error || "Impossible de supprimer le compte",
+        });
+      }
+    } finally {
+      setShowDeleteConfirm(false);
     }
-    setShowDeleteConfirm(false);
   };
+  
 
   return (
     <div className="space-modern">
