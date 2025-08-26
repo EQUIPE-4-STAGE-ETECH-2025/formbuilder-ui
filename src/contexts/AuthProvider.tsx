@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect, useState } from "react";
+import { authService } from "../services/api/auth/authService";
 import { ILoginResult, IUser } from "../types";
 import { AuthContext } from "./AuthContext";
-import { authService } from "../services/api/auth/authService";
 
 interface IAuthProviderProps {
   children: ReactNode;
@@ -19,25 +19,34 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
   const checkAuth = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem(
+        import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token"
+      );
 
       if (token) {
         const response = await authService.me();
         if (response.success && response.data) {
           setUser(response.data);
         } else {
-          localStorage.removeItem("auth_token");
+          localStorage.removeItem(
+            import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token"
+          );
         }
       }
     } catch {
       console.error("Erreur lors de la vérification de l'authentification");
-      localStorage.removeItem("auth_token");
+      localStorage.removeItem(
+        import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token"
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (email: string, password: string): Promise<ILoginResult> => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<ILoginResult> => {
     try {
       setLoading(true);
       setError(null);
@@ -46,7 +55,10 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
 
       if (response.success && response.data) {
         setUser(response.data.user);
-        localStorage.setItem("auth_token", response.data.token);
+        localStorage.setItem(
+          import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token",
+          response.data.token
+        );
       } else {
         setError(response.error || "Erreur de connexion");
       }
@@ -67,7 +79,9 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
       await authService.logout();
     } finally {
       setUser(null);
-      localStorage.removeItem("auth_token");
+      localStorage.removeItem(
+        import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token"
+      );
       setLoading(false);
     }
   };

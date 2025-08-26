@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { versionsService } from "../services/api";
-import { IFormVersion } from "../services/api/forms/formsTypes";
+import { IFormVersion } from "../types";
+import { adaptVersionFromAPIForHooks } from "../utils/formAdapter";
 
 interface IUseFormHistoryReturn {
   versions: IFormVersion[];
@@ -26,12 +27,17 @@ export const useFormHistory = (): IUseFormHistoryReturn => {
       const response = await versionsService.getByFormId(formId);
 
       if (response.success && response.data) {
-        setVersions(
-          response.data.sort(
+        const adaptedVersions = response.data
+          .map((version) => {
+            const adapted = adaptVersionFromAPIForHooks(version);
+            adapted.form_id = formId;
+            return adapted;
+          })
+          .sort(
             (a: IFormVersion, b: IFormVersion) =>
-              b.versionNumber - a.versionNumber
-          )
-        );
+              b.version_number - a.version_number
+          );
+        setVersions(adaptedVersions);
       } else {
         setError(
           response.message || "Erreur lors du chargement de l'historique"
@@ -54,10 +60,15 @@ export const useFormHistory = (): IUseFormHistoryReturn => {
       const versions = await versionsService.getByFormId(formId);
 
       if (versions.success && versions.data) {
-        const targetVersion = versions.data.find(
+        const targetVersionAPI = versions.data.find(
           (v) => v.versionNumber === version
         );
-        return targetVersion || null;
+        if (targetVersionAPI) {
+          const adapted = adaptVersionFromAPIForHooks(targetVersionAPI);
+          adapted.form_id = formId;
+          return adapted;
+        }
+        return null;
       } else {
         setError(
           versions.message || "Erreur lors de la récupération de la version"

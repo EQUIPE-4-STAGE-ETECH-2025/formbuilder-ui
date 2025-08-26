@@ -3,8 +3,9 @@ import { versionsService } from "../services/api";
 import {
   ICreateVersionRequest,
   IFormSchema,
-  IFormVersion,
 } from "../services/api/forms/formsTypes";
+import { IFormVersion } from "../types";
+import { adaptVersionFromAPIForHooks } from "../utils/formAdapter";
 
 interface IUseFormVersionsReturn {
   versions: IFormVersion[];
@@ -35,7 +36,12 @@ export const useFormVersions = (formId?: string): IUseFormVersionsReturn => {
     try {
       const response = await versionsService.getByFormId(id);
       if (response.success) {
-        setVersions(response.data || []);
+        const adaptedVersions = (response.data || []).map((version) => {
+          const adapted = adaptVersionFromAPIForHooks(version);
+          adapted.form_id = id;
+          return adapted;
+        });
+        setVersions(adaptedVersions);
       } else {
         setError(response.message || "Erreur lors du chargement des versions");
       }

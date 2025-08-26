@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { formsService } from "../services/api";
 import {
   ICreateFormRequest,
-  IForm as IFormAPI,
   IUpdateFormRequest,
 } from "../services/api/forms/formsTypes";
 import { IForm } from "../types";
+import { adaptFormFromAPI } from "../utils/formAdapter";
+import { useAuth } from "./useAuth";
 
 interface IUseFormsReturn {
   forms: IForm[];
@@ -19,140 +20,24 @@ interface IUseFormsReturn {
   getEmbedCode: (id: string) => Promise<string | null>;
 }
 
-// Fonction d'adaptation entre l'API et l'UI
-const adaptFormFromAPI = (form: IFormAPI): IForm => {
-  return {
-    id: form.id,
-    user_id: "user-1", // Sera remplacé par l'ID utilisateur réel depuis le contexte
-    title: form.title,
-    description: form.description,
-    status: form.status.toLowerCase() as "draft" | "published" | "disabled",
-    published_at: form.publishedAt || undefined,
-    created_at: form.createdAt,
-    updated_at: form.updatedAt,
-    submissionCount: form.submissionsCount || 0,
-    version: form.currentVersion?.versionNumber || 1,
-    fields:
-      form.schema?.fields?.map((field) => ({
-        id: field.id,
-        form_version_id: form.currentVersion?.id || "",
-        label: field.label,
-        type: field.type as
-          | "text"
-          | "email"
-          | "date"
-          | "select"
-          | "checkbox"
-          | "radio"
-          | "textarea"
-          | "number"
-          | "file"
-          | "url",
-        is_required: field.required,
-        placeholder: field.placeholder,
-        options: field.placeholder ? { placeholder: field.placeholder } : {},
-        position: 1,
-        order: 1,
-        validation_rules: field.validation || {},
-      })) || [],
-    history: {
-      versions:
-        form.versions?.map((v) => ({
-          id: v.id,
-          form_id: form.id,
-          version_number: v.versionNumber,
-          schema: {
-            title: form.title,
-            description: form.description,
-            fields:
-              v.schema?.fields?.map((field) => ({
-                id: field.id,
-                form_version_id: v.id,
-                label: field.label,
-                type: field.type as
-                  | "text"
-                  | "email"
-                  | "date"
-                  | "select"
-                  | "checkbox"
-                  | "radio"
-                  | "textarea"
-                  | "number"
-                  | "file"
-                  | "url",
-                is_required: field.required,
-                placeholder: field.placeholder,
-                options: field.placeholder
-                  ? { placeholder: field.placeholder }
-                  : {},
-                position: 1,
-                order: 1,
-                validation_rules: field.validation || {},
-              })) || [],
-            settings: {
-              theme: {
-                primary_color:
-                  v.schema?.settings?.theme?.primaryColor || "#3B82F6",
-                background_color:
-                  v.schema?.settings?.theme?.backgroundColor || "#FFFFFF",
-                text_color: "#1F2937",
-              },
-              success_message:
-                v.schema?.settings?.successMessage ||
-                "Merci pour votre soumission !",
-              notifications: {
-                email: !!v.schema?.settings?.notifications?.email,
-                webhook: v.schema?.settings?.notifications?.webhook,
-              },
-            },
-            status: form.status.toLowerCase() as
-              | "draft"
-              | "published"
-              | "disabled",
-          },
-          created_at: v.createdAt,
-        })) || [],
-      currentVersion: form.currentVersion?.versionNumber || 1,
-      maxVersions: 10,
-    },
-    settings: {
-      theme: {
-        primary_color: form.schema?.settings?.theme?.primaryColor || "#3B82F6",
-        background_color:
-          form.schema?.settings?.theme?.backgroundColor || "#FFFFFF",
-        text_color: "#1F2937",
-      },
-      success_message:
-        form.schema?.settings?.successMessage ||
-        "Merci pour votre soumission !",
-      notifications: {
-        email: !!form.schema?.settings?.notifications?.email,
-        webhook: form.schema?.settings?.notifications?.webhook,
-      },
-    },
-  };
-};
-
 export const useForms = (): IUseFormsReturn => {
   // Hooks
   const [forms, setForms] = useState<IForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Effets
-  useEffect(() => {
-    fetchForms();
-  }, []);
+  const { user } = useAuth();
 
   // Fonctions utilitaires
-  const fetchForms = async (): Promise<void> => {
+  const fetchForms = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
       const response = await formsService.getAll();
 
       if (response.success && response.data) {
-        const adaptedForms = response.data.map(adaptFormFromAPI);
+        const adaptedForms = response.data.map((form) =>
+          adaptFormFromAPI(form, user?.id)
+        );
         setForms(adaptedForms);
       } else {
         setError(
@@ -164,7 +49,12 @@ export const useForms = (): IUseFormsReturn => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  // Effets
+  useEffect(() => {
+    fetchForms();
+  }, [fetchForms]);
 
   const createForm = async (formData: ICreateFormRequest): Promise<void> => {
     try {

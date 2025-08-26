@@ -22,11 +22,11 @@ export interface IFormField {
     min?: number;
     max?: number;
     pattern?: string;
-    options?: string[]; // Pour select, checkbox, radio
+    options?: string[]; // Pour select, checkbox, radio - selon le contrat API
   };
   conditional?: {
     field: string; // ID du champ condition
-    value: string | number | boolean; // Valeur qui déclenche l'affichage
+    value: string | number | boolean; // Valeur qui déclenche l'affichage - selon le contrat API
   };
 }
 

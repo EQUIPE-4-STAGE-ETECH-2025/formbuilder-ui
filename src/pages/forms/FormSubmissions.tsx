@@ -4,14 +4,20 @@ import { useParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Pagination } from "../../components/ui/Pagination";
+import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { formsService, versionsService } from "../../services/api";
 import { submissionsAPI } from "../../services/api.mock";
 import { IForm, IFormVersion, ISubmission } from "../../types";
+import {
+  adaptFormFromAPI,
+  adaptVersionFromAPIForHooks,
+} from "../../utils/formAdapter";
 
 export function FormSubmissions() {
   const { id } = useParams();
   const { addToast } = useToast();
+  const { user } = useAuth();
   const [form, setForm] = useState<IForm | null>(null);
   const [submissions, setSubmissions] = useState<ISubmission[]>([]);
   const [formVersion, setFormVersion] = useState<IFormVersion | null>(null);
@@ -24,69 +30,7 @@ export function FormSubmissions() {
     try {
       const response = await formsService.getById(id!);
       if (response.success && response.data) {
-        const formData = response.data;
-        // Adapter les données de l'API vers le format UI
-        const adaptedForm: IForm = {
-          id: formData.id,
-          user_id: "user-1",
-          title: formData.title,
-          description: formData.description,
-          status: formData.status.toLowerCase() as
-            | "draft"
-            | "published"
-            | "disabled",
-          published_at: formData.publishedAt || undefined,
-          created_at: formData.createdAt,
-          updated_at: formData.updatedAt,
-          submissionCount: formData.submissionsCount || 0,
-          version: formData.currentVersion?.versionNumber || 1,
-          fields:
-            formData.schema?.fields?.map((field) => ({
-              id: field.id,
-              form_version_id: formData.currentVersion?.id || "",
-              label: field.label,
-              type: field.type as
-                | "text"
-                | "email"
-                | "date"
-                | "select"
-                | "checkbox"
-                | "radio"
-                | "textarea"
-                | "number"
-                | "file"
-                | "url",
-              is_required: field.required,
-              placeholder: field.placeholder,
-              options: field.placeholder
-                ? { placeholder: field.placeholder }
-                : {},
-              position: 1,
-              order: 1,
-              validation_rules: field.validation || {},
-            })) || [],
-          history: {
-            versions: [],
-            currentVersion: formData.currentVersion?.versionNumber || 1,
-            maxVersions: 10,
-          },
-          settings: {
-            theme: {
-              primary_color:
-                formData.schema?.settings?.theme?.primaryColor || "#3B82F6",
-              background_color:
-                formData.schema?.settings?.theme?.backgroundColor || "#FFFFFF",
-              text_color: "#1F2937",
-            },
-            success_message:
-              formData.schema?.settings?.successMessage ||
-              "Merci pour votre soumission !",
-            notifications: {
-              email: !!formData.schema?.settings?.notifications?.email,
-              webhook: formData.schema?.settings?.notifications?.webhook,
-            },
-          },
-        };
+        const adaptedForm = adaptFormFromAPI(response.data, user?.id);
         setForm(adaptedForm);
 
         // Récupérer la version actuelle du formulaire
@@ -96,70 +40,19 @@ export function FormSubmissions() {
           const latestVersion = versionResponse.data.reduce((latest, current) =>
             current.versionNumber > latest.versionNumber ? current : latest
           );
-          // Adapter la version vers le format UI
-          const adaptedVersion: IFormVersion = {
-            id: latestVersion.id,
-            form_id: formData.id,
-            version_number: latestVersion.versionNumber,
-            schema: {
-              title: formData.title,
-              description: formData.description,
-              fields: latestVersion.schema.fields.map((field) => ({
-                id: field.id,
-                form_version_id: latestVersion.id,
-                label: field.label,
-                type: field.type as
-                  | "text"
-                  | "email"
-                  | "date"
-                  | "select"
-                  | "checkbox"
-                  | "radio"
-                  | "textarea"
-                  | "number"
-                  | "file"
-                  | "url",
-                is_required: field.required,
-                placeholder: field.placeholder,
-                options: field.placeholder
-                  ? { placeholder: field.placeholder }
-                  : {},
-                position: 1,
-                order: 1,
-                validation_rules: field.validation || {},
-              })),
-              settings: {
-                theme: {
-                  primary_color:
-                    latestVersion.schema.settings.theme?.primaryColor ||
-                    "#3B82F6",
-                  background_color:
-                    latestVersion.schema.settings.theme?.backgroundColor ||
-                    "#FFFFFF",
-                  text_color: "#1F2937",
-                },
-                success_message:
-                  latestVersion.schema.settings.successMessage ||
-                  "Merci pour votre soumission !",
-                notifications: {
-                  email: !!latestVersion.schema.settings.notifications?.email,
-                  webhook: latestVersion.schema.settings.notifications?.webhook,
-                },
-              },
-              status: formData.status.toLowerCase() as
-                | "draft"
-                | "published"
-                | "disabled",
-            },
-            created_at: latestVersion.createdAt,
-          };
+          // Adapter la version vers le format UI en utilisant l'adaptateur centralisé
+          const adaptedVersion = adaptVersionFromAPIForHooks(latestVersion);
+          adaptedVersion.form_id = adaptedForm.id;
+          adaptedVersion.schema.title = adaptedForm.title;
+          adaptedVersion.schema.description = adaptedForm.description;
+          adaptedVersion.schema.status = adaptedForm.status;
           setFormVersion(adaptedVersion);
         }
       }
     } catch {
       console.error("Error fetching form");
     }
-  }, [id]);
+  }, [id, user?.id]);
 
   const fetchSubmissions = useCallback(async () => {
     try {
