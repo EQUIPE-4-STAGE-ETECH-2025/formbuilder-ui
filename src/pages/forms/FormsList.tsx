@@ -1,20 +1,18 @@
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, Edit, Eye, FileText, Plus, Search, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Dropdown } from "../../components/ui/Dropdown";
 import { Pagination } from "../../components/ui/Pagination";
 
-import { formsAPI } from "../../services/api.mock";
-import { IForm } from "../../types";
+import { useForms } from "../../hooks/useForms";
 
 export function FormsList() {
   const navigate = useNavigate();
-  const [forms, setForms] = useState<IForm[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { forms, loading } = useForms();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "draft" | "published" | "disabled"
@@ -22,23 +20,6 @@ export function FormsList() {
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
-
-  useEffect(() => {
-    fetchForms();
-  }, []);
-
-  const fetchForms = async () => {
-    try {
-      const response = await formsAPI.getAll();
-      if (response.success && response.data) {
-        setForms(response.data);
-      }
-    } catch {
-      console.error("Error fetching forms");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getStatusText = (status: string) => {
     switch (status) {

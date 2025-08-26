@@ -42,8 +42,13 @@ import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../../components/ui/Card";
 import { Dropdown } from "../../components/ui/Dropdown";
 import { Input } from "../../components/ui/Input";
+import { useForms } from "../../hooks/useForms";
 import { useToast } from "../../hooks/useToast";
-import { formsAPI } from "../../services/api.mock";
+import { formsService } from "../../services/api";
+import {
+  ICreateFormRequest,
+  IUpdateFormRequest,
+} from "../../services/api/forms/formsTypes";
 import { IForm, IFormField } from "../../types";
 
 // Composant DraggableField extrait pour éviter les re-rendus
@@ -204,6 +209,7 @@ export function FormBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { createForm, updateForm, publishForm, deleteForm } = useForms();
   const [form, setForm] = useState<IForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -225,9 +231,72 @@ export function FormBuilder() {
 
   const fetchForm = useCallback(async () => {
     try {
-      const response = await formsAPI.getById(id!);
+      const response = await formsService.getById(id!);
       if (response.success && response.data) {
-        setForm(response.data);
+        const formData = response.data;
+        // Adapter les données de l'API vers le format UI
+        const adaptedForm: IForm = {
+          id: formData.id,
+          user_id: "user-1",
+          title: formData.title,
+          description: formData.description,
+          status: formData.status.toLowerCase() as
+            | "draft"
+            | "published"
+            | "disabled",
+          published_at: formData.publishedAt || undefined,
+          created_at: formData.createdAt,
+          updated_at: formData.updatedAt,
+          submissionCount: formData.submissionsCount || 0,
+          version: formData.currentVersion?.versionNumber || 1,
+          fields:
+            formData.schema?.fields?.map((field) => ({
+              id: field.id,
+              form_version_id: formData.currentVersion?.id || "",
+              label: field.label,
+              type: field.type as
+                | "text"
+                | "email"
+                | "date"
+                | "select"
+                | "checkbox"
+                | "radio"
+                | "textarea"
+                | "number"
+                | "file"
+                | "url",
+              is_required: field.required,
+              placeholder: field.placeholder,
+              options: field.placeholder
+                ? { placeholder: field.placeholder }
+                : {},
+              position: 1,
+              order: 1,
+              validation_rules: field.validation || {},
+            })) || [],
+          history: {
+            versions: [],
+            currentVersion: formData.currentVersion?.versionNumber || 1,
+            maxVersions: 10,
+          },
+          settings: {
+            theme: {
+              primary_color:
+                formData.schema?.settings?.theme?.primaryColor || "#FACC15",
+              background_color:
+                formData.schema?.settings?.theme?.backgroundColor || "#020617",
+              text_color: "#ffffff",
+            },
+            success_message:
+              formData.schema?.settings?.successMessage ||
+              "Merci pour votre soumission !",
+            notifications: {
+              email: !!formData.schema?.settings?.notifications?.email,
+              webhook: formData.schema?.settings?.notifications?.webhook,
+            },
+          },
+        };
+        setForm(adaptedForm);
       }
     } catch {
       console.error("Error fetching form");
@@ -279,16 +348,76 @@ export function FormBuilder() {
     setSaving(true);
     try {
       if (form.id === "new") {
-        const response = await formsAPI.create(form);
-        if (response.success && response.data) {
-          setForm(response.data);
-          navigate(`/forms/${response.data.id}/edit`);
-        }
+        // Créer un nouveau formulaire
+        const createData: ICreateFormRequest = {
+          title: form.title,
+          description: form.description,
+          status: form.status.toUpperCase() as
+            | "DRAFT"
+            | "PUBLISHED"
+            | "ARCHIVED",
+          schema: {
+            fields: form.fields.map((field) => ({
+              id: field.id,
+              type: field.type,
+              label: field.label,
+              required: field.is_required,
+              placeholder: field.placeholder,
+              validation: field.validation_rules,
+            })),
+            settings: {
+              submitButtonText: "Envoyer",
+              successMessage: form.settings.success_message,
+              theme: {
+                primaryColor: form.settings.theme.primary_color,
+                backgroundColor: form.settings.theme.background_color,
+              },
+              notifications: {
+                email: form.settings.notifications.email
+                  ? "admin@example.com"
+                  : undefined,
+                webhook: form.settings.notifications.webhook,
+              },
+            },
+          },
+        };
+        await createForm(createData);
+        // Le hook createForm va gérer la navigation et les toasts
       } else {
-        const response = await formsAPI.update(form.id, form);
-        if (response.success && response.data) {
-          setForm(response.data);
-        }
+        // Mettre à jour un formulaire existant
+        const updateData: IUpdateFormRequest = {
+          title: form.title,
+          description: form.description,
+          status: form.status.toUpperCase() as
+            | "DRAFT"
+            | "PUBLISHED"
+            | "ARCHIVED",
+          schema: {
+            fields: form.fields.map((field) => ({
+              id: field.id,
+              type: field.type,
+              label: field.label,
+              required: field.is_required,
+              placeholder: field.placeholder,
+              validation: field.validation_rules,
+            })),
+            settings: {
+              submitButtonText: "Envoyer",
+              successMessage: form.settings.success_message,
+              theme: {
+                primaryColor: form.settings.theme.primary_color,
+                backgroundColor: form.settings.theme.background_color,
+              },
+              notifications: {
+                email: form.settings.notifications.email
+                  ? "admin@example.com"
+                  : undefined,
+                webhook: form.settings.notifications.webhook,
+              },
+            },
+          },
+        };
+        await updateForm(form.id, updateData);
       }
       addToast({
         type: "success",
@@ -311,16 +440,13 @@ export function FormBuilder() {
 
     setSaving(true);
     try {
-      const updatedForm = { ...form, status: "published" as const };
-      const response = await formsAPI.update(form.id, updatedForm);
-      if (response.success && response.data) {
-        setForm(response.data);
-        addToast({
-          type: "success",
-          title: "Formulaire publié",
-          message: "Votre formulaire est maintenant accessible au public",
-        });
-      }
+      await publishForm(form.id);
+      setForm({ ...form, status: "published" });
+      addToast({
+        type: "success",
+        title: "Formulaire publié",
+        message: "Votre formulaire est maintenant accessible au public",
+      });
     } catch {
       addToast({
         type: "error",
@@ -345,15 +471,13 @@ export function FormBuilder() {
 
     setSaving(true);
     try {
-      const response = await formsAPI.delete(form.id);
-      if (response.success) {
-        addToast({
-          type: "success",
-          title: "Formulaire supprimé",
-          message: "Le formulaire a été supprimé avec succès",
-        });
-        navigate("/forms");
-      }
+      await deleteForm(form.id);
+      addToast({
+        type: "success",
+        title: "Formulaire supprimé",
+        message: "Le formulaire a été supprimé avec succès",
+      });
+      navigate("/forms");
     } catch {
       addToast({
         type: "error",

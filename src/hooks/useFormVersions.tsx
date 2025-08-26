@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
-import { formVersionsAPI } from "../services/api.mock";
-import { IFormVersion } from "../types";
+import { versionsService } from "../services/api";
+import {
+  ICreateVersionRequest,
+  IFormSchema,
+  IFormVersion,
+} from "../services/api/forms/formsTypes";
 
 interface IUseFormVersionsReturn {
   versions: IFormVersion[];
   loading: boolean;
   error: string | null;
-  createVersion: (
-    formId: string,
-    schema: IFormVersion["schema"]
-  ) => Promise<boolean>;
-  getVersion: (versionId: string) => Promise<IFormVersion | null>;
+  createVersion: (formId: string, schema: IFormSchema) => Promise<boolean>;
+  restoreVersion: (formId: string, versionNumber: number) => Promise<boolean>;
+  deleteVersion: (formId: string, versionNumber: number) => Promise<boolean>;
   refreshVersions: (formId: string) => Promise<void>;
 }
 
@@ -31,11 +33,11 @@ export const useFormVersions = (formId?: string): IUseFormVersionsReturn => {
     setError(null);
 
     try {
-      const response = await formVersionsAPI.getByFormId(id);
+      const response = await versionsService.getByFormId(id);
       if (response.success) {
         setVersions(response.data || []);
       } else {
-        setError(response.error || "Erreur lors du chargement des versions");
+        setError(response.message || "Erreur lors du chargement des versions");
       }
     } catch {
       setError("Erreur lors du chargement des versions");
@@ -46,18 +48,21 @@ export const useFormVersions = (formId?: string): IUseFormVersionsReturn => {
 
   const createVersion = async (
     id: string,
-    schema: IFormVersion["schema"]
+    schema: IFormSchema
   ): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await formVersionsAPI.create(id, schema);
+      const versionData: ICreateVersionRequest = { schema };
+      const response = await versionsService.create(id, versionData);
 
       if (response.success) {
         // Recharger les versions
         await loadVersions(id);
         return true;
       } else {
-        setError(response.error || "Erreur lors de la création de la version");
+        setError(
+          response.message || "Erreur lors de la création de la version"
+        );
         return false;
       }
     } catch {
@@ -68,17 +73,55 @@ export const useFormVersions = (formId?: string): IUseFormVersionsReturn => {
     }
   };
 
-  const getVersion = async (
-    versionId: string
-  ): Promise<IFormVersion | null> => {
+  const restoreVersion = async (
+    id: string,
+    versionNumber: number
+  ): Promise<boolean> => {
     try {
-      const response = await formVersionsAPI.getById(versionId);
-      if (response.success && response.data) {
-        return response.data;
+      setLoading(true);
+      const response = await versionsService.restore(id, versionNumber);
+
+      if (response.success) {
+        // Recharger les versions
+        await loadVersions(id);
+        return true;
+      } else {
+        setError(
+          response.message || "Erreur lors de la restauration de la version"
+        );
+        return false;
       }
-      return null;
     } catch {
-      return null;
+      setError("Erreur lors de la restauration de la version");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteVersion = async (
+    id: string,
+    versionNumber: number
+  ): Promise<boolean> => {
+    try {
+      setLoading(true);
+      const response = await versionsService.delete(id, versionNumber);
+
+      if (response.success) {
+        // Recharger les versions
+        await loadVersions(id);
+        return true;
+      } else {
+        setError(
+          response.message || "Erreur lors de la suppression de la version"
+        );
+        return false;
+      }
+    } catch {
+      setError("Erreur lors de la suppression de la version");
+      return false;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,7 +134,8 @@ export const useFormVersions = (formId?: string): IUseFormVersionsReturn => {
     loading,
     error,
     createVersion,
-    getVersion,
+    restoreVersion,
+    deleteVersion,
     refreshVersions,
   };
 };

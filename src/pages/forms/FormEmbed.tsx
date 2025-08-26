@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
 import { Dropdown } from "../../components/ui/Dropdown";
-import { formsAPI } from "../../services/api.mock";
+import { formsService } from "../../services/api";
 import { IForm, IFormField } from "../../types";
 
 export function FormEmbed() {
@@ -25,15 +25,79 @@ export function FormEmbed() {
   const fetchForm = useCallback(async () => {
     try {
       // In real app, would verify JWT token here
-      const response = await formsAPI.getById(id!);
+      const response = await formsService.getById(id!);
       if (response.success && response.data) {
-        if (response.data.status !== "published") {
+        const formData = response.data;
+        if (formData.status !== "PUBLISHED") {
           setError("Ce formulaire n'est pas disponible");
         } else {
-          setForm(response.data);
+          // Adapter les données de l'API vers le format UI
+          const adaptedForm: IForm = {
+            id: formData.id,
+            user_id: "user-1",
+            title: formData.title,
+            description: formData.description,
+            status: formData.status.toLowerCase() as
+              | "draft"
+              | "published"
+              | "disabled",
+            published_at: formData.publishedAt || undefined,
+            created_at: formData.createdAt,
+            updated_at: formData.updatedAt,
+            submissionCount: formData.submissionsCount || 0,
+            version: formData.currentVersion?.versionNumber || 1,
+            fields:
+              formData.schema?.fields?.map((field) => ({
+                id: field.id,
+                form_version_id: formData.currentVersion?.id || "",
+                label: field.label,
+                type: field.type as
+                  | "text"
+                  | "email"
+                  | "date"
+                  | "select"
+                  | "checkbox"
+                  | "radio"
+                  | "textarea"
+                  | "number"
+                  | "file"
+                  | "url",
+                is_required: field.required,
+                placeholder: field.placeholder,
+                options: field.placeholder
+                  ? { placeholder: field.placeholder }
+                  : {},
+                position: 1,
+                order: 1,
+                validation_rules: field.validation || {},
+              })) || [],
+            history: {
+              versions: [],
+              currentVersion: formData.currentVersion?.versionNumber || 1,
+              maxVersions: 10,
+            },
+            settings: {
+              theme: {
+                primary_color:
+                  formData.schema?.settings?.theme?.primaryColor || "#3B82F6",
+                background_color:
+                  formData.schema?.settings?.theme?.backgroundColor ||
+                  "#FFFFFF",
+                text_color: "#1F2937",
+              },
+              success_message:
+                formData.schema?.settings?.successMessage ||
+                "Merci pour votre soumission !",
+              notifications: {
+                email: !!formData.schema?.settings?.notifications?.email,
+                webhook: formData.schema?.settings?.notifications?.webhook,
+              },
+            },
+          };
+          setForm(adaptedForm);
         }
       } else {
-        setError("Formulaire non trouvé");
+        setError(response.message || "Formulaire non trouvé");
       }
     } catch {
       setError("Erreur lors du chargement du formulaire");
