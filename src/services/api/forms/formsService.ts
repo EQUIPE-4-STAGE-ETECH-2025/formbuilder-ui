@@ -102,6 +102,61 @@ class FormsService {
   }
 
   /**
+   * Récupère un formulaire publié publiquement (sans authentification)
+   * FORMS-007a
+   */
+  async getPublicById(id: string): Promise<IFormResponse> {
+    try {
+      const response = await apiClient.get<IFormResponse>(
+        `/api/public/forms/${id}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error(
+        `Erreur lors de la récupération publique du formulaire ${id}:`,
+        error
+      );
+
+      if (
+        (
+          error as {
+            response?: { status?: number; data?: { message?: string } };
+          }
+        ).response?.status === 404
+      ) {
+        return {
+          success: false,
+          message: "Formulaire non trouvé",
+        };
+      }
+
+      if (
+        (
+          error as {
+            response?: { status?: number; data?: { message?: string } };
+          }
+        ).response?.status === 403
+      ) {
+        return {
+          success: false,
+          message: "Formulaire non publié ou non disponible publiquement",
+        };
+      }
+
+      return {
+        success: false,
+        message:
+          (
+            error as {
+              response?: { status?: number; data?: { message?: string } };
+            }
+          ).response?.data?.message ||
+          "Erreur lors de la récupération du formulaire",
+      };
+    }
+  }
+
+  /**
    * Crée un nouveau formulaire
    * FORMS-003
    */
@@ -353,8 +408,8 @@ class FormsService {
 
       const queryString = queryParams.toString();
       const url = queryString
-        ? `${this.basePath}/${id}/embed?${queryString}`
-        : `${this.basePath}/${id}/embed`;
+        ? `/api/public/forms/${id}/embed?${queryString}`
+        : `/api/public/forms/${id}/embed`;
 
       const response = await apiClient.get<IEmbedResponse>(url);
       return response.data;

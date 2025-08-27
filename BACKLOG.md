@@ -164,7 +164,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
   - Mise à jour de `published_at`
   - Mettre à jour `src/pages/forms/FormBuilder.tsx` pour utiliser le nouveau service
 
-- [x] **FORMS-007** : Implémenter l'API de génération du code iframe (`GET /api/forms/:id/embed`)
+- [x] **FORMS-007** : Implémenter l'API de génération du code iframe (`GET /api/public/forms/:id/embed`)
   - Génération du code HTML avec token JWT
   - Paramètres de personnalisation (couleurs, messages)
   - Validation des permissions

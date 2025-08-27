@@ -1,6 +1,6 @@
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
 import { Dropdown } from "../../components/ui/Dropdown";
@@ -11,7 +11,6 @@ import { adaptFormFromAPI } from "../../utils/formAdapter";
 
 export function FormEmbed() {
   const { id } = useParams();
-  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [form, setForm] = useState<IForm | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,20 +22,15 @@ export function FormEmbed() {
   >({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const token = searchParams.get("token");
-
   const fetchForm = useCallback(async () => {
     try {
-      // In real app, would verify JWT token here
-      const response = await formsService.getById(id!);
+      // Utiliser l'endpoint public pour récupérer le formulaire
+      const response = await formsService.getPublicById(id!);
       if (response.success && response.data) {
         const formData = response.data;
-        if (formData.status !== "PUBLISHED") {
-          setError("Ce formulaire n'est pas disponible");
-        } else {
-          const adaptedForm = adaptFormFromAPI(formData, user?.id);
-          setForm(adaptedForm);
-        }
+        // L'endpoint public ne retourne que les formulaires PUBLISHED
+        const adaptedForm = adaptFormFromAPI(formData, user?.id);
+        setForm(adaptedForm);
       } else {
         setError(response.message || "Formulaire non trouvé");
       }
@@ -48,13 +42,13 @@ export function FormEmbed() {
   }, [id, user?.id]);
 
   useEffect(() => {
-    if (id && token) {
+    if (id) {
       fetchForm();
     } else {
-      setError("Paramètres manquants");
+      setError("ID du formulaire manquant");
       setLoading(false);
     }
-  }, [id, token, fetchForm]);
+  }, [id, fetchForm]);
 
   const validateField = (
     field: IFormField,

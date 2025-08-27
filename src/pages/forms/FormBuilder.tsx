@@ -286,6 +286,33 @@ export function FormBuilder() {
   const handleSave = async () => {
     if (!form) return;
 
+    // Validation côté client selon le contrat API
+    if (
+      !form.title ||
+      form.title.trim().length < 3 ||
+      form.title.trim().length > 255
+    ) {
+      addToast({
+        type: "error",
+        title: "Erreur de validation",
+        message: "Le titre doit contenir entre 3 et 255 caractères",
+      });
+      return;
+    }
+
+    if (
+      !form.description ||
+      form.description.trim().length < 10 ||
+      form.description.trim().length > 1000
+    ) {
+      addToast({
+        type: "error",
+        title: "Erreur de validation",
+        message: "La description doit contenir entre 10 et 1000 caractères",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       if (form.id === "new") {
@@ -304,7 +331,14 @@ export function FormBuilder() {
               label: field.label,
               required: field.is_required,
               placeholder: field.placeholder,
-              validation: field.validation_rules,
+              validation: {
+                ...field.validation_rules,
+                // Convertir les options pour les champs select/radio
+                options:
+                  field.type === "select" || field.type === "radio"
+                    ? field.options?.choices
+                    : undefined,
+              },
             })),
             settings: {
               submitButtonText: "Envoyer",
@@ -340,7 +374,14 @@ export function FormBuilder() {
               label: field.label,
               required: field.is_required,
               placeholder: field.placeholder,
-              validation: field.validation_rules,
+              validation: {
+                ...field.validation_rules,
+                // Convertir les options pour les champs select/radio
+                options:
+                  field.type === "select" || field.type === "radio"
+                    ? field.options?.choices
+                    : undefined,
+              },
             })),
             settings: {
               submitButtonText: "Envoyer",
