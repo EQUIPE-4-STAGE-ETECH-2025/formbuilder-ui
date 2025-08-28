@@ -31,7 +31,10 @@ export interface IFormField {
 }
 
 export interface IFormSettings {
-  submitButtonText: string;
+  // Structure réelle de l'API (différente du contrat documenté)
+  submitButton: {
+    text: string;
+  };
   successMessage?: string;
   errorMessage?: string;
   theme?: {
@@ -39,9 +42,9 @@ export interface IFormSettings {
     fontFamily?: string;
     backgroundColor?: string;
   };
-  notifications?: {
-    email?: string; // Email de notification
-    webhook?: string; // URL de webhook
+  emailNotification?: {
+    enabled: boolean;
+    recipients: string[];
   };
 }
 

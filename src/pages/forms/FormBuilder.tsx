@@ -330,9 +330,15 @@ export function FormBuilder() {
               type: field.type,
               label: field.label,
               required: field.is_required,
-              placeholder: field.placeholder,
+              // Inclure placeholder même si vide (requis par l'API)
+              placeholder: field.placeholder || "",
               validation: {
-                ...field.validation_rules,
+                // Mapper les propriétés frontend vers API selon le contrat
+                minLength: field.validation_rules.min_length,
+                maxLength: field.validation_rules.max_length,
+                min: field.validation_rules.min_value,
+                max: field.validation_rules.max_value,
+                pattern: field.validation_rules.pattern,
                 // Convertir les options pour les champs select/radio
                 options:
                   field.type === "select" || field.type === "radio"
@@ -341,23 +347,25 @@ export function FormBuilder() {
               },
             })),
             settings: {
-              submitButtonText: "Envoyer",
+              // Structure réelle attendue par l'API (différente du contrat documenté)
+              submitButton: {
+                text: "Envoyer",
+              },
               successMessage: form.settings.success_message,
               theme: {
                 primaryColor: form.settings.theme.primary_color,
-                backgroundColor: form.settings.theme.background_color,
               },
-              notifications: {
-                email: form.settings.notifications.email
-                  ? "admin@example.com"
-                  : undefined,
-                webhook: form.settings.notifications.webhook,
+              emailNotification: {
+                enabled: form.settings.notifications.email ? true : false,
+                recipients: form.settings.notifications.email
+                  ? ["admin@example.com"]
+                  : [],
               },
             },
           },
         };
         await createForm(createData);
-        // Le hook createForm va gérer la navigation et les toasts
+        navigate("/forms");
       } else {
         // Mettre à jour un formulaire existant
         const updateData: IUpdateFormRequest = {
@@ -373,9 +381,15 @@ export function FormBuilder() {
               type: field.type,
               label: field.label,
               required: field.is_required,
-              placeholder: field.placeholder,
+              // Inclure placeholder même si vide (requis par l'API)
+              placeholder: field.placeholder || "",
               validation: {
-                ...field.validation_rules,
+                // Mapper les propriétés frontend vers API selon le contrat
+                minLength: field.validation_rules.min_length,
+                maxLength: field.validation_rules.max_length,
+                min: field.validation_rules.min_value,
+                max: field.validation_rules.max_value,
+                pattern: field.validation_rules.pattern,
                 // Convertir les options pour les champs select/radio
                 options:
                   field.type === "select" || field.type === "radio"
@@ -384,17 +398,19 @@ export function FormBuilder() {
               },
             })),
             settings: {
-              submitButtonText: "Envoyer",
+              // Structure réelle attendue par l'API (différente du contrat documenté)
+              submitButton: {
+                text: "Envoyer",
+              },
               successMessage: form.settings.success_message,
               theme: {
                 primaryColor: form.settings.theme.primary_color,
-                backgroundColor: form.settings.theme.background_color,
               },
-              notifications: {
-                email: form.settings.notifications.email
-                  ? "admin@example.com"
-                  : undefined,
-                webhook: form.settings.notifications.webhook,
+              emailNotification: {
+                enabled: form.settings.notifications.email ? true : false,
+                recipients: form.settings.notifications.email
+                  ? ["admin@example.com"]
+                  : [],
               },
             },
           },
@@ -439,6 +455,17 @@ export function FormBuilder() {
       setSaving(false);
     }
   };
+
+  // Rediriger vers l'onglet "build" si l'onglet actif n'est plus disponible
+  useEffect(() => {
+    if (
+      form &&
+      form.status === "draft" &&
+      (activeTab === "embed" || activeTab === "history")
+    ) {
+      setActiveTab("build");
+    }
+  }, [form, form?.status, activeTab]);
 
   const handleDelete = async () => {
     if (!form || form.id === "new") return;
@@ -903,7 +930,7 @@ export function FormBuilder() {
             <Save className="h-4 w-4 mr-2" />
             Sauvegarder
           </Button>
-          {form.id !== "new" && (
+          {form.id !== "new" && form.status !== "draft" && (
             <Button variant="accent" onClick={handleDelete} loading={saving}>
               <Trash2 className="h-4 w-4 mr-2" />
               Supprimer
@@ -990,7 +1017,7 @@ export function FormBuilder() {
             <Eye className="h-4 w-4" />
             Prévisualisation
           </button>
-          {form.id !== "new" && (
+          {form.id !== "new" && form.status !== "draft" && (
             <button
               onClick={() => setActiveTab("embed")}
               className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ease-out ${
@@ -1003,7 +1030,7 @@ export function FormBuilder() {
               Intégration
             </button>
           )}
-          {form.id !== "new" && (
+          {form.id !== "new" && form.status !== "draft" && (
             <button
               onClick={() => setActiveTab("history")}
               className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ease-out ${

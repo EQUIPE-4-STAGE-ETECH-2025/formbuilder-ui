@@ -1,4 +1,12 @@
-import { ChevronDown, LogOut, Menu, Settings, User, X } from "lucide-react";
+import {
+  ChevronDown,
+  LogOut,
+  Menu,
+  Search,
+  Settings,
+  User,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
@@ -78,7 +86,12 @@ export function Header() {
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            {/* Search Icon */}
+            <button className="p-2 text-surface-400 hover:text-text-100 hover:bg-surface-800 rounded-xl transition-all duration-200 focus-ring">
+              <Search className="h-5 w-5" />
+            </button>
+
             {/* Language Selector */}
             <div className="relative">
               <button
@@ -89,7 +102,6 @@ export function Header() {
                 className="flex items-center space-x-2 px-3 py-2 text-surface-400 hover:text-text-100 hover:bg-surface-800 rounded-xl transition-all duration-200 focus-ring"
               >
                 <span className="fi fi-fr w-5 h-4"></span>
-                <span className="text-sm font-medium">Français</span>
                 <ChevronDown
                   className={`h-4 w-4 transition-transform duration-200 ${
                     isLanguageMenuOpen ? "rotate-180" : ""

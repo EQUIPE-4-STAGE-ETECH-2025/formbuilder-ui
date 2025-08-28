@@ -57,20 +57,27 @@ export const useForms = (): IUseFormsReturn => {
   }, [fetchForms]);
 
   const createForm = async (formData: ICreateFormRequest): Promise<void> => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      setError(null);
       const response = await formsService.create(formData);
 
-      if (response.success && response.data) {
-        await fetchForms(); // Rafraîchir la liste complète
-      } else {
-        setError(
-          response.message || "Erreur lors de la création du formulaire"
-        );
+      if (!response.success) {
+        const errorMessage =
+          response.message || "Erreur lors de la création du formulaire";
+        setError(errorMessage);
+        throw new Error(errorMessage);
       }
-    } catch {
-      setError("Erreur lors de la création du formulaire");
+    } catch (error) {
+      if (
+        !(error instanceof Error) ||
+        !error.message.includes("Erreur lors de la création")
+      ) {
+        setError("Erreur lors de la création du formulaire");
+        throw new Error("Erreur lors de la création du formulaire");
+      }
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -85,9 +92,7 @@ export const useForms = (): IUseFormsReturn => {
       setError(null);
       const response = await formsService.update(id, formData);
 
-      if (response.success && response.data) {
-        await fetchForms(); // Rafraîchir la liste complète
-      } else {
+      if (!response.success) {
         setError(
           response.message || "Erreur lors de la mise à jour du formulaire"
         );
@@ -129,9 +134,7 @@ export const useForms = (): IUseFormsReturn => {
       setError(null);
       const response = await formsService.publish(id);
 
-      if (response.success && response.data) {
-        await fetchForms(); // Rafraîchir la liste complète
-      } else {
+      if (!response.success) {
         setError(
           response.message || "Erreur lors de la publication du formulaire"
         );

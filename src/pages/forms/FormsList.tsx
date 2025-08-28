@@ -1,18 +1,30 @@
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Calendar, Edit, Eye, FileText, Plus, Search, Zap } from "lucide-react";
+import {
+  Calendar,
+  Edit,
+  Eye,
+  FileText,
+  Plus,
+  Search,
+  Trash2,
+  Zap,
+} from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Dropdown } from "../../components/ui/Dropdown";
+import { Modal } from "../../components/ui/Modal";
 import { Pagination } from "../../components/ui/Pagination";
 
 import { useForms } from "../../hooks/useForms";
+import { useToast } from "../../hooks/useToast";
 
 export function FormsList() {
   const navigate = useNavigate();
-  const { forms, loading } = useForms();
+  const { forms, loading, deleteForm } = useForms();
+  const { addToast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "draft" | "published" | "disabled"
@@ -20,6 +32,12 @@ export function FormsList() {
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedForm, setSelectedForm] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -88,6 +106,35 @@ export function FormsList() {
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
+  };
+
+  const handleDelete = (formId: string, formTitle: string) => {
+    setSelectedForm({ id: formId, title: formTitle });
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedForm) return;
+
+    try {
+      setDeleting(true);
+      await deleteForm(selectedForm.id);
+      addToast({
+        type: "success",
+        title: "Formulaire supprimé",
+        message: "Le formulaire a été supprimé avec succès",
+      });
+      setShowDeleteModal(false);
+      setSelectedForm(null);
+    } catch {
+      addToast({
+        type: "error",
+        title: "Erreur",
+        message: "Impossible de supprimer le formulaire",
+      });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (loading) {
@@ -251,16 +298,28 @@ export function FormsList() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Link to={`/forms/${form.id}/submissions`}>
+                    {form.status === "published" ? (
+                      <Link to={`/forms/${form.id}/submissions`}>
+                        <Button
+                          variant="secondary"
+                          size="md"
+                          className="shadow-none hover:shadow-none"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Voir les réponses
+                        </Button>
+                      </Link>
+                    ) : (
                       <Button
                         variant="secondary"
                         size="md"
                         className="shadow-none hover:shadow-none"
+                        onClick={() => handleDelete(form.id, form.title)}
                       >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Voir les réponses
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Supprimer
                       </Button>
-                    </Link>
+                    )}
                     <Button
                       variant="secondary"
                       size="md"
@@ -291,6 +350,47 @@ export function FormsList() {
           onItemsPerPageChange={handleItemsPerPageChange}
         />
       )}
+
+      {/* Modal de confirmation pour supprimer */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        size="lg"
+        title={
+          <div className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-accent-400" />
+            <span>Supprimer le formulaire</span>
+          </div>
+        }
+      >
+        {selectedForm && (
+          <div className="space-y-4">
+            <div>
+              <p className="text-base text-surface-300">
+                Êtes-vous sûr de vouloir supprimer le formulaire "
+                {selectedForm.title}" ? Cette action est irréversible et
+                supprimera complètement ce formulaire.
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button
+                variant="secondary"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={confirmDelete}
+                disabled={deleting}
+                variant="accent"
+              >
+                {deleting ? "Suppression..." : "Supprimer"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
