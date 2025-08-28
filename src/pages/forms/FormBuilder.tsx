@@ -42,6 +42,7 @@ import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../../components/ui/Card";
 import { Dropdown } from "../../components/ui/Dropdown";
 import { Input } from "../../components/ui/Input";
+import { Modal } from "../../components/ui/Modal";
 import { useAuth } from "../../hooks/useAuth";
 import { useForms } from "../../hooks/useForms";
 import { useToast } from "../../hooks/useToast";
@@ -219,6 +220,10 @@ export function FormBuilder() {
   const [activeTab, setActiveTab] = useState<
     "build" | "preview" | "embed" | "history"
   >("build");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   // Configuration des capteurs pour @dnd-kit
   const sensors = useSensors(
@@ -233,18 +238,54 @@ export function FormBuilder() {
   );
 
   const fetchForm = useCallback(async () => {
+    // Ne pas charger si le formulaire a été supprimé ou n'existe pas
+    if (isDeleted || notFound) return;
+
     try {
       const response = await formsService.getById(id!);
       if (response.success && response.data) {
         const adaptedForm = adaptFormFromAPI(response.data, user?.id);
         setForm(adaptedForm);
+        setNotFound(false); // Reset si le formulaire est trouvé
+      } else {
+        // Formulaire non trouvé, marquer comme tel et rediriger
+        setNotFound(true);
+        addToast({
+          type: "error",
+          title: "Formulaire non trouvé",
+          message: "Ce formulaire n'existe pas ou a été supprimé",
+        });
+        // Rediriger vers la liste des formulaires après un délai
+        setTimeout(() => {
+          navigate("/forms", { replace: true });
+        }, 2000);
       }
-    } catch {
-      console.error("Error fetching form");
+    } catch (error: unknown) {
+      // Vérifier si c'est une erreur 404
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError?.response?.status === 404) {
+        setNotFound(true);
+        addToast({
+          type: "error",
+          title: "Formulaire non trouvé",
+          message: "Ce formulaire n'existe pas ou a été supprimé",
+        });
+        // Rediriger vers la liste des formulaires après un délai
+        setTimeout(() => {
+          navigate("/forms", { replace: true });
+        }, 2000);
+      } else {
+        // Autres erreurs
+        addToast({
+          type: "error",
+          title: "Erreur",
+          message: "Impossible de charger le formulaire",
+        });
+      }
     } finally {
       setLoading(false);
     }
-  }, [id, user?.id]);
+  }, [id, user?.id, addToast, isDeleted, notFound, navigate]);
 
   useEffect(() => {
     if (id && id !== "new") {
@@ -283,138 +324,117 @@ export function FormBuilder() {
     }
   }, [id, fetchForm]);
 
-  const handleSave = async () => {
-    if (!form) return;
-
-    // Validation côté client selon le contrat API
+  // Validation commune pour les formulaires
+  const validateForm = (formToValidate: IForm): boolean => {
     if (
-      !form.title ||
-      form.title.trim().length < 3 ||
-      form.title.trim().length > 255
+      !formToValidate.title ||
+      formToValidate.title.trim().length < 3 ||
+      formToValidate.title.trim().length > 255
     ) {
       addToast({
         type: "error",
         title: "Erreur de validation",
         message: "Le titre doit contenir entre 3 et 255 caractères",
       });
-      return;
+      return false;
     }
 
     if (
-      !form.description ||
-      form.description.trim().length < 10 ||
-      form.description.trim().length > 1000
+      !formToValidate.description ||
+      formToValidate.description.trim().length < 10 ||
+      formToValidate.description.trim().length > 1000
     ) {
       addToast({
         type: "error",
         title: "Erreur de validation",
         message: "La description doit contenir entre 10 et 1000 caractères",
       });
-      return;
+      return false;
     }
+
+    return true;
+  };
+
+  // Fonction utilitaire pour préparer les données du formulaire
+  const prepareFormData = (
+    formToPrepare: IForm,
+    status: "DRAFT" | "PUBLISHED" | "ARCHIVED"
+  ): ICreateFormRequest => {
+    return {
+      title: formToPrepare.title,
+      description: formToPrepare.description,
+      status,
+      schema: {
+        fields: formToPrepare.fields.map((field, index) => ({
+          id: field.id,
+          type: field.type,
+          label: field.label,
+          required: field.is_required,
+          // Inclure placeholder même si vide (requis par l'API)
+          placeholder: field.placeholder || "",
+          // Ajouter le champ position requis par l'API
+          position: index + 1,
+          // Convertir les options pour les champs select/radio selon le format attendu
+          ...(field.type === "select" || field.type === "radio"
+            ? {
+                options:
+                  field.options?.choices?.map((choice: string) => ({
+                    value: choice.toLowerCase().replace(/\s+/g, "_"),
+                    label: choice,
+                  })) || [],
+              }
+            : {}),
+          validation: {
+            // Mapper les propriétés frontend vers API selon le contrat
+            required: field.is_required,
+            minLength: field.validation_rules.min_length,
+            maxLength: field.validation_rules.max_length,
+            min: field.validation_rules.min_value,
+            max: field.validation_rules.max_value,
+            pattern: field.validation_rules.pattern,
+          },
+        })),
+        settings: {
+          // Structure réelle attendue par l'API (différente du contrat documenté)
+          submitButton: {
+            text: "Envoyer",
+          },
+          successMessage: formToPrepare.settings.success_message,
+          theme: {
+            primaryColor: formToPrepare.settings.theme.primary_color,
+          },
+          emailNotification: {
+            enabled: formToPrepare.settings.notifications.email ? true : false,
+            recipients: formToPrepare.settings.notifications.email
+              ? ["admin@example.com"]
+              : ["admin@example.com"], // L'API exige toujours un tableau non vide
+          },
+        },
+      },
+    };
+  };
+
+  const handleSave = async () => {
+    if (!form) return;
+
+    if (!validateForm(form)) return;
 
     setSaving(true);
     try {
       if (form.id === "new") {
         // Créer un nouveau formulaire
-        const createData: ICreateFormRequest = {
-          title: form.title,
-          description: form.description,
-          status: form.status.toUpperCase() as
-            | "DRAFT"
-            | "PUBLISHED"
-            | "ARCHIVED",
-          schema: {
-            fields: form.fields.map((field) => ({
-              id: field.id,
-              type: field.type,
-              label: field.label,
-              required: field.is_required,
-              // Inclure placeholder même si vide (requis par l'API)
-              placeholder: field.placeholder || "",
-              validation: {
-                // Mapper les propriétés frontend vers API selon le contrat
-                minLength: field.validation_rules.min_length,
-                maxLength: field.validation_rules.max_length,
-                min: field.validation_rules.min_value,
-                max: field.validation_rules.max_value,
-                pattern: field.validation_rules.pattern,
-                // Convertir les options pour les champs select/radio
-                options:
-                  field.type === "select" || field.type === "radio"
-                    ? field.options?.choices
-                    : undefined,
-              },
-            })),
-            settings: {
-              // Structure réelle attendue par l'API (différente du contrat documenté)
-              submitButton: {
-                text: "Envoyer",
-              },
-              successMessage: form.settings.success_message,
-              theme: {
-                primaryColor: form.settings.theme.primary_color,
-              },
-              emailNotification: {
-                enabled: form.settings.notifications.email ? true : false,
-                recipients: form.settings.notifications.email
-                  ? ["admin@example.com"]
-                  : [],
-              },
-            },
-          },
-        };
+        const createData = prepareFormData(
+          form,
+          form.status.toUpperCase() as "DRAFT" | "PUBLISHED" | "ARCHIVED"
+        );
         await createForm(createData);
         navigate("/forms");
       } else {
         // Mettre à jour un formulaire existant
-        const updateData: IUpdateFormRequest = {
-          title: form.title,
-          description: form.description,
-          status: form.status.toUpperCase() as
-            | "DRAFT"
-            | "PUBLISHED"
-            | "ARCHIVED",
-          schema: {
-            fields: form.fields.map((field) => ({
-              id: field.id,
-              type: field.type,
-              label: field.label,
-              required: field.is_required,
-              // Inclure placeholder même si vide (requis par l'API)
-              placeholder: field.placeholder || "",
-              validation: {
-                // Mapper les propriétés frontend vers API selon le contrat
-                minLength: field.validation_rules.min_length,
-                maxLength: field.validation_rules.max_length,
-                min: field.validation_rules.min_value,
-                max: field.validation_rules.max_value,
-                pattern: field.validation_rules.pattern,
-                // Convertir les options pour les champs select/radio
-                options:
-                  field.type === "select" || field.type === "radio"
-                    ? field.options?.choices
-                    : undefined,
-              },
-            })),
-            settings: {
-              // Structure réelle attendue par l'API (différente du contrat documenté)
-              submitButton: {
-                text: "Envoyer",
-              },
-              successMessage: form.settings.success_message,
-              theme: {
-                primaryColor: form.settings.theme.primary_color,
-              },
-              emailNotification: {
-                enabled: form.settings.notifications.email ? true : false,
-                recipients: form.settings.notifications.email
-                  ? ["admin@example.com"]
-                  : [],
-              },
-            },
-          },
-        };
+        const updateData: IUpdateFormRequest = prepareFormData(
+          form,
+          form.status.toUpperCase() as "DRAFT" | "PUBLISHED" | "ARCHIVED"
+        );
         await updateForm(form.id, updateData);
       }
       addToast({
@@ -436,15 +456,31 @@ export function FormBuilder() {
   const handlePublish = async () => {
     if (!form) return;
 
+    if (!validateForm(form)) return;
+
     setSaving(true);
     try {
-      await publishForm(form.id);
-      setForm({ ...form, status: "published" });
-      addToast({
-        type: "success",
-        title: "Formulaire publié",
-        message: "Votre formulaire est maintenant accessible au public",
-      });
+      // Si c'est un nouveau formulaire, le créer directement avec le statut PUBLISHED
+      if (form.id === "new") {
+        const createData = prepareFormData(form, "PUBLISHED");
+        await createForm(createData);
+        addToast({
+          type: "success",
+          title: "Formulaire créé et publié",
+          message: "Votre formulaire a été créé et publié avec succès",
+        });
+        navigate("/forms");
+        return;
+      } else {
+        // Pour un formulaire existant, le publier directement
+        await publishForm(form.id);
+        setForm({ ...form, status: "published" });
+        addToast({
+          type: "success",
+          title: "Formulaire publié",
+          message: "Votre formulaire est maintenant accessible au public",
+        });
+      }
     } catch {
       addToast({
         type: "error",
@@ -467,34 +503,34 @@ export function FormBuilder() {
     }
   }, [form, form?.status, activeTab]);
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    if (!form || form.id === "new") return;
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
     if (!form || form.id === "new") return;
 
-    if (
-      !window.confirm(
-        "Êtes-vous sûr de vouloir supprimer ce formulaire ? Cette action est irréversible."
-      )
-    ) {
-      return;
-    }
-
-    setSaving(true);
     try {
+      setDeleting(true);
+      setIsDeleted(true); // Marquer comme supprimé avant l'appel API
       await deleteForm(form.id);
       addToast({
         type: "success",
         title: "Formulaire supprimé",
         message: "Le formulaire a été supprimé avec succès",
       });
+      setShowDeleteModal(false);
       navigate("/forms");
     } catch {
+      setIsDeleted(false); // Remettre à false en cas d'erreur
       addToast({
         type: "error",
         title: "Erreur",
         message: "Impossible de supprimer le formulaire",
       });
     } finally {
-      setSaving(false);
+      setDeleting(false);
     }
   };
 
@@ -672,7 +708,7 @@ export function FormBuilder() {
                   value=""
                   options={
                     field.options?.choices?.map((choice: string) => ({
-                      value: choice,
+                      value: choice.toLowerCase().replace(/\s+/g, "_"),
                       label: choice,
                     })) || []
                   }
@@ -901,12 +937,25 @@ export function FormBuilder() {
     );
   }
 
-  if (!form) {
+  if (!form && !loading) {
     return (
       <div className="text-center py-12">
-        <p className="text-surface-500">Formulaire non trouvé</p>
+        <p className="text-surface-500">
+          {notFound
+            ? "Formulaire non trouvé ou supprimé"
+            : "Formulaire non trouvé"}
+        </p>
+        {notFound && (
+          <p className="text-surface-400 text-sm mt-2">
+            Redirection vers la liste des formulaires...
+          </p>
+        )}
       </div>
     );
+  }
+
+  if (!form) {
+    return null; // Ne devrait pas arriver avec les conditions ci-dessus
   }
 
   return (
@@ -931,7 +980,7 @@ export function FormBuilder() {
             Sauvegarder
           </Button>
           {form.id !== "new" && form.status !== "draft" && (
-            <Button variant="accent" onClick={handleDelete} loading={saving}>
+            <Button variant="accent" onClick={handleDelete} loading={deleting}>
               <Trash2 className="h-4 w-4 mr-2" />
               Supprimer
             </Button>
@@ -1208,6 +1257,44 @@ export function FormBuilder() {
           />
         </div>
       )}
+
+      {/* Modal de confirmation pour supprimer */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        size="lg"
+        title={
+          <div className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-accent-400" />
+            <span>Supprimer le formulaire</span>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="text-base text-surface-300">
+              Êtes-vous sûr de vouloir supprimer ce formulaire ? Cette action
+              est irréversible et supprimera complètement ce formulaire.
+            </p>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="secondary"
+              onClick={() => setShowDeleteModal(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              disabled={deleting}
+              variant="accent"
+            >
+              {deleting ? "Suppression..." : "Supprimer"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

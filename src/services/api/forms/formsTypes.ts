@@ -16,13 +16,19 @@ export interface IFormField {
   label: string;
   required: boolean;
   placeholder?: string;
+  position: number; // Requis par l'API selon le payload
+  // Options pour les champs select et radio selon le format attendu par l'API
+  options?: Array<{
+    value: string;
+    label: string;
+  }>;
   validation?: {
+    required?: boolean;
     minLength?: number;
     maxLength?: number;
     min?: number;
     max?: number;
     pattern?: string;
-    options?: string[]; // Pour select, checkbox, radio - selon le contrat API
   };
   conditional?: {
     field: string; // ID du champ condition

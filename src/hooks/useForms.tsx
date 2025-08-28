@@ -93,12 +93,20 @@ export const useForms = (): IUseFormsReturn => {
       const response = await formsService.update(id, formData);
 
       if (!response.success) {
-        setError(
-          response.message || "Erreur lors de la mise à jour du formulaire"
-        );
+        const errorMessage =
+          response.message || "Erreur lors de la mise à jour du formulaire";
+        setError(errorMessage);
+        throw new Error(errorMessage);
       }
-    } catch {
-      setError("Erreur lors de la mise à jour du formulaire");
+    } catch (error) {
+      if (
+        !(error instanceof Error) ||
+        !error.message.includes("Erreur lors de la mise à jour")
+      ) {
+        setError("Erreur lors de la mise à jour du formulaire");
+        throw new Error("Erreur lors de la mise à jour du formulaire");
+      }
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -135,12 +143,29 @@ export const useForms = (): IUseFormsReturn => {
       const response = await formsService.publish(id);
 
       if (!response.success) {
-        setError(
-          response.message || "Erreur lors de la publication du formulaire"
+        const errorMessage =
+          response.message || "Erreur lors de la publication du formulaire";
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      }
+
+      // Selon le contrat API, la réponse contient les données mises à jour du formulaire
+      // On devrait mettre à jour la liste des formulaires si elle est chargée
+      if (response.data) {
+        const adaptedForm = adaptFormFromAPI(response.data, user?.id);
+        setForms((prevForms) =>
+          prevForms.map((form) => (form.id === id ? adaptedForm : form))
         );
       }
-    } catch {
-      setError("Erreur lors de la publication du formulaire");
+    } catch (error) {
+      if (
+        !(error instanceof Error) ||
+        !error.message.includes("Erreur lors de la publication")
+      ) {
+        setError("Erreur lors de la publication du formulaire");
+        throw new Error("Erreur lors de la publication du formulaire");
+      }
+      throw error;
     } finally {
       setLoading(false);
     }

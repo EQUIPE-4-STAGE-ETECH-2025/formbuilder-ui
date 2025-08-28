@@ -35,19 +35,21 @@ const adaptFieldFromAPI = (
       | "tel",
     is_required: field.required,
     placeholder: field.placeholder,
-    // Correction : les options contiennent les choix pour select/radio/checkbox
-    options: field.validation?.options
+    // Correction : récupérer les options depuis field.options et les convertir au format frontend
+    options: field.options?.length
       ? {
-          choices: field.validation.options,
+          choices: field.options.map((option) => option.label),
           placeholder: field.placeholder,
         }
       : field.placeholder
       ? {
           placeholder: field.placeholder,
         }
-      : {},
-    position: 1,
-    order: 1,
+      : {
+          choices: [],
+        },
+    position: field.position || 1,
+    order: field.position || 1,
     validation_rules: field.validation || {},
   };
 };

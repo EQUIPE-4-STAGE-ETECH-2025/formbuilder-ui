@@ -367,9 +367,8 @@ export function FormsList() {
           <div className="space-y-4">
             <div>
               <p className="text-base text-surface-300">
-                Êtes-vous sûr de vouloir supprimer le formulaire "
-                {selectedForm.title}" ? Cette action est irréversible et
-                supprimera complètement ce formulaire.
+                Êtes-vous sûr de vouloir supprimer ce formulaire ? Cette action
+                est irréversible et supprimera complètement ce formulaire.
               </p>
             </div>
 
