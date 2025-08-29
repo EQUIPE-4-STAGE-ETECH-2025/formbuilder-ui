@@ -61,6 +61,24 @@ interface IDraggableFieldProps {
   onRemove: (fieldId: string) => void;
 }
 
+// Fonction utilitaire pour gérer les événements clavier du textarea des options
+const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const textarea = e.target as HTMLTextAreaElement;
+    const value = textarea.value;
+    const newValue = value + "\n";
+
+    textarea.value = newValue;
+    textarea.selectionStart = textarea.selectionEnd = newValue.length;
+    textarea.scrollTop = textarea.scrollHeight;
+
+    // Déclencher l'onChange pour mettre à jour l'état
+    const event = new Event("input", { bubbles: true });
+    textarea.dispatchEvent(event);
+  }
+};
+
 const DraggableField = ({
   field,
   onUpdate,
@@ -173,6 +191,7 @@ const DraggableField = ({
                         },
                       })
                     }
+                    onKeyDown={handleTextareaKeyDown}
                     placeholder={`Option 1\nOption 2\nOption 3`}
                     className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     rows={3}

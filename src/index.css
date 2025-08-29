@@ -81,6 +81,31 @@
   animation: dropSuccess 0.15s ease-in-out;
 }
 
+/* Masquer complètement la scrollbar pour tous les navigateurs */
+textarea {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE et Edge */
+}
+
+/* Masquer complètement la scrollbar pour WebKit (Chrome, Safari, Opera) */
+textarea::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Masquer la poignée de redimensionnement (petit carré blanc) */
+textarea::-webkit-resizer {
+  display: none !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Masquer complètement tous les éléments de scrollbar non désirés */
+textarea::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
 @layer base {
   * {
     font-family: "Inter", system-ui, sans-serif;
