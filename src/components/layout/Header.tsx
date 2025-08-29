@@ -68,8 +68,8 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-2">
+          {/* Desktop Navigation - Centered */}
+          <nav className="hidden md:flex space-x-2 absolute left-1/2 transform -translate-x-1/2">
             {navigation.map((item) => (
               <Link
                 key={item.name}
@@ -87,10 +87,15 @@ export function Header() {
 
           {/* Right side */}
           <div className="flex items-center space-x-2">
-            {/* Search Icon */}
-            <button className="p-2 text-surface-400 hover:text-text-100 hover:bg-surface-800 rounded-xl transition-all duration-200 focus-ring">
-              <Search className="h-5 w-5" />
-            </button>
+            {/* Search Field */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Rechercher"
+                className="w-36 pl-10 pr-4 py-2 text-sm bg-surface-800 border border-surface-700/50 rounded-xl text-text-100 placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 transition-all duration-200"
+              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-surface-400" />
+            </div>
 
             {/* Language Selector */}
             <div className="relative">
