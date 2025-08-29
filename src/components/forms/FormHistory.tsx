@@ -86,7 +86,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
         addToast({
           type: "success",
           title: "Version restaurée",
-          message: `La version ${selectedVersion.versionNumber} a été restaurée avec succès`,
+          message: `La version numéro ${selectedVersion.versionNumber} a été restaurée avec succès`,
         });
         setShowRestoreModal(false);
         setSelectedVersion(null);
@@ -123,15 +123,18 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
         addToast({
           type: "success",
           title: "Version supprimée",
-          message: `La version ${selectedVersion.versionNumber} a été supprimée`,
+          message: `La version numéro ${selectedVersion.versionNumber} a été supprimée`,
         });
         setShowDeleteModal(false);
         setSelectedVersion(null);
         fetchVersions(); // Recharger la liste
       } else {
+        const errorType = response.message?.includes("version active")
+          ? "warning"
+          : "error";
         addToast({
-          type: "error",
-          title: "Erreur",
+          type: errorType,
+          title: errorType === "warning" ? "Action impossible" : "Erreur",
           message: response.message || "Impossible de supprimer la version",
         });
       }
@@ -205,8 +208,15 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
                     </p>
                     <div className="flex items-center gap-6 text-sm text-surface-500">
                       <span>
-                        {version.schema.fields.length} champ
-                        {version.schema.fields.length !== 1 ? "s" : ""}
+                        {
+                          (version.schema?.fields || version.fields || [])
+                            .length
+                        }{" "}
+                        champ
+                        {(version.schema?.fields || version.fields || [])
+                          .length !== 1
+                          ? "s"
+                          : ""}
                       </span>
                       <span>
                         Créée{" "}
@@ -274,7 +284,9 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
         {selectedVersion && (
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium mb-2 text-text-100">Informations</h4>
+              <h4 className="font-medium mb-2 text-text-100">
+                Informations générales
+              </h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-surface-400">Version :</span>
@@ -283,40 +295,49 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-surface-400">ID :</span>
-                  <span className="text-text-100 font-mono text-xs">
-                    {selectedVersion.id}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-surface-400">Champs :</span>
+                  <span className="text-surface-400">Nombre de champs :</span>
                   <span className="text-text-100">
-                    {selectedVersion.schema.fields.length}
+                    {
+                      (
+                        selectedVersion.schema?.fields ||
+                        selectedVersion.fields ||
+                        []
+                      ).length
+                    }
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-surface-400">Créée le :</span>
                   <span className="text-text-100">
                     {new Date(selectedVersion.createdAt).toLocaleDateString(
-                      "fr-FR"
+                      "fr-FR",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
                     )}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-surface-400">ID :</span>
+                  <span className="text-text-100 font-mono text-xs">
+                    {selectedVersion.id}
                   </span>
                 </div>
               </div>
             </div>
 
             <div>
-              <h4 className="font-medium mb-2 text-text-100">Informations</h4>
-              <p className="text-sm text-surface-300 bg-surface-800 p-3 rounded-xl">
-                Cette version contient {selectedVersion.schema.fields.length}{" "}
-                champ{selectedVersion.schema.fields.length !== 1 ? "s" : ""}.
-              </p>
-            </div>
-
-            <div>
               <h4 className="font-medium mb-2 text-text-100">Champs</h4>
               <div className="space-y-2">
-                {selectedVersion.schema.fields.map((field) => (
+                {(
+                  selectedVersion.schema?.fields ||
+                  selectedVersion.fields ||
+                  []
+                ).map((field) => (
                   <div
                     key={field.id}
                     className="flex items-center justify-between p-2 bg-surface-800 rounded-lg"

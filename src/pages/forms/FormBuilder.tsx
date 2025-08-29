@@ -513,11 +513,7 @@ export function FormBuilder() {
 
   // Rediriger vers l'onglet "build" si l'onglet actif n'est plus disponible
   useEffect(() => {
-    if (
-      form &&
-      form.status === "draft" &&
-      (activeTab === "embed" || activeTab === "history")
-    ) {
+    if (form && form.status === "draft" && activeTab === "embed") {
       setActiveTab("build");
     }
   }, [form, form?.status, activeTab]);
@@ -1098,7 +1094,7 @@ export function FormBuilder() {
               Intégration
             </button>
           )}
-          {form.id !== "new" && form.status !== "draft" && (
+          {form.id !== "new" && (
             <button
               onClick={() => setActiveTab("history")}
               className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ease-out ${
