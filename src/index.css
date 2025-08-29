@@ -418,6 +418,20 @@ textarea::-webkit-scrollbar-corner {
     box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.2);
   }
 
+  /* Exception pour l'input de recherche du Header */
+  .header-search-input:focus {
+    border-color: #525252;
+    box-shadow: none;
+    outline: none;
+    outline-offset: 0;
+  }
+
+  /* Désactiver complètement tous les effets de focus pour l'input de recherche */
+  .header-search-input:focus-visible {
+    outline: none;
+    outline-offset: 0;
+  }
+
   /* Modern navigation styles - dark mode */
   .nav-link {
     @apply px-4 py-2 text-surface-400 hover:text-text-100 font-medium

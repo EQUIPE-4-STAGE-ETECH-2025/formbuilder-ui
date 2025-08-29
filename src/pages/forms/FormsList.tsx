@@ -313,7 +313,7 @@ export function FormsList() {
                       <Button
                         variant="secondary"
                         size="md"
-                        className="shadow-none hover:shadow-none"
+                        className="shadow-none hover:shadow-none text-yellow-400 hover:text-yellow-300"
                         onClick={() => handleDelete(form.id, form.title)}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -368,7 +368,8 @@ export function FormsList() {
             <div>
               <p className="text-base text-surface-300">
                 Êtes-vous sûr de vouloir supprimer ce formulaire ? Cette action
-                est irréversible et supprimera complètement ce formulaire.
+                est irréversible et supprimera complètement ce formulaire ainsi
+                que toutes les données associées.
               </p>
             </div>
 

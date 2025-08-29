@@ -204,16 +204,9 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
                       )}
                     </div>
                     <p className="text-surface-400 mb-4">
-                      Sauvegarde automatique de cette version du formulaire
+                      Cette version a été sauvegardée automatiquement
                     </p>
                     <div className="flex items-center gap-6 text-sm text-surface-500">
-                      <span>
-                        Créée{" "}
-                        {formatDistanceToNow(new Date(version.createdAt), {
-                          addSuffix: true,
-                          locale: fr,
-                        })}
-                      </span>
                       <span>
                         Contient{" "}
                         {
@@ -224,7 +217,15 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
                         {(version.schema?.fields || version.fields || [])
                           .length !== 1
                           ? "s"
-                          : ""}
+                          : ""}{" "}
+                        de saisie
+                      </span>
+                      <span>
+                        Créée{" "}
+                        {formatDistanceToNow(new Date(version.createdAt), {
+                          addSuffix: true,
+                          locale: fr,
+                        })}
                       </span>
                     </div>
                   </div>

@@ -234,8 +234,10 @@ export function FormBuilder() {
   const { user } = useAuth();
   const { createForm, updateForm, publishForm, deleteForm } = useForms();
   const [form, setForm] = useState<IForm | null>(null);
+  const [originalForm, setOriginalForm] = useState<IForm | null>(null); // Formulaire original pour comparaison
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "build" | "preview" | "embed" | "history"
   >("build");
@@ -265,6 +267,7 @@ export function FormBuilder() {
       if (response.success && response.data) {
         const adaptedForm = adaptFormFromAPI(response.data, user?.id);
         setForm(adaptedForm);
+        setOriginalForm(JSON.parse(JSON.stringify(adaptedForm))); // Copie profonde pour comparaison
         setNotFound(false); // Reset si le formulaire est trouvé
       } else {
         // Formulaire non trouvé, marquer comme tel et rediriger
@@ -311,12 +314,12 @@ export function FormBuilder() {
       fetchForm();
     } else {
       // Create new form
-      setForm({
+      const newForm: IForm = {
         id: "new",
         user_id: "user-1",
         title: "",
         description: "",
-        status: "draft",
+        status: "draft" as const,
         submissionCount: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -338,10 +341,86 @@ export function FormBuilder() {
             email: true,
           },
         },
-      });
+      };
+      setForm(newForm);
+      setOriginalForm(JSON.parse(JSON.stringify(newForm))); // Copie profonde pour comparaison
       setLoading(false);
     }
   }, [id, fetchForm]);
+
+  // Fonction pour détecter les changements dans le formulaire
+  const hasFormChanged = useCallback(
+    (currentForm: IForm, originalFormData: IForm | null): boolean => {
+      if (!originalFormData) return true; // Si pas d'original, considérer comme changé
+
+      // Comparer les propriétés principales
+      if (
+        currentForm.title !== originalFormData.title ||
+        currentForm.description !== originalFormData.description ||
+        currentForm.status !== originalFormData.status
+      ) {
+        return true;
+      }
+
+      // Comparer les champs
+      if (currentForm.fields.length !== originalFormData.fields.length) {
+        return true;
+      }
+
+      // Comparer chaque champ
+      for (let i = 0; i < currentForm.fields.length; i++) {
+        const currentField = currentForm.fields[i];
+        const originalField = originalFormData.fields[i];
+
+        if (
+          currentField.type !== originalField.type ||
+          currentField.label !== originalField.label ||
+          currentField.placeholder !== originalField.placeholder ||
+          currentField.is_required !== originalField.is_required ||
+          currentField.position !== originalField.position
+        ) {
+          return true;
+        }
+
+        // Comparer les options pour les champs select/radio
+        if (currentField.type === "select" || currentField.type === "radio") {
+          const currentChoices = currentField.options?.choices || [];
+          const originalChoices = originalField.options?.choices || [];
+
+          if (currentChoices.length !== originalChoices.length) {
+            return true;
+          }
+
+          for (let j = 0; j < currentChoices.length; j++) {
+            if (currentChoices[j] !== originalChoices[j]) {
+              return true;
+            }
+          }
+        }
+      }
+
+      // Comparer les paramètres
+      const currentSettings = currentForm.settings;
+      const originalSettings = originalFormData.settings;
+
+      if (
+        currentSettings.success_message !== originalSettings.success_message ||
+        currentSettings.theme.primary_color !==
+          originalSettings.theme.primary_color ||
+        currentSettings.theme.background_color !==
+          originalSettings.theme.background_color ||
+        currentSettings.theme.text_color !==
+          originalSettings.theme.text_color ||
+        currentSettings.notifications.email !==
+          originalSettings.notifications.email
+      ) {
+        return true;
+      }
+
+      return false;
+    },
+    []
+  );
 
   // Validation commune pour les formulaires
   const validateForm = (formToValidate: IForm): boolean => {
@@ -369,6 +448,44 @@ export function FormBuilder() {
         message: "La description doit contenir entre 10 et 1000 caractères",
       });
       return false;
+    }
+
+    // Validation des champs
+    for (const field of formToValidate.fields) {
+      // Validation des labels des champs
+      if (
+        !field.label ||
+        field.label.trim().length < 3 ||
+        field.label.trim().length > 255
+      ) {
+        addToast({
+          type: "error",
+          title: "Erreur de validation",
+          message: `Le label du champ ${
+            field.label || "sans nom"
+          } doit contenir entre 3 et 255 caractères`,
+        });
+        return false;
+      }
+
+      // Validation des champs avec options (select et radio)
+      if (field.type === "select" || field.type === "radio") {
+        const choices = field.options?.choices || [];
+        const validChoices = choices.filter(
+          (choice) => choice && choice.trim().length > 0
+        );
+
+        if (validChoices.length < 2) {
+          addToast({
+            type: "error",
+            title: "Erreur de validation",
+            message: `Le champ ${field.label} de type ${
+              field.type === "select" ? "liste déroulante" : "bouton radio"
+            } doit avoir au moins 2 options non vides`,
+          });
+          return false;
+        }
+      }
     }
 
     return true;
@@ -438,6 +555,17 @@ export function FormBuilder() {
 
     if (!validateForm(form)) return;
 
+    // Vérifier s'il y a des changements avant de sauvegarder
+    if (form.id !== "new" && !hasFormChanged(form, originalForm)) {
+      addToast({
+        type: "info",
+        title: "Aucune modification détectée",
+        message:
+          "Le formulaire n'a pas été modifié depuis la dernière sauvegarde",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       if (form.id === "new") {
@@ -455,6 +583,8 @@ export function FormBuilder() {
           form.status.toUpperCase() as "DRAFT" | "PUBLISHED" | "ARCHIVED"
         );
         await updateForm(form.id, updateData);
+        // Mettre à jour le formulaire original après une sauvegarde réussie
+        setOriginalForm(JSON.parse(JSON.stringify(form)));
       }
       addToast({
         type: "success",
@@ -477,7 +607,7 @@ export function FormBuilder() {
 
     if (!validateForm(form)) return;
 
-    setSaving(true);
+    setPublishing(true);
     try {
       // Si c'est un nouveau formulaire, le créer directement avec le statut PUBLISHED
       if (form.id === "new") {
@@ -507,7 +637,7 @@ export function FormBuilder() {
         message: "Impossible de publier le formulaire",
       });
     } finally {
-      setSaving(false);
+      setPublishing(false);
     }
   };
 
@@ -666,7 +796,7 @@ export function FormBuilder() {
     return () => {
       // Recharger le formulaire après restauration
       if (form && form.id !== "new") {
-        fetchForm();
+        fetchForm(); // Ceci va automatiquement mettre à jour originalForm aussi
       }
     };
   }, [form, fetchForm]);
@@ -1011,7 +1141,11 @@ export function FormBuilder() {
             </Button>
           )}
           {form.status === "draft" && (
-            <Button variant="accent" onClick={handlePublish} loading={saving}>
+            <Button
+              variant="accent"
+              onClick={handlePublish}
+              loading={publishing}
+            >
               <Send className="h-4 w-4 mr-2" />
               Publier
             </Button>
@@ -1124,12 +1258,14 @@ export function FormBuilder() {
       {activeTab === "build" && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 relative">
           {/* Loading overlay during save */}
-          {saving && (
+          {(saving || publishing) && (
             <div className="absolute inset-0 bg-surface-900/80 backdrop-blur-sm rounded-2xl z-10 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
                 <p className="text-accent-400 font-medium">
-                  Sauvegarde en cours...
+                  {publishing
+                    ? "Publication en cours..."
+                    : "Sauvegarde en cours..."}
                 </p>
                 <p className="text-surface-400 text-sm mt-1">
                   Veuillez patienter
@@ -1152,7 +1288,7 @@ export function FormBuilder() {
                   <button
                     key={fieldType.type}
                     onClick={() => addField(fieldType.type)}
-                    disabled={saving}
+                    disabled={saving || publishing}
                     className="w-full flex items-center gap-3 p-3 text-left text-surface-300 hover:bg-surface-800 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Icon className="h-4 w-4" />
@@ -1196,7 +1332,7 @@ export function FormBuilder() {
                           field={field}
                           onUpdate={updateField}
                           onRemove={removeField}
-                          disabled={saving}
+                          disabled={saving || publishing}
                         />
                       ))}
                     </SortableContext>
@@ -1211,12 +1347,14 @@ export function FormBuilder() {
       {activeTab === "preview" && (
         <div className="relative">
           {/* Loading overlay during save */}
-          {saving && (
+          {(saving || publishing) && (
             <div className="absolute inset-0 bg-surface-900/80 backdrop-blur-sm rounded-2xl z-10 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
                 <p className="text-accent-400 font-medium">
-                  Sauvegarde en cours...
+                  {publishing
+                    ? "Publication en cours..."
+                    : "Sauvegarde en cours..."}
                 </p>
                 <p className="text-surface-400 text-sm mt-1">
                   Veuillez patienter
@@ -1235,12 +1373,14 @@ export function FormBuilder() {
       {activeTab === "embed" && (
         <div className="relative">
           {/* Loading overlay during save */}
-          {saving && (
+          {(saving || publishing) && (
             <div className="absolute inset-0 bg-surface-900/80 backdrop-blur-sm rounded-2xl z-10 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
                 <p className="text-accent-400 font-medium">
-                  Sauvegarde en cours...
+                  {publishing
+                    ? "Publication en cours..."
+                    : "Sauvegarde en cours..."}
                 </p>
                 <p className="text-surface-400 text-sm mt-1">
                   Veuillez patienter
@@ -1256,12 +1396,14 @@ export function FormBuilder() {
       {activeTab === "history" && (
         <div className="relative">
           {/* Loading overlay during save */}
-          {saving && (
+          {(saving || publishing) && (
             <div className="absolute inset-0 bg-surface-900/80 backdrop-blur-sm rounded-2xl z-10 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
                 <p className="text-accent-400 font-medium">
-                  Sauvegarde en cours...
+                  {publishing
+                    ? "Publication en cours..."
+                    : "Sauvegarde en cours..."}
                 </p>
                 <p className="text-surface-400 text-sm mt-1">
                   Veuillez patienter
@@ -1294,7 +1436,8 @@ export function FormBuilder() {
           <div>
             <p className="text-base text-surface-300">
               Êtes-vous sûr de vouloir supprimer ce formulaire ? Cette action
-              est irréversible et supprimera complètement ce formulaire.
+              est irréversible et supprimera complètement ce formulaire ainsi
+              que toutes les données associées.
             </p>
           </div>
 
