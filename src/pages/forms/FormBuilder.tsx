@@ -35,7 +35,7 @@ import {
   Type,
   Wrench,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FormHistory } from "../../components/forms/FormHistory";
 import { Button } from "../../components/ui/Button";
@@ -661,6 +661,16 @@ export function FormBuilder() {
     }
   };
 
+  // Callback memoïzé pour la restauration de version
+  const handleVersionRestored = useMemo(() => {
+    return () => {
+      // Recharger le formulaire après restauration
+      if (form && form.id !== "new") {
+        fetchForm();
+      }
+    };
+  }, [form, fetchForm]);
+
   const renderFormPreview = () => {
     return (
       <Card className="max-w-2xl mx-auto">
@@ -1263,12 +1273,7 @@ export function FormBuilder() {
           <FormHistory
             formId={form.id}
             currentVersion={form.version}
-            onVersionRestored={() => {
-              // Recharger le formulaire après restauration
-              if (form.id !== "new") {
-                fetchForm();
-              }
-            }}
+            onVersionRestored={handleVersionRestored}
           />
         </div>
       )}
