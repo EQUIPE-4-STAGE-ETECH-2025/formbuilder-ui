@@ -40,7 +40,7 @@ export function EmailVerification() {
             setToastShown(true);
           }
         } else {
-          setStatus(res.error?.includes("expiré") ? "expired" : "error");
+          setStatus(res.message?.includes("expiré") ? "expired" : "error");
         }
       } catch {
         if (!cancelled) setStatus("error");
@@ -59,10 +59,18 @@ export function EmailVerification() {
   const resendVerification = async () => {
     setLoading(true);
     const res = await authService.resendVerification(email);
-    if (res.success) {
-      addToast({ type: "success", title: "Email envoyé", message: "Un nouveau lien de vérification a été envoyé." });
+    if (!('error' in res)) {
+      addToast({
+        type: "success",
+        title: "Email envoyé",
+        message: res.message || "Un nouveau lien de vérification a été envoyé."
+      });
     } else {
-      addToast({ type: "error", title: "Erreur", message: res.error });
+      addToast({
+        type: "error",
+        title: "Erreur",
+        message: res.error || "Impossible d'envoyer l'email."
+      });
     }
     setLoading(false);
   };
@@ -157,7 +165,7 @@ export function EmailVerification() {
               Renvoyer l'email de vérification
             </Button>
             <Link to="/register">
-              <Button variant="secondary" className="w-full">
+              <Button variant="secondary" className="w-full my-6">
                 Créer un nouveau compte
               </Button>
             </Link>

@@ -7,7 +7,6 @@ import { Input } from "../components/ui/Input";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { userService } from "../services/api/user/userService";
-import { useNavigate } from "react-router-dom";
 
 interface ProfileForm {
   firstName: string;
@@ -46,25 +45,25 @@ const AdminProfile = () => {
         firstName: formData.firstName,
         lastName: formData.lastName,
       });
-  
-      if (result.success) {
+
+      if (result.message) {
         addToast({
           type: "success",
           title: "Profil mis à jour",
-          message: "Vos informations ont été sauvegardées",
+          message: result.message,
         });
       } else {
         addToast({
           type: "error",
           title: "Erreur",
-          message: result.error || "Impossible de mettre à jour le profil",
+          message: result.errors || "Impossible de mettre à jour le profil",
         });
       }
     } finally {
       setLoading(false);
     }
   };
-  
+
 
   return (
     <div className="space-modern">
@@ -141,9 +140,6 @@ export function Profile() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const navigate = useNavigate();
-
-
 
   const {
     register: registerProfile,
@@ -181,17 +177,17 @@ export function Profile() {
         lastName: formData.lastName,
       });
 
-      if (result.success) {
+      if (result.message) {
         addToast({
           type: "success",
           title: "Profil mis à jour",
-          message: "Vos informations ont été sauvegardées",
+          message: result.message,
         });
       } else {
         addToast({
           type: "error",
           title: "Erreur",
-          message: result.error || "Impossible de mettre à jour le profil",
+          message: result.errors || "Impossible de mettre à jour le profil",
         });
       }
     } finally {
@@ -216,7 +212,7 @@ export function Profile() {
         addToast({
           type: "error",
           title: "Erreur",
-          message: result.error || "Impossible de modifier le mot de passe",
+          message: result.message || "Impossible de modifier le mot de passe",
         });
       }
     } finally {
@@ -228,6 +224,7 @@ export function Profile() {
     if (!user) return;
     try {
       const result = await userService.deleteUser(user.id);
+
       if (result.success) {
         addToast({
           type: "success",
@@ -235,19 +232,18 @@ export function Profile() {
           message: "Votre compte a été supprimé définitivement",
         });
         await logout();
-        navigate("/login");
       } else {
         addToast({
           type: "error",
           title: "Erreur",
-          message: result.error || "Impossible de supprimer le compte",
+          message: result.message || "Impossible de supprimer le compte",
         });
       }
     } finally {
       setShowDeleteConfirm(false);
     }
   };
-  
+
 
   return (
     <div className="space-modern">
