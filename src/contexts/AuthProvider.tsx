@@ -1,15 +1,26 @@
 import React, { ReactNode, useEffect, useState } from "react";
 import { ILoginResult, IUser } from "../types";
-import { AuthContext } from "./AuthContext";
+import { AuthContext, IAuthContext } from "./AuthContext";
 import { authService } from "../services/api/auth/authService";
+import {
+  ILoginRequest,
+  ILoginResponse,
+  IRegisterRequest,
+  IRegisterResponse,
+  IMeResponse,
+  ILogoutResponse,
+  IChangePasswordResponse,
+} from "../services/api/auth/authType";
 
 interface IAuthProviderProps {
   children: ReactNode;
 }
 
+const TOKEN_KEY = import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token";
+
 export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<IUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -17,57 +28,63 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
   }, []);
 
   const checkAuth = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const token = localStorage.getItem("auth_token");
-
+      const token = localStorage.getItem(TOKEN_KEY);
       if (token) {
-        const response = await authService.me();
+        const response: IMeResponse = await authService.me();
         if (response.success && response.data) {
           setUser(response.data);
         } else {
-          localStorage.removeItem("auth_token");
+          localStorage.removeItem(TOKEN_KEY);
         }
       }
     } catch {
-      console.error("Erreur lors de la vérification de l'authentification");
-      localStorage.removeItem("auth_token");
+      localStorage.removeItem(TOKEN_KEY);
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (email: string, password: string): Promise<ILoginResult> => {
-    try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      const response = await authService.login(email, password);
+    try {
+      const credentials: ILoginRequest = { email, password };
+      const response: ILoginResponse = await authService.login(credentials);
 
       if (response.success && response.data) {
         setUser(response.data.user);
-        localStorage.setItem("auth_token", response.data.token);
+        localStorage.setItem(TOKEN_KEY, response.data.token);
+        return { success: true, data: response.data };
       } else {
-        setError(response.error || "Erreur de connexion");
+        const err = response.message || "Erreur lors de la connexion";
+        setError(err);
+        return { success: false, error: err };
       }
-
-      return response;
     } catch {
-      const err = { success: false, error: "Erreur lors de la connexion" };
-      setError(err.error);
-      return err;
+      const err = "Erreur lors de la connexion";
+      setError(err);
+      return { success: false, error: err };
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<ILogoutResponse>  => {
+    setLoading(true);
     try {
-      setLoading(true);
-      await authService.logout();
+      const response: ILogoutResponse = await authService.logout();
+      return response;
+    } catch (error) {
+      return {
+        success: false,
+        message: (error as any)?.message || "Erreur lors de la déconnexion",
+      };
     } finally {
       setUser(null);
-      localStorage.removeItem("auth_token");
+      localStorage.removeItem(TOKEN_KEY);
       setLoading(false);
     }
   };
@@ -78,23 +95,15 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     email: string;
     password: string;
   }): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
+      const request: IRegisterRequest = { ...userData };
+      const response: IRegisterResponse = await authService.register(request);
+      if (response.message) return true;
 
-      const response = await authService.register({
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        email: userData.email,
-        password: userData.password,
-      });
-
-      if (response.success) {
-        return true;
-      } else {
-        setError(response.error || "Erreur lors de l'inscription");
-        return false;
-      }
+      setError(response.message || "Erreur lors de l'inscription");
+      return false;
     } catch {
       setError("Erreur lors de l'inscription");
       return false;
@@ -103,11 +112,20 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     }
   };
 
-  const clearError = () => {
-    setError(null);
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    setLoading(true);
+    try {
+      const response: IChangePasswordResponse = await authService.changePassword(currentPassword, newPassword);
+      if (!response.success) setError(response.message || "Erreur lors du changement de mot de passe");
+      return { success: response.success, message: response.message };
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const value = {
+  const clearError = () => setError(null);
+
+  const value: IAuthContext = {
     user,
     loading,
     error,
@@ -116,6 +134,7 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     logout,
     register,
     clearError,
+    changePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
