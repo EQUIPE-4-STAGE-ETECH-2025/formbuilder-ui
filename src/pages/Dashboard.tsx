@@ -21,56 +21,10 @@ import { useAuth } from "../hooks/useAuth";
 import { dashboardService } from "../services/api/dashboard/dashboardService";
 import { IDashboardStats } from "../services/api/dashboard/dashboardTypes";
 
-// Mock data for charts
-const submissionsData = [
-  { name: "Jan", Soumissions: 120 },
-  { name: "Fév", Soumissions: 190 },
-  { name: "Mar", Soumissions: 300 },
-  { name: "Avr", Soumissions: 250 },
-  { name: "Mai", Soumissions: 400 },
-  { name: "Jun", Soumissions: 350 },
-  { name: "Jul", Soumissions: 450 },
-];
-
-const formsStatusData = [
-  { name: "Publiés", value: 8 },
-  { name: "Brouillons", value: 3 },
-  { name: "Désactivés", value: 1 },
-];
-
-const topFormsData = [
-  { name: "Contact Lead", Soumissions: 245 },
-  { name: "Newsletter", Soumissions: 189 },
-  { name: "Satisfaction", Soumissions: 156 },
-  { name: "Support", Soumissions: 89 },
-];
-
 export function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState<IDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Données mockées pour les formulaires récents
-  const mockRecentForms = [
-    {
-      id: "form-1",
-      title: "Contact Lead Generation",
-      submissionCount: 245,
-      status: "published" as const,
-    },
-    {
-      id: "form-2",
-      title: "Inscription Newsletter",
-      submissionCount: 189,
-      status: "published" as const,
-    },
-    {
-      id: "form-3",
-      title: "Satisfaction Client",
-      submissionCount: 156,
-      status: "published" as const,
-    },
-  ];
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -95,6 +49,29 @@ export function Dashboard() {
     const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     return stats.submissionsPerMonth[key] || 0;
   })();
+
+  const submissionsData = Object.entries(stats?.submissionsPerMonth || {}).map(
+    ([month, count]) => ({
+      name: month,
+      Soumissions: count,
+    })
+  );
+  
+  const formsStatusData = Object.entries(stats?.formsStatusCount || {}).map(
+    ([status, count]) => ({
+      name: status,
+      value: count,
+    })
+  );
+  
+  const topFormsData = Object.entries(stats?.submissionsPerForm || {}).map(
+    ([formTitle, count]) => ({
+      name: formTitle,
+      Soumissions: count,
+    })
+  );
+
+  const recentSubmissions = stats?.recentSubmissions || [];
 
   const getQuotaPercentage = (current: number, max: number) => {
     return Math.round((current / max) * 100);
@@ -283,12 +260,12 @@ export function Dashboard() {
             </h3>
           </CardHeader>
           <CardContent>
-            {mockRecentForms.length > 0 ? (
+            {recentSubmissions.length > 0 ? (
               <div className="space-y-4">
-                {mockRecentForms.slice(0, 2).map((form) => (
+                {recentSubmissions.slice(0, 2).map((submission) => (
                   <Link
-                    key={form.id}
-                    to={`/forms/${form.id}/edit`}
+                    key={submission.id}
+                    to={`/forms/${submission.id}/edit`}
                     className="block"
                   >
                     <div className="flex items-center justify-between p-4 bg-transparent border border-accent-500/30 rounded-xl hover:border-accent-500/50 hover:bg-accent-500/5 transition-all duration-200 cursor-pointer">
@@ -298,13 +275,13 @@ export function Dashboard() {
                         </div>
                         <div>
                           <p className="text-base font-medium text-surface-400">
-                            {form.title}
+                            {submission.formTitle}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-accent-400">
-                          {form.submissionCount}
+                        {new Date(submission.submittedAt).toLocaleDateString()}
                         </p>
                         <p className="text-xs text-surface-500">soumissions</p>
                       </div>
