@@ -8,6 +8,12 @@ primary_region = 'jnb'
 
 [build]
   dockerfile = 'Dockerfile'
+  [build.args]
+    VITE_API_URL = { from_env = "VITE_API_URL" }
+    VITE_JWT_STORAGE_KEY = { from_env = "VITE_JWT_STORAGE_KEY" }
+    VITE_JWT_REFRESH_KEY = { from_env = "VITE_JWT_REFRESH_KEY" }
+    VITE_API_TIMEOUT = { from_env = "VITE_API_TIMEOUT" }
+    VITE_API_RETRY_ATTEMPTS = { from_env = "VITE_API_RETRY_ATTEMPTS" }
 
 [http_service]
   internal_port = 8080

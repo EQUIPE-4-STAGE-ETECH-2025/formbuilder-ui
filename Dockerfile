@@ -9,7 +9,14 @@ RUN npm install
 # Copier le reste des fichiers
 COPY . .
 
-# Build de l'app
+# Les variables d'environnement seront disponibles au build
+ARG VITE_API_URL
+ARG VITE_JWT_STORAGE_KEY
+ARG VITE_JWT_REFRESH_KEY
+ARG VITE_API_TIMEOUT
+ARG VITE_API_RETRY_ATTEMPTS
+
+# Build de l'app avec les variables d'environnement
 RUN npm run build
 
 # Étape 2 : nginx pour servir les fichiers statiques
