@@ -15,6 +15,7 @@ const PUBLIC_ENDPOINTS = [
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/refresh",
+  "/auth/verify-email", 
 ];
 
 
@@ -23,6 +24,7 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
   apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     // Ne pas ajouter le token pour login ou refresh
     if (PUBLIC_ENDPOINTS.some((url) => config.url?.includes(url))) {
+      delete config.headers?.Authorization; 
       return config;
     }
 
