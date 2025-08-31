@@ -40,7 +40,7 @@ export function ForgotPassword() {
         addToast({
           type: "error",
           title: "Erreur",
-          message: res.error || "Impossible d'envoyer l'email",
+          message: res.message || "Impossible d'envoyer l'email",
         });
       }
     } catch {

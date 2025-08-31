@@ -1,184 +1,138 @@
-import { ILoginResult, IRegisterResponse, IUser } from "../../../types";
+import { apiClient } from "../config/apiClient";
+import {
+  IChangePasswordResponse,
+  IForgotPasswordResponse,
+  ILoginRequest,
+  ILoginResponse,
+  ILogoutResponse,
+  IMeResponse,
+  IRegisterRequest,
+  IRegisterResponse,
+  IResendVerificationResponse,
+  IResetPasswordResponse,
+  IVerifyEmailResponse,
+} from "./authType";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const basePath = "/api/auth";
 
 export const authService = {
-  login: async (email: string, password: string): Promise<ILoginResult> => {
+  login: async (credentials: ILoginRequest): Promise<ILoginResponse> => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await apiClient.post<ILoginResponse>(
+        `${basePath}/login`,
+        credentials
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Erreur lors de la connexion:", error);
+      return {
+        success: false,
+        message:
+          (error as { response?: { data?: { error?: string } } })?.response
+            ?.data?.error || "Erreur de connexion",
+      };
+    }
+  },
 
-      const data = await response.json();
+  register: async (userData: IRegisterRequest): Promise<IRegisterResponse> => {
+    try {
+      const response = await apiClient.post<IRegisterResponse>(
+        `${basePath}/register`,
+        userData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Erreur lors de l'inscription:", error);
+      return {
+        success: false,
+        message:
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message || "Erreur lors de l'inscription",
+      };
+    }
+  },
 
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.error || "Erreur lors de la connexion",
-        };
-      }
+  me: async (): Promise<IMeResponse> => {
+    try {
+      const response = await apiClient.get<IMeResponse>(`${basePath}/me`);
+      return response.data;
+    } catch (error) {
+      console.error("Erreur lors de la récupération du profil:", error);
+      return {
+        success: false,
+        message: "Impossible de récupérer l'utilisateur connecté",
+      };
+    }
+  },
 
+  logout: async (): Promise<ILogoutResponse> => {
+    try {
+      const response = await apiClient.post<ILogoutResponse>(
+        `${basePath}/logout`
+      );
       return {
         success: true,
-        data: {
-          token: data.data.token,
-          user: data.data.user,
-        },
+        message: response.data.message,
       };
-    } catch {
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
       return {
         success: false,
-        error: "Impossible de se connecter. Vérifiez votre connexion.",
+        message: "Erreur lors de la déconnexion",
       };
     }
   },
 
-  register: async (userData: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-  }): Promise<IRegisterResponse> => {
+  verifyEmail: async (token: string): Promise<IVerifyEmailResponse> => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok)
-        return {
-          success: false,
-          error: data.error || "Erreur lors de l'inscription",
-        };
-
-      return { success: true, data: { user: data.user, token: data.token } };
-    } catch {
-      return {
-        success: false,
-        error: "Impossible de s'inscrire. Vérifiez votre connexion.",
-      };
-    }
-  },
-
-  me: async (): Promise<{ success: boolean; data?: IUser }> => {
-    const token = localStorage.getItem("auth_token");
-    if (!token) return { success: false };
-
-    try {
-      const response = await fetch(`${API_URL}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      if (!response.ok) return { success: false };
-      return { success: true, data };
-    } catch {
-      return { success: false };
-    }
-  },
-
-  logout: async (): Promise<{ success: boolean; error?: string }> => {
-    const token = localStorage.getItem("auth_token");
-    if (!token) return { success: false, error: "Token manquant" };
-
-    try {
-      const response = await fetch(`${API_URL}/api/auth/logout`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (!response.ok)
-        return {
-          success: false,
-          error: data.error || "Erreur lors de la déconnexion",
-        };
-      return { success: true };
-    } catch {
-      return {
-        success: false,
-        error: "Impossible de se déconnecter. Vérifiez votre connexion.",
-      };
-    }
-  },
-
-  verifyEmail: async (
-    token: string
-  ): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const response = await fetch(
-        `${API_URL}/api/auth/verify-email?token=${token}`
+      const response = await apiClient.get<IVerifyEmailResponse>(
+        `${basePath}/verify-email?token=${token}`
       );
-      const data = await response.json();
-      if (!response.ok)
-        return {
-          success: false,
-          error: data.error || "Lien invalide ou expiré",
-        };
-      return { success: true };
-    } catch {
+      return {
+        success: response.data.success,
+        message: response.data.message || "",
+      };
+    } catch (error) {
+      console.error("Erreur lors de la vérification d'email:", error);
       return {
         success: false,
-        error: "Impossible de vérifier l'email. Vérifiez votre connexion.",
+        message:
+          (error as { response?: { data?: { error?: string } } })?.response
+            ?.data?.error || "Lien invalide ou expiré",
       };
     }
   },
 
   resendVerification: async (
     email: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<IResendVerificationResponse> => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/resend-verification`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await response.json();
-      if (!response.ok)
-        return {
-          success: false,
-          error: data.error || "Erreur lors de l'envoi de l'email",
-        };
-      return { success: true };
-    } catch {
+      const response = await apiClient.post<IResendVerificationResponse>(
+        `${basePath}/resend-verification`,
+        { email }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Erreur lors du renvoi de l'email:", error);
       return {
         success: false,
-        error: "Impossible d'envoyer l'email. Vérifiez votre connexion.",
+        message: "Erreur lors de l'envoi de l'email",
       };
     }
   },
 
-  forgotPassword: async (
-    email: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  forgotPassword: async (email: string): Promise<IForgotPasswordResponse> => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.error || "Erreur lors de la demande de réinitialisation",
-        };
-      }
-
-      return { success: true };
-    } catch {
+      const response = await apiClient.post<IForgotPasswordResponse>(
+        `${basePath}/forgot-password`,
+        { email }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Erreur lors de la demande de reset password:", error);
       return {
         success: false,
-        error: "Impossible d'envoyer la demande. Vérifiez votre connexion.",
+        message: "Erreur lors de la demande de réinitialisation",
       };
     }
   },
@@ -186,30 +140,40 @@ export const authService = {
   resetPassword: async (
     token: string,
     newPassword: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<IResetPasswordResponse> => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error:
-            data.error || "Erreur lors de la réinitialisation du mot de passe",
-        };
-      }
-
-      return { success: true };
-    } catch {
+      const response = await apiClient.post<IResetPasswordResponse>(
+        `${basePath}/reset-password`,
+        { token, newPassword }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Erreur lors de la réinitialisation du mot de passe:",
+        error
+      );
       return {
         success: false,
-        error:
-          "Impossible de réinitialiser le mot de passe. Vérifiez votre connexion.",
+        message: "Erreur lors de la réinitialisation du mot de passe",
+      };
+    }
+  },
+
+  changePassword: async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<IChangePasswordResponse> => {
+    try {
+      const response = await apiClient.post<IChangePasswordResponse>(
+        `${basePath}/change-password`,
+        { currentPassword, newPassword }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Erreur lors du changement de mot de passe:", error);
+      return {
+        success: false,
+        message: "Erreur lors du changement de mot de passe",
       };
     }
   },

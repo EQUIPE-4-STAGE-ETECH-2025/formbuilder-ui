@@ -47,7 +47,7 @@ export function ResetPassword() {
       addToast({
         type: "error",
         title: "Erreur",
-        message: res.error || "Impossible de réinitialiser le mot de passe",
+        message: res.message || "Impossible de réinitialiser le mot de passe",
       });
     }
     setLoading(false);
@@ -66,7 +66,7 @@ export function ResetPassword() {
       addToast({
         type: "error",
         title: "Erreur",
-        message: res.error,
+        message: res.message,
       });
     }
     setLoading(false);

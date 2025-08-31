@@ -10,6 +10,8 @@ import {
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../hooks/useToast";
+
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -17,6 +19,7 @@ export function Header() {
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { user, logout } = useAuth();
+  const { addToast } = useToast();
   const location = useLocation();
 
   // Détection du scroll pour l'effet sticky
@@ -46,6 +49,25 @@ export function Header() {
 
   const isActive = (href: string) => location.pathname === href;
 
+  const handleLogout = async () => {
+    const response = await logout();
+
+    if (response.success) {
+      addToast({
+        type: "success",
+        title: "Déconnexion",
+        message: response.message || "Vous avez été déconnecté",
+      });
+    } else {
+      addToast({
+        type: "error",
+        title: "Erreur",
+        message: response.message || "Erreur lors de la déconnexion",
+      });
+    }
+
+    setIsUserMenuOpen(false);
+  };
   return (
     <header
       className={`sticky top-0 z-50 transition-all duration-200 ${
@@ -180,10 +202,7 @@ export function Header() {
                     </Link>
                     <hr className="my-2 border-surface-700" />
                     <button
-                      onClick={() => {
-                        logout();
-                        setIsUserMenuOpen(false);
-                      }}
+                      onClick={handleLogout}
                       className="flex items-center w-full px-4 py-3 text-sm text-yellow-400 hover:bg-yellow-900/20 rounded-xl transition-colors duration-200"
                     >
                       <LogOut className="h-4 w-4 mr-3" />
