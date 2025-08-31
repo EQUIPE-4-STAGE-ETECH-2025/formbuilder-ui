@@ -265,3 +265,28 @@ export interface IDashboardStats {
     storage_limit_mb: number;
   };
 }
+
+export interface IAdminStats {
+  totalUsers: number;
+  activeUsers: number;
+  totalForms: number;
+  totalSubmissions: number;
+  revenueThisMonth: number;
+  userGrowth: { name: string; utilisateurs: number; nouveaux: number }[];
+  revenue: { name: string; revenus: number }[];
+  planDistribution: { name: string; utilisateurs: number }[];
+}
+
+export interface IUserList {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  plan: string;
+  status: "active" | "suspended";
+  formsCount: number;
+  submissionsCount: number;
+  lastLoginAt: string;
+}
+
+
