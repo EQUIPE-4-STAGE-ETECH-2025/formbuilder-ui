@@ -18,8 +18,8 @@ import {
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../components/ui/Card";
 import { useAuth } from "../hooks/useAuth";
-import { dashboardAPI } from "../services/api.mock";
-import { IDashboardStats } from "../types";
+import { dashboardService } from "../services/api/dashboard/dashboardService";
+import { IDashboardStats } from "../services/api/dashboard/dashboardTypes";
 
 // Mock data for charts
 const submissionsData = [
@@ -75,7 +75,7 @@ export function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await dashboardAPI.getStats();
+        const response = await dashboardService.getStats();
         if (response.success && response.data) {
           setStats(response.data);
         }
@@ -88,6 +88,13 @@ export function Dashboard() {
 
     fetchStats();
   }, []);
+
+  const submissionsThisMonth = (() => {
+    if (!stats) return 0;
+    const now = new Date();
+    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    return stats.submissionsPerMonth[key] || 0;
+  })();
 
   const getQuotaPercentage = (current: number, max: number) => {
     return Math.round((current / max) * 100);
@@ -140,7 +147,7 @@ export function Dashboard() {
               <div>
                 <p className="text-sm text-surface-400">Total Formulaires</p>
                 <p className="text-3xl font-bold text-text-100">
-                  {stats?.total_forms || 0}
+                  {stats?.totalForms || 0}
                 </p>
               </div>
               <div className="w-14 h-14 bg-accent-900/20 rounded-2xl flex items-center justify-center">
@@ -156,7 +163,7 @@ export function Dashboard() {
               <div>
                 <p className="text-sm text-surface-400">Formulaires Publiés</p>
                 <p className="text-3xl font-bold text-text-100">
-                  {stats?.published_forms || 0}
+                  {stats?.publishedForms || 0}
                 </p>
               </div>
               <div className="w-14 h-14 bg-accent-900/20 rounded-2xl flex items-center justify-center">
@@ -172,7 +179,7 @@ export function Dashboard() {
               <div>
                 <p className="text-sm text-surface-400">Total Soumissions</p>
                 <p className="text-3xl font-bold text-text-100">
-                  {stats?.total_submissions || 0}
+                  {stats?.totalSubmissions || 0}
                 </p>
               </div>
               <div className="w-14 h-14 bg-accent-900/20 rounded-2xl flex items-center justify-center">
@@ -188,7 +195,7 @@ export function Dashboard() {
               <div>
                 <p className="text-sm text-surface-400">Ce Mois</p>
                 <p className="text-3xl font-bold text-text-100">
-                  {stats?.submissions_this_month || 0}
+                  {submissionsThisMonth}
                 </p>
               </div>
               <div className="w-14 h-14 bg-accent-900/20 rounded-2xl flex items-center justify-center">
