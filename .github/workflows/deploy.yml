@@ -66,17 +66,13 @@ jobs:
       - name: Installation des dépendances
         run: npm ci
 
-      # Étape 4: Build de l'application
-      - name: Build de l'application
-        run: npm run build
-
-      # Étape 5: Configuration de Fly.io
+      # Étape 4: Configuration de Fly.io
       - name: Configuration de Fly.io
         uses: superfly/flyctl-actions/setup-flyctl@master
 
-      # Étape 6: Déploiement sur Fly.io
+      # Étape 5: Déploiement sur Fly.io avec build args
       - name: Déploiement sur Fly.io
-        run: flyctl deploy --remote-only
+        run: flyctl deploy --remote-only --build-arg VITE_API_URL="https://formbuilder-api.fly.dev" --build-arg VITE_JWT_STORAGE_KEY="formbuilder_token" --build-arg VITE_JWT_REFRESH_KEY="formbuilder_refresh_token" --build-arg VITE_API_TIMEOUT="10000" --build-arg VITE_API_RETRY_ATTEMPTS="3"
         env:
           # Token d'authentification Fly.io (doit être configuré dans les secrets GitHub)
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
