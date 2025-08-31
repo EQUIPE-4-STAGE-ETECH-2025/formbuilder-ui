@@ -85,8 +85,10 @@ export const authService = {
 
   verifyEmail: async (token: string): Promise<IVerifyEmailResponse> => {
     try {
+      // Encoder le token pour éviter les problèmes avec les caractères spéciaux
+      const encodedToken = encodeURIComponent(token);
       const response = await apiClient.get<IVerifyEmailResponse>(
-        `${basePath}/verify-email?token=${token}`
+        `${basePath}/verify-email?token=${encodedToken}`
       );
       return {
         success: response.data.success,
@@ -94,12 +96,41 @@ export const authService = {
       };
     } catch (error) {
       console.error("Erreur lors de la vérification d'email:", error);
-      return {
-        success: false,
-        message:
-          (error as { response?: { data?: { error?: string } } })?.response
-            ?.data?.error || "Lien invalide ou expiré",
+
+      const axiosError = error as {
+        response?: { status?: number; data?: { error?: string } };
       };
+      const status = axiosError.response?.status;
+      const errorMessage = axiosError.response?.data?.error;
+
+      // Gestion spécifique des codes d'erreur améliorés
+      switch (status) {
+        case 409:
+          return {
+            success: false,
+            message: errorMessage || "Email déjà vérifié.",
+            error: "already_verified",
+          };
+        case 410:
+          return {
+            success: false,
+            message: errorMessage || "Token révoqué.",
+            error: "token_revoked",
+          };
+        case 404:
+          return {
+            success: false,
+            message: errorMessage || "Utilisateur introuvable.",
+            error: "user_not_found",
+          };
+        case 400:
+        default:
+          return {
+            success: false,
+            message: errorMessage || "Lien invalide ou expiré.",
+            error: "invalid_token",
+          };
+      }
     }
   },
 

@@ -1,5 +1,5 @@
-import { CheckCircle, Loader, Mail, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, CheckCircle, Loader, Mail, XCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
@@ -13,63 +13,81 @@ export function EmailVerification() {
   >("loading");
   const [loading, setLoading] = useState(false);
   const { addToast } = useToast();
-  const [toastShown, setToastShown] = useState(false);
+  const verificationAttempted = useRef(false);
 
   const token = searchParams.get("token");
   const email = searchParams.get("email") || "";
 
   useEffect(() => {
-    if (!token || toastShown) return;
-  
-    let cancelled = false;
-  
+    // Éviter la double exécution en React Strict Mode
+    if (!token || verificationAttempted.current) return;
+
+    // Marquer immédiatement que la vérification a été tentée
+    verificationAttempted.current = true;
+
     const verify = async () => {
       try {
         const res = await authService.verifyEmail(token);
-  
-        if (cancelled) return;
-  
+
         if (res.success) {
           setStatus("success");
-          if (!toastShown) {
-            addToast({
-              type: "success",
-              title: "Email vérifié",
-              message: "Votre compte est activé !",
-            });
-            setToastShown(true);
-          }
+          addToast({
+            type: "success",
+            title: "Email vérifié",
+            message: "Votre compte est activé !",
+          });
         } else {
-          setStatus(res.message?.includes("expiré") ? "expired" : "error");
+          // Gestion spécifique selon le type d'erreur
+          switch (res.error) {
+            case "already_verified":
+              setStatus("success");
+              addToast({
+                type: "info",
+                title: "Déjà vérifié",
+                message: "Votre email est déjà vérifié !",
+              });
+              break;
+            case "token_revoked":
+              setStatus("expired");
+              addToast({
+                type: "warning",
+                title: "Lien déjà utilisé",
+                message:
+                  "Ce lien a déjà été utilisé. Demandez un nouveau lien si nécessaire.",
+              });
+              break;
+            case "user_not_found":
+              setStatus("error");
+              break;
+            case "invalid_token":
+            default:
+              setStatus("expired");
+              break;
+          }
         }
-      } catch {
-        if (!cancelled) setStatus("error");
+      } catch (error) {
+        console.error("Erreur lors de la vérification:", error);
+        setStatus("error");
       }
     };
-  
-    verify();
-  
-    return () => {
-      cancelled = true;
-    };
-  }, [token, addToast, toastShown]);
-   
 
+    verify();
+  }, [token, addToast]);
 
   const resendVerification = async () => {
     setLoading(true);
     const res = await authService.resendVerification(email);
-    if (!('error' in res)) {
+    if (!("error" in res)) {
       addToast({
         type: "success",
         title: "Email envoyé",
-        message: res.message || "Un nouveau lien de vérification a été envoyé."
+        message: res.message || "Un nouveau lien de vérification a été envoyé.",
       });
     } else {
       addToast({
         type: "error",
         title: "Erreur",
-        message: res.error || "Impossible d'envoyer l'email."
+        message: res.error || "Impossible d'envoyer l'email.",
       });
     }
     setLoading(false);
@@ -145,7 +163,7 @@ export function EmailVerification() {
       case "success":
         return (
           <Link to="/login">
-            <Button className="w-full mt-2" size="lg" variant="accent">
+            <Button className="w-full mt-2 mb-4" size="lg" variant="accent">
               Se connecter
             </Button>
           </Link>
@@ -198,6 +216,7 @@ export function EmailVerification() {
                   to="/login"
                   className="text-sm text-accent-400 hover:text-accent-300 font-medium transition-colors duration-200"
                 >
+                  <ArrowLeft className="h-4 w-4 inline mr-1" />
                   Retour à la connexion
                 </Link>
               )}
