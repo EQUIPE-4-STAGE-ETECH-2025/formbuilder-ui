@@ -17,7 +17,6 @@ import { Card, CardContent, CardHeader } from "../../components/ui/Card";
 import { adminService } from "../../services/api/dashboard/adminService";
 import { IAdminStats } from "../../types";
 
-
 // 👇 Définition des interfaces des tableaux de stats
 interface IUserGrowth {
   name: string;
@@ -37,7 +36,6 @@ interface IPlanDistribution {
 
 export function AdminDashboard() {
   const [stats, setStats] = useState<IAdminStats | null>(null);
-
   const [userGrowthData, setUserGrowthData] = useState<IUserGrowth[]>([]);
   const [revenueData, setRevenueData] = useState<IRevenue[]>([]);
   const [planDistributionData, setPlanDistributionData] = useState<IPlanDistribution[]>([]);
@@ -46,9 +44,9 @@ export function AdminDashboard() {
     adminService.getAdminStats()
       .then((data) => {
         setStats(data);
-        setUserGrowthData(data.userGrowth);
-        setRevenueData(data.revenue);
-        setPlanDistributionData(data.planDistribution);
+        setUserGrowthData(data.userGrowth ?? []);
+        setRevenueData(data.revenue ?? []);
+        setPlanDistributionData(data.planDistribution ?? []);
       })
       .catch(console.error);
   }, []);
@@ -64,57 +62,65 @@ export function AdminDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mt-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-surface-400">Utilisateurs totaux</p>
-                <p className="text-2xl font-bold text-text-100">{stats.totalUsers}</p>
+                <p className="text-2xl font-bold text-text-100">{stats.totalUsers ?? 0}</p>
               </div>
               <Users className="h-8 w-8 text-accent-500" />
             </div>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-surface-400">Utilisateurs actifs</p>
-                <p className="text-2xl font-bold text-text-100">{stats.activeUsers}</p>
+                <p className="text-2xl font-bold text-text-100">{stats.activeUsers ?? 0}</p>
               </div>
               <Users className="h-8 w-8 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-surface-400">Formulaires totaux</p>
-                <p className="text-2xl font-bold text-text-100">{stats.totalForms}</p>
+                <p className="text-2xl font-bold text-text-100">{stats.totalForms ?? 0}</p>
               </div>
               <FileText className="h-8 w-8 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-surface-400">Soumissions totales</p>
-                <p className="text-2xl font-bold text-text-100">{stats.totalSubmissions.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-text-100">
+                  {(stats.totalSubmissions ?? 0).toLocaleString()}
+                </p>
               </div>
               <TrendingUp className="h-8 w-8 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
+
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-surface-400">Revenus ce mois</p>
-                <p className="text-2xl font-bold text-text-100">{stats.revenueThisMonth.toLocaleString()}€</p>
+                <p className="text-2xl font-bold text-text-100">
+                  {(stats.revenueThisMonth ?? 0).toLocaleString()}€
+                </p>
               </div>
               <TrendingUp className="h-8 w-8 text-yellow-500" />
             </div>
@@ -122,19 +128,22 @@ export function AdminDashboard() {
         </Card>
       </div>
 
+      {/* Graphiques */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <Card>
-          <CardHeader><h3 className="text-lg font-semibold text-text-100">Croissance des utilisateurs</h3></CardHeader>
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-text-100">Croissance des utilisateurs</h3>
+          </CardHeader>
           <CardContent>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={userGrowthData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#404040" strokeOpacity={0.3}/>
-                  <XAxis dataKey="name" stroke="#a3a3a3" fontSize={12} fontWeight={500} tickLine={false} axisLine={{ stroke: "#525252", strokeWidth: 1 }}/>
-                  <YAxis stroke="#a3a3a3" fontSize={12} fontWeight={500} tickLine={false} axisLine={{ stroke: "#525252", strokeWidth: 1 }} tickFormatter={(v) => v.toLocaleString()}/>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#404040" strokeOpacity={0.3} />
+                  <XAxis dataKey="name" stroke="#a3a3a3" fontSize={12} fontWeight={500} tickLine={false} axisLine={{ stroke: "#525252", strokeWidth: 1 }} />
+                  <YAxis stroke="#a3a3a3" fontSize={12} fontWeight={500} tickLine={false} axisLine={{ stroke: "#525252", strokeWidth: 1 }} tickFormatter={(v) => (v ?? 0).toLocaleString()} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="utilisateurs" stroke="#8b5cf6" strokeWidth={3}/>
-                  <Line type="monotone" dataKey="nouveaux" stroke="#10b981" strokeWidth={3}/>
+                  <Line type="monotone" dataKey="utilisateurs" stroke="#8b5cf6" strokeWidth={3} />
+                  <Line type="monotone" dataKey="nouveaux" stroke="#10b981" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -142,16 +151,18 @@ export function AdminDashboard() {
         </Card>
 
         <Card>
-          <CardHeader><h3 className="text-lg font-semibold text-text-100">Évolution des revenus</h3></CardHeader>
+          <CardHeader>
+            <h3 className="text-lg font-semibold text-text-100">Évolution des revenus</h3>
+          </CardHeader>
           <CardContent>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.3}/>
-                  <XAxis dataKey="name" stroke="#94a3b8"/>
-                  <YAxis stroke="#94a3b8" tickFormatter={(v) => `${v.toLocaleString()}€`}/>
-                  <Tooltip formatter={(value) => [`${value.toLocaleString()}€`, "Revenus"]}/>
-                  <Area type="monotone" dataKey="revenus" stroke="#10b981" fill="#10b981" fillOpacity={0.4}/>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.3} />
+                  <XAxis dataKey="name" stroke="#94a3b8" />
+                  <YAxis stroke="#94a3b8" tickFormatter={(v) => `${(v ?? 0).toLocaleString()}€`} />
+                  <Tooltip formatter={(value) => [`${(value ?? 0).toLocaleString()}€`, "Revenus"]} />
+                  <Area type="monotone" dataKey="revenus" stroke="#10b981" fill="#10b981" fillOpacity={0.4} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -160,16 +171,18 @@ export function AdminDashboard() {
       </div>
 
       <Card className="mt-6">
-        <CardHeader><h3 className="text-lg font-semibold text-text-100">Répartition des plans</h3></CardHeader>
+        <CardHeader>
+          <h3 className="text-lg font-semibold text-text-100">Répartition des plans</h3>
+        </CardHeader>
         <CardContent>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={planDistributionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#404040" strokeOpacity={0.3}/>
-                <XAxis dataKey="name" stroke="#a3a3a3"/>
-                <YAxis stroke="#a3a3a3" tickFormatter={(v) => v.toLocaleString()}/>
+                <CartesianGrid strokeDasharray="3 3" stroke="#404040" strokeOpacity={0.3} />
+                <XAxis dataKey="name" stroke="#a3a3a3" />
+                <YAxis stroke="#a3a3a3" tickFormatter={(v) => (v ?? 0).toLocaleString()} />
                 <Tooltip />
-                <Bar dataKey="utilisateurs" fill="#8b5cf6" radius={[6, 6, 0, 0]}/>
+                <Bar dataKey="utilisateurs" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
