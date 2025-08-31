@@ -1,16 +1,16 @@
 import React, { ReactNode, useEffect, useState } from "react";
-import { ILoginResult, IUser } from "../types";
-import { AuthContext, IAuthContext } from "./AuthContext";
 import { authService } from "../services/api/auth/authService";
 import {
+  IChangePasswordResponse,
   ILoginRequest,
   ILoginResponse,
+  ILogoutResponse,
+  IMeResponse,
   IRegisterRequest,
   IRegisterResponse,
-  IMeResponse,
-  ILogoutResponse,
-  IChangePasswordResponse,
 } from "../services/api/auth/authType";
+import { ILoginResult, IUser } from "../types";
+import { AuthContext, IAuthContext } from "./AuthContext";
 
 interface IAuthProviderProps {
   children: ReactNode;
@@ -46,7 +46,10 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     }
   };
 
-  const login = async (email: string, password: string): Promise<ILoginResult> => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<ILoginResult> => {
     setLoading(true);
     setError(null);
 
@@ -72,7 +75,7 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = async (): Promise<ILogoutResponse>  => {
+  const logout = async (): Promise<ILogoutResponse> => {
     setLoading(true);
     try {
       const response: ILogoutResponse = await authService.logout();
@@ -80,7 +83,10 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: (error as any)?.message || "Erreur lors de la déconnexion",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la déconnexion",
       };
     } finally {
       setUser(null);
@@ -112,11 +118,18 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     }
   };
 
-  const changePassword = async (currentPassword: string, newPassword: string) => {
+  const changePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ) => {
     setLoading(true);
     try {
-      const response: IChangePasswordResponse = await authService.changePassword(currentPassword, newPassword);
-      if (!response.success) setError(response.message || "Erreur lors du changement de mot de passe");
+      const response: IChangePasswordResponse =
+        await authService.changePassword(currentPassword, newPassword);
+      if (!response.success)
+        setError(
+          response.message || "Erreur lors du changement de mot de passe"
+        );
       return { success: response.success, message: response.message };
     } finally {
       setLoading(false);
