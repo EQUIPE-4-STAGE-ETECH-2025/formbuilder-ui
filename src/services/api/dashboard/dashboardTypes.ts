@@ -1,19 +1,20 @@
 export interface ISubmissionsPerMonth {
-    [month: string]: number; // ex: "2024-07": 4
+    [month: string]: number;
   }
   
   export interface ISubmissionsPerForm {
-    [formTitle: string]: number; // ex: "Contact Lead Generation": 2
+    [formTitle: string]: number;
   }
   
   export interface IFormsStatusCount {
-    [status: string]: number; // ex: "PUBLISHED": 2
+    [status: string]: number;
   }
   
-  export interface IRecentSubmission {
+  export interface IRecentForm {
     id: string;
-    submittedAt: string;
-    formTitle: string;
+    title: string;
+    status: string;
+    createdAt: string;
   }
   
   export interface IDashboardStats {
@@ -23,7 +24,7 @@ export interface ISubmissionsPerMonth {
     submissionsPerMonth: ISubmissionsPerMonth;
     submissionsPerForm: ISubmissionsPerForm;
     formsStatusCount: IFormsStatusCount;
-    recentSubmissions: IRecentSubmission[];
+    recentForms: IRecentForm[]; 
   }
   
   export interface IGetStatsResponse {

@@ -71,7 +71,7 @@ export function Dashboard() {
     })
   );
 
-  const recentSubmissions = stats?.recentSubmissions || [];
+  const recentForms = stats?.recentForms || [];
 
   const getQuotaPercentage = (current: number, max: number) => {
     return Math.round((current / max) * 100);
@@ -260,12 +260,12 @@ export function Dashboard() {
             </h3>
           </CardHeader>
           <CardContent>
-            {recentSubmissions.length > 0 ? (
+            {recentForms.length > 0 ? (
               <div className="space-y-4">
-                {recentSubmissions.slice(0, 2).map((submission) => (
+                {recentForms.slice(0, 2).map((form) => (
                   <Link
-                    key={submission.id}
-                    to={`/forms/${submission.id}/edit`}
+                    key={form.id}
+                    to={`/forms/${form.id}/edit`}
                     className="block"
                   >
                     <div className="flex items-center justify-between p-4 bg-transparent border border-accent-500/30 rounded-xl hover:border-accent-500/50 hover:bg-accent-500/5 transition-all duration-200 cursor-pointer">
@@ -275,15 +275,15 @@ export function Dashboard() {
                         </div>
                         <div>
                           <p className="text-base font-medium text-surface-400">
-                            {submission.formTitle}
+                            {form.title}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-accent-400">
-                        {new Date(submission.submittedAt).toLocaleDateString()}
+                          {new Date(form.createdAt).toLocaleDateString()}
                         </p>
-                        <p className="text-xs text-surface-500">soumissions</p>
+                        <p className="text-xs text-surface-500">{form.status}</p>
                       </div>
                     </div>
                   </Link>
