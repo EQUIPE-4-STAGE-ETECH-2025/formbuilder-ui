@@ -25,9 +25,10 @@ export function UserManagement() {
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
-      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      (user.firstName ?? "").toLowerCase().includes((searchTerm ?? "").toLowerCase()) ||
+      (user.lastName ?? "").toLowerCase().includes((searchTerm ?? "").toLowerCase()) ||
+      (user.email ?? "").toLowerCase().includes((searchTerm ?? "").toLowerCase());
+
     const matchesStatus = statusFilter === "all" || user.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -57,7 +58,11 @@ export function UserManagement() {
     status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
 
   const getPlanBadge = (plan: string) => {
-    const badges = { free: "bg-gray-100 text-gray-800", premium: "bg-blue-100 text-blue-800", pro: "bg-purple-100 text-purple-800" };
+    const badges = {
+      free: "bg-gray-100 text-gray-800",
+      premium: "bg-blue-100 text-blue-800",
+      pro: "bg-purple-100 text-purple-800",
+    };
     return badges[plan as keyof typeof badges] || "bg-gray-100 text-gray-800";
   };
 
@@ -118,21 +123,42 @@ export function UserManagement() {
               <tbody>
                 {paginatedUsers.map((user) => (
                   <tr key={user.id} className="border-b border-surface-700 hover:bg-surface-800">
-                    <td>{user.firstName} {user.lastName} <br/> <span className="text-sm text-surface-400">{user.email}</span></td>
-                    <td><span className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanBadge(user.plan)}`}>{user.plan}</span></td>
-                    <td><span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(user.status)}`}>{user.status}</span></td>
-                    <td>{user.formsCount}</td>
-                    <td>{user.submissionsCount.toLocaleString()}</td>
-                    <td>{formatDistanceToNow(new Date(user.lastLoginAt), { addSuffix: true, locale: fr })}</td>
                     <td>
-                      <Button variant="ghost" size="sm" onClick={() => setActiveDropdown(activeDropdown === user.id ? null : user.id)}>
+                      {user.firstName} {user.lastName} <br />
+                      <span className="text-sm text-surface-400">{user.email}</span>
+                    </td>
+                    <td>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanBadge(user.plan)}`}>
+                        {user.plan}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(user.status)}`}>
+                        {user.status}
+                      </span>
+                    </td>
+                    <td>{user.formsCount ?? 0}</td>
+                    <td>{(user.submissionsCount ?? 0).toLocaleString()}</td>
+                    <td>
+                      {user.lastLoginAt
+                        ? formatDistanceToNow(new Date(user.lastLoginAt), { addSuffix: true, locale: fr })
+                        : "Jamais"}
+                    </td>
+                    <td>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setActiveDropdown(activeDropdown === user.id ? null : user.id)}
+                      >
                         <MoreHorizontal />
                       </Button>
                       {activeDropdown === user.id && (
                         <div className="absolute right-0 mt-2 w-48 bg-surface-900 rounded-xl shadow-large border border-surface-800 z-10">
                           <div className="py-1">
                             <button onClick={() => handleSuspendUser(user.id)}>Suspendre / Réactiver</button>
-                            <button onClick={() => handleDeleteUser(user.id)} className="text-red-400">Supprimer</button>
+                            <button onClick={() => handleDeleteUser(user.id)} className="text-red-400">
+                              Supprimer
+                            </button>
                           </div>
                         </div>
                       )}

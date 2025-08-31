@@ -16,7 +16,7 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
   apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
       const token = localStorage.getItem(
-        import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token"
+        import.meta.env.VITE_JWT_STORAGE_KEY || "auth_token"
       );
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -42,7 +42,7 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
 
         try {
           const refreshToken = localStorage.getItem(
-            import.meta.env.VITE_JWT_REFRESH_KEY || "formbuilder_refresh_token"
+            import.meta.env.VITE_JWT_REFRESH_KEY || "auth_refresh_token"
           );
           if (refreshToken) {
             const response = await apiClient.post("/auth/refresh", {
@@ -53,13 +53,13 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
 
             // Mettre à jour les tokens
             localStorage.setItem(
-              import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token",
+              import.meta.env.VITE_JWT_STORAGE_KEY || "auth_token",
               token
             );
             if (refresh_token) {
               localStorage.setItem(
                 import.meta.env.VITE_JWT_REFRESH_KEY ||
-                  "formbuilder_refresh_token",
+                  "auth_refresh_token",
                 refresh_token
               );
             }
@@ -73,10 +73,10 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
         } catch {
           // Échec du refresh, déconnexion
           localStorage.removeItem(
-            import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token"
+            import.meta.env.VITE_JWT_STORAGE_KEY || "auth_token"
           );
           localStorage.removeItem(
-            import.meta.env.VITE_JWT_REFRESH_KEY || "formbuilder_refresh_token"
+            import.meta.env.VITE_JWT_REFRESH_KEY || "auth_refresh_token"
           );
           window.location.href = "/login";
         }
