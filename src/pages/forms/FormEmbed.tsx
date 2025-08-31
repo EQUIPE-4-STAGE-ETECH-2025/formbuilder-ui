@@ -1,15 +1,17 @@
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
 import { Dropdown } from "../../components/ui/Dropdown";
-import { formsAPI } from "../../services/api.mock";
+import { useAuth } from "../../hooks/useAuth";
+import { formsService } from "../../services/api";
 import { IForm, IFormField } from "../../types";
+import { adaptFormFromAPI } from "../../utils/formAdapter";
 
 export function FormEmbed() {
   const { id } = useParams();
-  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const [form, setForm] = useState<IForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -20,36 +22,33 @@ export function FormEmbed() {
   >({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const token = searchParams.get("token");
-
   const fetchForm = useCallback(async () => {
     try {
-      // In real app, would verify JWT token here
-      const response = await formsAPI.getById(id!);
+      // Utiliser l'endpoint public pour récupérer le formulaire
+      const response = await formsService.getPublicById(id!);
       if (response.success && response.data) {
-        if (response.data.status !== "published") {
-          setError("Ce formulaire n'est pas disponible");
-        } else {
-          setForm(response.data);
-        }
+        const formData = response.data;
+        // L'endpoint public ne retourne que les formulaires PUBLISHED
+        const adaptedForm = adaptFormFromAPI(formData, user?.id);
+        setForm(adaptedForm);
       } else {
-        setError("Formulaire non trouvé");
+        setError(response.message || "Formulaire non trouvé");
       }
     } catch {
       setError("Erreur lors du chargement du formulaire");
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user?.id]);
 
   useEffect(() => {
-    if (id && token) {
+    if (id) {
       fetchForm();
     } else {
-      setError("Paramètres manquants");
+      setError("ID du formulaire manquant");
       setLoading(false);
     }
-  }, [id, token, fetchForm]);
+  }, [id, fetchForm]);
 
   const validateField = (
     field: IFormField,

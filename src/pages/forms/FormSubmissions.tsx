@@ -4,17 +4,20 @@ import { useParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Pagination } from "../../components/ui/Pagination";
+import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
-import {
-  formsAPI,
-  formVersionsAPI,
-  submissionsAPI,
-} from "../../services/api.mock";
+import { formsService, versionsService } from "../../services/api";
+import { submissionsAPI } from "../../services/api.mock";
 import { IForm, IFormVersion, ISubmission } from "../../types";
+import {
+  adaptFormFromAPI,
+  adaptVersionFromAPIForHooks,
+} from "../../utils/formAdapter";
 
 export function FormSubmissions() {
   const { id } = useParams();
   const { addToast } = useToast();
+  const { user } = useAuth();
   const [form, setForm] = useState<IForm | null>(null);
   const [submissions, setSubmissions] = useState<ISubmission[]>([]);
   const [formVersion, setFormVersion] = useState<IFormVersion | null>(null);
@@ -25,24 +28,31 @@ export function FormSubmissions() {
 
   const fetchForm = useCallback(async () => {
     try {
-      const response = await formsAPI.getById(id!);
+      const response = await formsService.getById(id!);
       if (response.success && response.data) {
-        setForm(response.data);
+        const adaptedForm = adaptFormFromAPI(response.data, user?.id);
+        setForm(adaptedForm);
 
-        // Récupérer la version actuelle du formulaire depuis formVersionsAPI
-        const versionResponse = await formVersionsAPI.getByFormId(id!);
+        // Récupérer la version actuelle du formulaire
+        const versionResponse = await versionsService.getByFormId(id!);
         if (versionResponse.success && versionResponse.data) {
-          // Prendre la version la plus récente (version_number la plus élevée)
+          // Prendre la version la plus récente (versionNumber la plus élevée)
           const latestVersion = versionResponse.data.reduce((latest, current) =>
-            current.version_number > latest.version_number ? current : latest
+            current.versionNumber > latest.versionNumber ? current : latest
           );
-          setFormVersion(latestVersion);
+          // Adapter la version vers le format UI en utilisant l'adaptateur centralisé
+          const adaptedVersion = adaptVersionFromAPIForHooks(latestVersion);
+          adaptedVersion.form_id = adaptedForm.id;
+          adaptedVersion.schema.title = adaptedForm.title;
+          adaptedVersion.schema.description = adaptedForm.description;
+          adaptedVersion.schema.status = adaptedForm.status;
+          setFormVersion(adaptedVersion);
         }
       }
     } catch {
       console.error("Error fetching form");
     }
-  }, [id]);
+  }, [id, user?.id]);
 
   const fetchSubmissions = useCallback(async () => {
     try {

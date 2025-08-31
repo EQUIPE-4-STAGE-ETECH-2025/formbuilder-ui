@@ -46,7 +46,7 @@ export const authService = {
       return {
         success: false,
         message:
-          (error as { response?: { data?: { message?: string } } }).response
+          (error as { response?: { data?: { message?: string } } })?.response
             ?.data?.message || "Erreur lors de l'inscription",
       };
     }

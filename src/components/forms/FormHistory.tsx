@@ -3,8 +3,8 @@ import { fr } from "date-fns/locale";
 import { Eye, FileText, GitBranch, RotateCcw, Trash2 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { useToast } from "../../hooks/useToast";
-import { formVersionsAPI } from "../../services/api.mock";
-import { IFormVersion } from "../../types";
+import { versionsService } from "../../services/api";
+import { IFormVersion } from "../../services/api/forms/formsTypes";
 import { Button } from "../ui/Button";
 import { Card, CardContent } from "../ui/Card";
 import { Modal } from "../ui/Modal";
@@ -35,10 +35,10 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
   const fetchVersions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await formVersionsAPI.getByFormId(formId);
+      const response = await versionsService.getByFormId(formId);
       if (response.success && response.data) {
         setVersions(
-          response.data.sort((a, b) => b.version_number - a.version_number)
+          response.data.sort((a, b) => b.versionNumber - a.versionNumber)
         );
       }
     } catch (error) {
@@ -51,7 +51,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [formId, addToast]);
+  }, [formId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchVersions();
@@ -77,13 +77,16 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
 
     try {
       setRestoring(true);
-      const response = await formVersionsAPI.restore(selectedVersion.id);
+      const response = await versionsService.restore(
+        formId,
+        selectedVersion.versionNumber
+      );
 
       if (response.success) {
         addToast({
           type: "success",
           title: "Version restaurée",
-          message: `La version ${selectedVersion.version_number} a été restaurée avec succès`,
+          message: `La version numéro ${selectedVersion.versionNumber} a été restaurée avec succès`,
         });
         setShowRestoreModal(false);
         setSelectedVersion(null);
@@ -92,7 +95,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
         addToast({
           type: "error",
           title: "Erreur",
-          message: response.error || "Impossible de restaurer la version",
+          message: response.message || "Impossible de restaurer la version",
         });
       }
     } catch {
@@ -111,22 +114,28 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
 
     try {
       setDeleting(true);
-      const response = await formVersionsAPI.delete(selectedVersion.id);
+      const response = await versionsService.delete(
+        formId,
+        selectedVersion.versionNumber
+      );
 
       if (response.success) {
         addToast({
           type: "success",
           title: "Version supprimée",
-          message: `La version ${selectedVersion.version_number} a été supprimée`,
+          message: `La version numéro ${selectedVersion.versionNumber} a été supprimée`,
         });
         setShowDeleteModal(false);
         setSelectedVersion(null);
         fetchVersions(); // Recharger la liste
       } else {
+        const errorType = response.message?.includes("version active")
+          ? "warning"
+          : "error";
         addToast({
-          type: "error",
-          title: "Erreur",
-          message: response.error || "Impossible de supprimer la version",
+          type: errorType,
+          title: errorType === "warning" ? "Action impossible" : "Erreur",
+          message: response.message || "Impossible de supprimer la version",
         });
       }
     } catch {
@@ -137,21 +146,6 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
       });
     } finally {
       setDeleting(false);
-    }
-  };
-
-  const getStatusText = (version: IFormVersion) => {
-    const status = version.schema.status;
-
-    switch (status) {
-      case "published":
-        return "Publié";
-      case "draft":
-        return "Brouillon";
-      case "disabled":
-        return "Désactivé";
-      default:
-        return "Inconnu";
     }
   };
 
@@ -190,7 +184,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
             <Card
               key={version.id}
               className={`transition-all duration-200 ${
-                version.version_number === currentVersion
+                version.versionNumber === currentVersion
                   ? "border-accent-500/30 bg-accent-900/10"
                   : ""
               }`}
@@ -201,26 +195,34 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
                     <div className="flex items-center gap-3 mb-2">
                       <GitBranch className="h-5 w-5 text-accent-400" />
                       <h3 className="text-lg font-semibold text-text-100">
-                        Version numéro {version.version_number}
+                        Version numéro {version.versionNumber}
                       </h3>
-                      {version.version_number === currentVersion && (
+                      {version.versionNumber === currentVersion && (
                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-accent-500/20 text-accent-400 border border-accent-500/30">
                           Actuelle
                         </span>
                       )}
                     </div>
                     <p className="text-surface-400 mb-4">
-                      {version.schema.title || "Sans titre"}
+                      Cette version a été sauvegardée automatiquement
                     </p>
                     <div className="flex items-center gap-6 text-sm text-surface-500">
-                      <span>Statut : {getStatusText(version)}</span>
                       <span>
-                        Contient {version.schema.fields.length} champ
-                        {version.schema.fields.length !== 1 ? "s" : ""}
+                        Contient{" "}
+                        {
+                          (version.schema?.fields || version.fields || [])
+                            .length
+                        }{" "}
+                        champ
+                        {(version.schema?.fields || version.fields || [])
+                          .length !== 1
+                          ? "s"
+                          : ""}{" "}
+                        de saisie
                       </span>
                       <span>
                         Créée{" "}
-                        {formatDistanceToNow(new Date(version.created_at), {
+                        {formatDistanceToNow(new Date(version.createdAt), {
                           addSuffix: true,
                           locale: fr,
                         })}
@@ -238,7 +240,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
                       Voir les détails
                     </Button>
 
-                    {version.version_number !== currentVersion && (
+                    {version.versionNumber !== currentVersion && (
                       <>
                         <Button
                           variant="secondary"
@@ -277,57 +279,67 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
         title={
           <div className="flex items-center gap-2">
             <GitBranch className="h-5 w-5 text-accent-400" />
-            <span>Version numéro {selectedVersion?.version_number}</span>
+            <span>Version numéro {selectedVersion?.versionNumber}</span>
           </div>
         }
       >
         {selectedVersion && (
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium mb-2 text-text-100">Informations</h4>
+              <h4 className="font-medium mb-2 text-text-100">
+                Informations générales
+              </h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-surface-400">Titre :</span>
+                  <span className="text-surface-400">Version :</span>
                   <span className="text-text-100">
-                    {selectedVersion.schema.title}
+                    {selectedVersion.versionNumber}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-surface-400">Statut :</span>
+                  <span className="text-surface-400">Nombre de champs :</span>
                   <span className="text-text-100">
-                    {getStatusText(selectedVersion)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-surface-400">Champs :</span>
-                  <span className="text-text-100">
-                    {selectedVersion.schema.fields.length}
+                    {
+                      (
+                        selectedVersion.schema?.fields ||
+                        selectedVersion.fields ||
+                        []
+                      ).length
+                    }
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-surface-400">Créée le :</span>
                   <span className="text-text-100">
-                    {new Date(selectedVersion.created_at).toLocaleDateString(
-                      "fr-FR"
+                    {new Date(selectedVersion.createdAt).toLocaleDateString(
+                      "fr-FR",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
                     )}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-surface-400">ID :</span>
+                  <span className="text-text-100 font-mono text-xs">
+                    {selectedVersion.id}
                   </span>
                 </div>
               </div>
             </div>
 
-            {selectedVersion.schema.description && (
-              <div>
-                <h4 className="font-medium mb-2 text-text-100">Description</h4>
-                <p className="text-sm text-surface-300 bg-surface-800 p-3 rounded-xl">
-                  {selectedVersion.schema.description}
-                </p>
-              </div>
-            )}
-
             <div>
               <h4 className="font-medium mb-2 text-text-100">Champs</h4>
               <div className="space-y-2">
-                {selectedVersion.schema.fields.map((field) => (
+                {(
+                  selectedVersion.schema?.fields ||
+                  selectedVersion.fields ||
+                  []
+                ).map((field) => (
                   <div
                     key={field.id}
                     className="flex items-center justify-between p-2 bg-surface-800 rounded-lg"
@@ -337,7 +349,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
                       <span className="text-sm font-medium text-text-100">
                         {field.label}
                       </span>
-                      {field.is_required && (
+                      {field.required && (
                         <span className="text-yellow-400 text-xs">*</span>
                       )}
                     </div>
@@ -369,7 +381,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
             <div>
               <p className="text-base text-surface-300">
                 Êtes-vous sûr de vouloir restaurer la version numéro{" "}
-                {selectedVersion.version_number} ? Cette action créera une
+                {selectedVersion.versionNumber} ? Cette action créera une
                 nouvelle version avec le contenu de la version sélectionnée.
               </p>
             </div>
@@ -410,7 +422,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
             <div>
               <p className="text-base text-surface-300">
                 Êtes-vous sûr de vouloir supprimer la version numéro{" "}
-                {selectedVersion.version_number} ? Cette action est irréversible
+                {selectedVersion.versionNumber} ? Cette action est irréversible
                 et supprimera complètement cette version de l'historique.
               </p>
             </div>

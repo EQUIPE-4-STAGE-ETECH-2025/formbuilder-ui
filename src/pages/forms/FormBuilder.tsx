@@ -35,16 +35,24 @@ import {
   Type,
   Wrench,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FormHistory } from "../../components/forms/FormHistory";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../../components/ui/Card";
 import { Dropdown } from "../../components/ui/Dropdown";
 import { Input } from "../../components/ui/Input";
+import { Modal } from "../../components/ui/Modal";
+import { useAuth } from "../../hooks/useAuth";
+import { useForms } from "../../hooks/useForms";
 import { useToast } from "../../hooks/useToast";
-import { formsAPI } from "../../services/api.mock";
+import { formsService } from "../../services/api";
+import {
+  ICreateFormRequest,
+  IUpdateFormRequest,
+} from "../../services/api/forms/formsTypes";
 import { IForm, IFormField } from "../../types";
+import { adaptFormFromAPI } from "../../utils/formAdapter";
 
 // Composant DraggableField extrait pour éviter les re-rendus
 interface IDraggableFieldProps {
@@ -52,6 +60,24 @@ interface IDraggableFieldProps {
   onUpdate: (fieldId: string, updates: Partial<IFormField>) => void;
   onRemove: (fieldId: string) => void;
 }
+
+// Fonction utilitaire pour gérer les événements clavier du textarea des options
+const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const textarea = e.target as HTMLTextAreaElement;
+    const value = textarea.value;
+    const newValue = value + "\n";
+
+    textarea.value = newValue;
+    textarea.selectionStart = textarea.selectionEnd = newValue.length;
+    textarea.scrollTop = textarea.scrollHeight;
+
+    // Déclencher l'onChange pour mettre à jour l'état
+    const event = new Event("input", { bubbles: true });
+    textarea.dispatchEvent(event);
+  }
+};
 
 const DraggableField = ({
   field,
@@ -165,6 +191,7 @@ const DraggableField = ({
                         },
                       })
                     }
+                    onKeyDown={handleTextareaKeyDown}
                     placeholder={`Option 1\nOption 2\nOption 3`}
                     className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-surface-400 placeholder:text-surface-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     rows={3}
@@ -204,12 +231,20 @@ export function FormBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { user } = useAuth();
+  const { createForm, updateForm, publishForm, deleteForm } = useForms();
   const [form, setForm] = useState<IForm | null>(null);
+  const [originalForm, setOriginalForm] = useState<IForm | null>(null); // Formulaire original pour comparaison
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "build" | "preview" | "embed" | "history"
   >("build");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   // Configuration des capteurs pour @dnd-kit
   const sensors = useSensors(
@@ -224,29 +259,67 @@ export function FormBuilder() {
   );
 
   const fetchForm = useCallback(async () => {
+    // Ne pas charger si le formulaire a été supprimé ou n'existe pas
+    if (isDeleted || notFound) return;
+
     try {
-      const response = await formsAPI.getById(id!);
+      const response = await formsService.getById(id!);
       if (response.success && response.data) {
-        setForm(response.data);
+        const adaptedForm = adaptFormFromAPI(response.data, user?.id);
+        setForm(adaptedForm);
+        setOriginalForm(JSON.parse(JSON.stringify(adaptedForm))); // Copie profonde pour comparaison
+        setNotFound(false); // Reset si le formulaire est trouvé
+      } else {
+        // Formulaire non trouvé, marquer comme tel et rediriger
+        setNotFound(true);
+        addToast({
+          type: "error",
+          title: "Formulaire non trouvé",
+          message: "Ce formulaire n'existe pas ou a été supprimé",
+        });
+        // Rediriger vers la liste des formulaires après un délai
+        setTimeout(() => {
+          navigate("/forms", { replace: true });
+        }, 2000);
       }
-    } catch {
-      console.error("Error fetching form");
+    } catch (error: unknown) {
+      // Vérifier si c'est une erreur 404
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError?.response?.status === 404) {
+        setNotFound(true);
+        addToast({
+          type: "error",
+          title: "Formulaire non trouvé",
+          message: "Ce formulaire n'existe pas ou a été supprimé",
+        });
+        // Rediriger vers la liste des formulaires après un délai
+        setTimeout(() => {
+          navigate("/forms", { replace: true });
+        }, 2000);
+      } else {
+        // Autres erreurs
+        addToast({
+          type: "error",
+          title: "Erreur",
+          message: "Impossible de charger le formulaire",
+        });
+      }
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user?.id, addToast, isDeleted, notFound, navigate]);
 
   useEffect(() => {
     if (id && id !== "new") {
       fetchForm();
     } else {
       // Create new form
-      setForm({
+      const newForm: IForm = {
         id: "new",
         user_id: "user-1",
         title: "",
         description: "",
-        status: "draft",
+        status: "draft" as const,
         submissionCount: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -268,27 +341,250 @@ export function FormBuilder() {
             email: true,
           },
         },
-      });
+      };
+      setForm(newForm);
+      setOriginalForm(JSON.parse(JSON.stringify(newForm))); // Copie profonde pour comparaison
       setLoading(false);
     }
   }, [id, fetchForm]);
 
+  // Fonction pour détecter les changements dans le formulaire
+  const hasFormChanged = useCallback(
+    (currentForm: IForm, originalFormData: IForm | null): boolean => {
+      if (!originalFormData) return true; // Si pas d'original, considérer comme changé
+
+      // Comparer les propriétés principales
+      if (
+        currentForm.title !== originalFormData.title ||
+        currentForm.description !== originalFormData.description ||
+        currentForm.status !== originalFormData.status
+      ) {
+        return true;
+      }
+
+      // Comparer les champs
+      if (currentForm.fields.length !== originalFormData.fields.length) {
+        return true;
+      }
+
+      // Comparer chaque champ
+      for (let i = 0; i < currentForm.fields.length; i++) {
+        const currentField = currentForm.fields[i];
+        const originalField = originalFormData.fields[i];
+
+        if (
+          currentField.type !== originalField.type ||
+          currentField.label !== originalField.label ||
+          currentField.placeholder !== originalField.placeholder ||
+          currentField.is_required !== originalField.is_required ||
+          currentField.position !== originalField.position
+        ) {
+          return true;
+        }
+
+        // Comparer les options pour les champs select/radio
+        if (currentField.type === "select" || currentField.type === "radio") {
+          const currentChoices = currentField.options?.choices || [];
+          const originalChoices = originalField.options?.choices || [];
+
+          if (currentChoices.length !== originalChoices.length) {
+            return true;
+          }
+
+          for (let j = 0; j < currentChoices.length; j++) {
+            if (currentChoices[j] !== originalChoices[j]) {
+              return true;
+            }
+          }
+        }
+      }
+
+      // Comparer les paramètres
+      const currentSettings = currentForm.settings;
+      const originalSettings = originalFormData.settings;
+
+      if (
+        currentSettings.success_message !== originalSettings.success_message ||
+        currentSettings.theme.primary_color !==
+          originalSettings.theme.primary_color ||
+        currentSettings.theme.background_color !==
+          originalSettings.theme.background_color ||
+        currentSettings.theme.text_color !==
+          originalSettings.theme.text_color ||
+        currentSettings.notifications.email !==
+          originalSettings.notifications.email
+      ) {
+        return true;
+      }
+
+      return false;
+    },
+    []
+  );
+
+  // Validation commune pour les formulaires
+  const validateForm = (formToValidate: IForm): boolean => {
+    if (
+      !formToValidate.title ||
+      formToValidate.title.trim().length < 3 ||
+      formToValidate.title.trim().length > 255
+    ) {
+      addToast({
+        type: "error",
+        title: "Erreur de validation",
+        message: "Le titre doit contenir entre 3 et 255 caractères",
+      });
+      return false;
+    }
+
+    if (
+      !formToValidate.description ||
+      formToValidate.description.trim().length < 10 ||
+      formToValidate.description.trim().length > 1000
+    ) {
+      addToast({
+        type: "error",
+        title: "Erreur de validation",
+        message: "La description doit contenir entre 10 et 1000 caractères",
+      });
+      return false;
+    }
+
+    // Validation des champs
+    for (const field of formToValidate.fields) {
+      // Validation des labels des champs
+      if (
+        !field.label ||
+        field.label.trim().length < 3 ||
+        field.label.trim().length > 255
+      ) {
+        addToast({
+          type: "error",
+          title: "Erreur de validation",
+          message: `Le label du champ ${
+            field.label || "sans nom"
+          } doit contenir entre 3 et 255 caractères`,
+        });
+        return false;
+      }
+
+      // Validation des champs avec options (select et radio)
+      if (field.type === "select" || field.type === "radio") {
+        const choices = field.options?.choices || [];
+        const validChoices = choices.filter(
+          (choice) => choice && choice.trim().length > 0
+        );
+
+        if (validChoices.length < 2) {
+          addToast({
+            type: "error",
+            title: "Erreur de validation",
+            message: `Le champ ${field.label} de type ${
+              field.type === "select" ? "liste déroulante" : "bouton radio"
+            } doit avoir au moins 2 options non vides`,
+          });
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
+  // Fonction utilitaire pour préparer les données du formulaire
+  const prepareFormData = (
+    formToPrepare: IForm,
+    status: "DRAFT" | "PUBLISHED" | "ARCHIVED"
+  ): ICreateFormRequest => {
+    return {
+      title: formToPrepare.title,
+      description: formToPrepare.description,
+      status,
+      schema: {
+        fields: formToPrepare.fields.map((field, index) => ({
+          id: field.id,
+          type: field.type,
+          label: field.label,
+          required: field.is_required,
+          // Inclure placeholder même si vide (requis par l'API)
+          placeholder: field.placeholder || "",
+          // Ajouter le champ position requis par l'API
+          position: index + 1,
+          // Convertir les options pour les champs select/radio selon le format attendu
+          ...(field.type === "select" || field.type === "radio"
+            ? {
+                options:
+                  field.options?.choices?.map((choice: string) => ({
+                    value: choice.toLowerCase().replace(/\s+/g, "_"),
+                    label: choice,
+                  })) || [],
+              }
+            : {}),
+          validation: {
+            // Mapper les propriétés frontend vers API selon le contrat
+            required: field.is_required,
+            minLength: field.validation_rules.min_length,
+            maxLength: field.validation_rules.max_length,
+            min: field.validation_rules.min_value,
+            max: field.validation_rules.max_value,
+            pattern: field.validation_rules.pattern,
+          },
+        })),
+        settings: {
+          // Structure réelle attendue par l'API (différente du contrat documenté)
+          submitButton: {
+            text: "Envoyer",
+          },
+          successMessage: formToPrepare.settings.success_message,
+          theme: {
+            primaryColor: formToPrepare.settings.theme.primary_color,
+          },
+          emailNotification: {
+            enabled: formToPrepare.settings.notifications.email ? true : false,
+            recipients: formToPrepare.settings.notifications.email
+              ? ["admin@example.com"]
+              : ["admin@example.com"], // L'API exige toujours un tableau non vide
+          },
+        },
+      },
+    };
+  };
+
   const handleSave = async () => {
     if (!form) return;
+
+    if (!validateForm(form)) return;
+
+    // Vérifier s'il y a des changements avant de sauvegarder
+    if (form.id !== "new" && !hasFormChanged(form, originalForm)) {
+      addToast({
+        type: "info",
+        title: "Aucune modification détectée",
+        message:
+          "Le formulaire n'a pas été modifié depuis la dernière sauvegarde",
+      });
+      return;
+    }
 
     setSaving(true);
     try {
       if (form.id === "new") {
-        const response = await formsAPI.create(form);
-        if (response.success && response.data) {
-          setForm(response.data);
-          navigate(`/forms/${response.data.id}/edit`);
-        }
+        // Créer un nouveau formulaire
+        const createData = prepareFormData(
+          form,
+          form.status.toUpperCase() as "DRAFT" | "PUBLISHED" | "ARCHIVED"
+        );
+        await createForm(createData);
+        navigate("/forms");
       } else {
-        const response = await formsAPI.update(form.id, form);
-        if (response.success && response.data) {
-          setForm(response.data);
-        }
+        // Mettre à jour un formulaire existant
+        const updateData: IUpdateFormRequest = prepareFormData(
+          form,
+          form.status.toUpperCase() as "DRAFT" | "PUBLISHED" | "ARCHIVED"
+        );
+        await updateForm(form.id, updateData);
+        // Mettre à jour le formulaire original après une sauvegarde réussie
+        setOriginalForm(JSON.parse(JSON.stringify(form)));
       }
       addToast({
         type: "success",
@@ -309,12 +605,25 @@ export function FormBuilder() {
   const handlePublish = async () => {
     if (!form) return;
 
-    setSaving(true);
+    if (!validateForm(form)) return;
+
+    setPublishing(true);
     try {
-      const updatedForm = { ...form, status: "published" as const };
-      const response = await formsAPI.update(form.id, updatedForm);
-      if (response.success && response.data) {
-        setForm(response.data);
+      // Si c'est un nouveau formulaire, le créer directement avec le statut PUBLISHED
+      if (form.id === "new") {
+        const createData = prepareFormData(form, "PUBLISHED");
+        await createForm(createData);
+        addToast({
+          type: "success",
+          title: "Formulaire créé et publié",
+          message: "Votre formulaire a été créé et publié avec succès",
+        });
+        navigate("/forms");
+        return;
+      } else {
+        // Pour un formulaire existant, le publier directement
+        await publishForm(form.id);
+        setForm({ ...form, status: "published" });
         addToast({
           type: "success",
           title: "Formulaire publié",
@@ -328,40 +637,45 @@ export function FormBuilder() {
         message: "Impossible de publier le formulaire",
       });
     } finally {
-      setSaving(false);
+      setPublishing(false);
     }
   };
 
-  const handleDelete = async () => {
+  // Rediriger vers l'onglet "build" si l'onglet actif n'est plus disponible
+  useEffect(() => {
+    if (form && form.status === "draft" && activeTab === "embed") {
+      setActiveTab("build");
+    }
+  }, [form, form?.status, activeTab]);
+
+  const handleDelete = () => {
+    if (!form || form.id === "new") return;
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
     if (!form || form.id === "new") return;
 
-    if (
-      !window.confirm(
-        "Êtes-vous sûr de vouloir supprimer ce formulaire ? Cette action est irréversible."
-      )
-    ) {
-      return;
-    }
-
-    setSaving(true);
     try {
-      const response = await formsAPI.delete(form.id);
-      if (response.success) {
-        addToast({
-          type: "success",
-          title: "Formulaire supprimé",
-          message: "Le formulaire a été supprimé avec succès",
-        });
-        navigate("/forms");
-      }
+      setDeleting(true);
+      setIsDeleted(true); // Marquer comme supprimé avant l'appel API
+      await deleteForm(form.id);
+      addToast({
+        type: "success",
+        title: "Formulaire supprimé",
+        message: "Le formulaire a été supprimé avec succès",
+      });
+      setShowDeleteModal(false);
+      navigate("/forms");
     } catch {
+      setIsDeleted(false); // Remettre à false en cas d'erreur
       addToast({
         type: "error",
         title: "Erreur",
         message: "Impossible de supprimer le formulaire",
       });
     } finally {
-      setSaving(false);
+      setDeleting(false);
     }
   };
 
@@ -477,6 +791,16 @@ export function FormBuilder() {
     }
   };
 
+  // Callback memoïzé pour la restauration de version
+  const handleVersionRestored = useMemo(() => {
+    return () => {
+      // Recharger le formulaire après restauration
+      if (form && form.id !== "new") {
+        fetchForm(); // Ceci va automatiquement mettre à jour originalForm aussi
+      }
+    };
+  }, [form, fetchForm]);
+
   const renderFormPreview = () => {
     return (
       <Card className="max-w-2xl mx-auto">
@@ -539,7 +863,7 @@ export function FormBuilder() {
                   value=""
                   options={
                     field.options?.choices?.map((choice: string) => ({
-                      value: choice,
+                      value: choice.toLowerCase().replace(/\s+/g, "_"),
                       label: choice,
                     })) || []
                   }
@@ -768,12 +1092,25 @@ export function FormBuilder() {
     );
   }
 
-  if (!form) {
+  if (!form && !loading) {
     return (
       <div className="text-center py-12">
-        <p className="text-surface-500">Formulaire non trouvé</p>
+        <p className="text-surface-500">
+          {notFound
+            ? "Formulaire non trouvé ou supprimé"
+            : "Formulaire non trouvé"}
+        </p>
+        {notFound && (
+          <p className="text-surface-400 text-sm mt-2">
+            Redirection vers la liste des formulaires...
+          </p>
+        )}
       </div>
     );
+  }
+
+  if (!form) {
+    return null; // Ne devrait pas arriver avec les conditions ci-dessus
   }
 
   return (
@@ -797,14 +1134,18 @@ export function FormBuilder() {
             <Save className="h-4 w-4 mr-2" />
             Sauvegarder
           </Button>
-          {form.id !== "new" && (
-            <Button variant="accent" onClick={handleDelete} loading={saving}>
+          {form.id !== "new" && form.status !== "draft" && (
+            <Button variant="accent" onClick={handleDelete} loading={deleting}>
               <Trash2 className="h-4 w-4 mr-2" />
               Supprimer
             </Button>
           )}
           {form.status === "draft" && (
-            <Button variant="accent" onClick={handlePublish} loading={saving}>
+            <Button
+              variant="accent"
+              onClick={handlePublish}
+              loading={publishing}
+            >
               <Send className="h-4 w-4 mr-2" />
               Publier
             </Button>
@@ -884,7 +1225,7 @@ export function FormBuilder() {
             <Eye className="h-4 w-4" />
             Prévisualisation
           </button>
-          {form.id !== "new" && (
+          {form.id !== "new" && form.status !== "draft" && (
             <button
               onClick={() => setActiveTab("embed")}
               className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ease-out ${
@@ -917,12 +1258,14 @@ export function FormBuilder() {
       {activeTab === "build" && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 relative">
           {/* Loading overlay during save */}
-          {saving && (
+          {(saving || publishing) && (
             <div className="absolute inset-0 bg-surface-900/80 backdrop-blur-sm rounded-2xl z-10 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
                 <p className="text-accent-400 font-medium">
-                  Sauvegarde en cours...
+                  {publishing
+                    ? "Publication en cours..."
+                    : "Sauvegarde en cours..."}
                 </p>
                 <p className="text-surface-400 text-sm mt-1">
                   Veuillez patienter
@@ -945,7 +1288,7 @@ export function FormBuilder() {
                   <button
                     key={fieldType.type}
                     onClick={() => addField(fieldType.type)}
-                    disabled={saving}
+                    disabled={saving || publishing}
                     className="w-full flex items-center gap-3 p-3 text-left text-surface-300 hover:bg-surface-800 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Icon className="h-4 w-4" />
@@ -989,7 +1332,7 @@ export function FormBuilder() {
                           field={field}
                           onUpdate={updateField}
                           onRemove={removeField}
-                          disabled={saving}
+                          disabled={saving || publishing}
                         />
                       ))}
                     </SortableContext>
@@ -1004,12 +1347,14 @@ export function FormBuilder() {
       {activeTab === "preview" && (
         <div className="relative">
           {/* Loading overlay during save */}
-          {saving && (
+          {(saving || publishing) && (
             <div className="absolute inset-0 bg-surface-900/80 backdrop-blur-sm rounded-2xl z-10 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
                 <p className="text-accent-400 font-medium">
-                  Sauvegarde en cours...
+                  {publishing
+                    ? "Publication en cours..."
+                    : "Sauvegarde en cours..."}
                 </p>
                 <p className="text-surface-400 text-sm mt-1">
                   Veuillez patienter
@@ -1028,12 +1373,14 @@ export function FormBuilder() {
       {activeTab === "embed" && (
         <div className="relative">
           {/* Loading overlay during save */}
-          {saving && (
+          {(saving || publishing) && (
             <div className="absolute inset-0 bg-surface-900/80 backdrop-blur-sm rounded-2xl z-10 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
                 <p className="text-accent-400 font-medium">
-                  Sauvegarde en cours...
+                  {publishing
+                    ? "Publication en cours..."
+                    : "Sauvegarde en cours..."}
                 </p>
                 <p className="text-surface-400 text-sm mt-1">
                   Veuillez patienter
@@ -1049,12 +1396,14 @@ export function FormBuilder() {
       {activeTab === "history" && (
         <div className="relative">
           {/* Loading overlay during save */}
-          {saving && (
+          {(saving || publishing) && (
             <div className="absolute inset-0 bg-surface-900/80 backdrop-blur-sm rounded-2xl z-10 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
                 <p className="text-accent-400 font-medium">
-                  Sauvegarde en cours...
+                  {publishing
+                    ? "Publication en cours..."
+                    : "Sauvegarde en cours..."}
                 </p>
                 <p className="text-surface-400 text-sm mt-1">
                   Veuillez patienter
@@ -1066,15 +1415,49 @@ export function FormBuilder() {
           <FormHistory
             formId={form.id}
             currentVersion={form.version}
-            onVersionRestored={() => {
-              // Recharger le formulaire après restauration
-              if (form.id !== "new") {
-                fetchForm();
-              }
-            }}
+            onVersionRestored={handleVersionRestored}
           />
         </div>
       )}
+
+      {/* Modal de confirmation pour supprimer */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        size="lg"
+        title={
+          <div className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-accent-400" />
+            <span>Supprimer le formulaire</span>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="text-base text-surface-300">
+              Êtes-vous sûr de vouloir supprimer ce formulaire ? Cette action
+              est irréversible et supprimera complètement ce formulaire ainsi
+              que toutes les données associées.
+            </p>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="secondary"
+              onClick={() => setShowDeleteModal(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              disabled={deleting}
+              variant="accent"
+            >
+              {deleting ? "Suppression..." : "Supprimer"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

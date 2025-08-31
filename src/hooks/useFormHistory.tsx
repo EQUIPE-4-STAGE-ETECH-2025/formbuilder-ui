@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { formVersionsAPI } from "../services/api.mock";
+import { versionsService } from "../services/api";
 import { IFormVersion } from "../types";
+import { adaptVersionFromAPIForHooks } from "../utils/formAdapter";
 
 interface IUseFormHistoryReturn {
   versions: IFormVersion[];
@@ -23,17 +24,24 @@ export const useFormHistory = (): IUseFormHistoryReturn => {
     try {
       setLoading(true);
       setError(null);
-      const response = await formVersionsAPI.getByFormId(formId);
+      const response = await versionsService.getByFormId(formId);
 
       if (response.success && response.data) {
-        setVersions(
-          response.data.sort(
+        const adaptedVersions = response.data
+          .map((version) => {
+            const adapted = adaptVersionFromAPIForHooks(version);
+            adapted.form_id = formId;
+            return adapted;
+          })
+          .sort(
             (a: IFormVersion, b: IFormVersion) =>
               b.version_number - a.version_number
-          )
-        );
+          );
+        setVersions(adaptedVersions);
       } else {
-        setError(response.error || "Erreur lors du chargement de l'historique");
+        setError(
+          response.message || "Erreur lors du chargement de l'historique"
+        );
       }
     } catch {
       setError("Erreur lors du chargement de l'historique");
@@ -49,16 +57,21 @@ export const useFormHistory = (): IUseFormHistoryReturn => {
     try {
       setLoading(true);
       setError(null);
-      const versions = await formVersionsAPI.getByFormId(formId);
+      const versions = await versionsService.getByFormId(formId);
 
       if (versions.success && versions.data) {
-        const targetVersion = versions.data.find(
-          (v) => v.version_number === version
+        const targetVersionAPI = versions.data.find(
+          (v) => v.versionNumber === version
         );
-        return targetVersion || null;
+        if (targetVersionAPI) {
+          const adapted = adaptVersionFromAPIForHooks(targetVersionAPI);
+          adapted.form_id = formId;
+          return adapted;
+        }
+        return null;
       } else {
         setError(
-          versions.error || "Erreur lors de la récupération de la version"
+          versions.message || "Erreur lors de la récupération de la version"
         );
         return null;
       }
@@ -78,29 +91,14 @@ export const useFormHistory = (): IUseFormHistoryReturn => {
       setLoading(true);
       setError(null);
 
-      // Récupérer la version à restaurer
-      const versions = await formVersionsAPI.getByFormId(formId);
-      if (!versions.success || !versions.data) {
-        setError("Erreur lors de la récupération des versions");
-        return false;
-      }
-
-      const targetVersion = versions.data.find(
-        (v) => v.version_number === version
-      );
-      if (!targetVersion) {
-        setError("Version non trouvée");
-        return false;
-      }
-
-      const response = await formVersionsAPI.restore(targetVersion.id);
+      const response = await versionsService.restore(formId, version);
 
       if (response.success) {
         // Recharger les versions après restauration
         await getVersions(formId);
         return true;
       } else {
-        setError(response.error || "Erreur lors de la restauration");
+        setError(response.message || "Erreur lors de la restauration");
         return false;
       }
     } catch {
@@ -119,29 +117,14 @@ export const useFormHistory = (): IUseFormHistoryReturn => {
       setLoading(true);
       setError(null);
 
-      // Récupérer la version à supprimer
-      const versions = await formVersionsAPI.getByFormId(formId);
-      if (!versions.success || !versions.data) {
-        setError("Erreur lors de la récupération des versions");
-        return false;
-      }
-
-      const targetVersion = versions.data.find(
-        (v) => v.version_number === version
-      );
-      if (!targetVersion) {
-        setError("Version non trouvée");
-        return false;
-      }
-
-      const response = await formVersionsAPI.delete(targetVersion.id);
+      const response = await versionsService.delete(formId, version);
 
       if (response.success) {
         // Recharger les versions après suppression
         await getVersions(formId);
         return true;
       } else {
-        setError(response.error || "Erreur lors de la suppression");
+        setError(response.message || "Erreur lors de la suppression");
         return false;
       }
     } catch {

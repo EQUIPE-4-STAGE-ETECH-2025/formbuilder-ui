@@ -20,23 +20,23 @@ export interface IUser {
 }
 
 export interface ILoginSuccess {
-    token: string;
-    user: IUser;
+  token: string;
+  user: IUser;
 }
 
 export interface ILoginResult {
-    success: boolean;
-    data?: ILoginSuccess;
-    error?: string;
+  success: boolean;
+  data?: ILoginSuccess;
+  error?: string;
 }
 
 export interface IRegisterResponse {
-    success: boolean;
-    data?: {
-        user: IUser;
-        token: string;
-    };
-    error?: string;
+  success: boolean;
+  data?: {
+    user: IUser;
+    token: string;
+  };
+  error?: string;
 }
 
 export interface IForm {
@@ -83,7 +83,18 @@ export interface IFormField {
   id: string;
   form_version_id: string;
   label: string;
-  type: TFieldType;
+  type:
+    | "text"
+    | "email"
+    | "date"
+    | "select"
+    | "checkbox"
+    | "radio"
+    | "textarea"
+    | "number"
+    | "file"
+    | "url"
+    | "tel";
   is_required: boolean;
   placeholder?: string;
   options: IFieldOptions;

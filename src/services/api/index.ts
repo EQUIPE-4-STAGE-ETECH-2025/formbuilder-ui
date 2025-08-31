@@ -6,6 +6,7 @@ export * from "./auth/authService";
 
 // Services des formulaires
 export * from "./forms/formsService";
+export * from "./forms/formsTypes";
 export * from "./forms/versionsService";
 
 // Services des soumissions
