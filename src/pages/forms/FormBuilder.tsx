@@ -245,6 +245,14 @@ export function FormBuilder() {
   const [deleting, setDeleting] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  // État pour la gestion de l'intégration
+  const [embedData, setEmbedData] = useState<{
+    embedCode: string;
+    embedUrl: string;
+    token: string;
+  } | null>(null);
+  const [loadingEmbed, setLoadingEmbed] = useState(false);
+  const [embedError, setEmbedError] = useState<string | null>(null);
 
   // Configuration des capteurs pour @dnd-kit
   const sensors = useSensors(
@@ -624,6 +632,10 @@ export function FormBuilder() {
         // Pour un formulaire existant, le publier directement
         await publishForm(form.id);
         setForm({ ...form, status: "published" });
+        // Recharger les données d'intégration si on est sur l'onglet embed
+        if (activeTab === "embed") {
+          loadEmbedData();
+        }
         addToast({
           type: "success",
           title: "Formulaire publié",
@@ -760,20 +772,53 @@ export function FormBuilder() {
     }
   };
 
-  const getPublishUrl = () => {
-    if (!form || form.id === "new") return "";
-    // Générer un token mockée pour le développement
-    const mockToken = btoa(
-      JSON.stringify({ formId: form.id, exp: Date.now() + 86400000 })
-    );
-    return `${window.location.origin}/embed/${form.id}?token=${mockToken}`;
-  };
+  // Fonction pour charger les données d'intégration via le service
+  const loadEmbedData = useCallback(async () => {
+    if (!form || form.id === "new" || form.status === "draft") return;
 
-  const getIframeSnippet = () => {
-    const publishUrl = getPublishUrl();
-    if (!publishUrl) return "";
-    return `<iframe src="${publishUrl}" width="100%" height="600" frameborder="0"></iframe>`;
-  };
+    setLoadingEmbed(true);
+    setEmbedError(null);
+
+    try {
+      const response = await formsService.getEmbedCode(form.id, {
+        width: "100%",
+        height: "600",
+      });
+
+      if (response.success && response.data) {
+        setEmbedData({
+          embedCode: response.data.embedCode,
+          embedUrl: response.data.embedUrl,
+          token: response.data.token,
+        });
+      } else {
+        setEmbedError(
+          response.message || "Erreur lors du chargement du code d'intégration"
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors du chargement des données d'intégration:",
+        error
+      );
+      setEmbedError("Erreur lors du chargement du code d'intégration");
+    } finally {
+      setLoadingEmbed(false);
+    }
+  }, [form]);
+
+  // Charger les données d'intégration quand on passe à l'onglet embed
+  useEffect(() => {
+    if (
+      activeTab === "embed" &&
+      form &&
+      form.id !== "new" &&
+      form.status !== "draft"
+    ) {
+      loadEmbedData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, form?.id, form?.status]);
 
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -785,9 +830,14 @@ export function FormBuilder() {
   };
 
   const openEmbedPreview = () => {
-    const publishUrl = getPublishUrl();
-    if (publishUrl) {
-      window.open(publishUrl, "_blank");
+    if (embedData?.embedUrl) {
+      window.open(embedData.embedUrl, "_blank");
+    } else {
+      addToast({
+        type: "error",
+        title: "Erreur",
+        message: "URL d'intégration non disponible",
+      });
     }
   };
 
@@ -923,8 +973,72 @@ export function FormBuilder() {
   };
 
   const renderEmbedView = () => {
-    const publishUrl = getPublishUrl();
-    const iframeSnippet = getIframeSnippet();
+    // Gestion des états de chargement et d'erreur
+    if (loadingEmbed) {
+      return (
+        <div className="space-modern">
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-500 mx-auto mb-4"></div>
+                <p className="text-surface-400">
+                  Chargement des données d'intégration...
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    if (embedError) {
+      return (
+        <div className="space-modern">
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="text-red-400 mb-4">
+                  <ExternalLink className="h-12 w-12 mx-auto" />
+                </div>
+                <p className="text-red-400 font-medium mb-2">
+                  Erreur de chargement
+                </p>
+                <p className="text-surface-400 text-sm mb-4">{embedError}</p>
+                <Button
+                  variant="secondary"
+                  onClick={loadEmbedData}
+                  className="mx-auto"
+                >
+                  Réessayer
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    if (!embedData) {
+      return (
+        <div className="space-modern">
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="text-surface-500 mb-4">
+                  <ExternalLink className="h-12 w-12 mx-auto" />
+                </div>
+                <p className="text-surface-500 font-medium">
+                  Données d'intégration non disponibles
+                </p>
+                <p className="text-surface-400 text-sm mt-1">
+                  Veuillez d'abord publier le formulaire
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
 
     return (
       <div className="space-modern">
@@ -943,13 +1057,13 @@ export function FormBuilder() {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  value={publishUrl}
+                  value={embedData.embedUrl}
                   readOnly
                   className="flex-1 px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-sm font-mono text-surface-400"
                 />
                 <Button
                   variant="secondary"
-                  onClick={() => copyToClipboard(publishUrl, "Lien")}
+                  onClick={() => copyToClipboard(embedData.embedUrl, "Lien")}
                 >
                   <Copy className="h-4 w-4 mr-2" />
                   Copier le lien
@@ -968,14 +1082,14 @@ export function FormBuilder() {
               </label>
               <div className="space-y-2">
                 <textarea
-                  value={iframeSnippet}
+                  value={embedData.embedCode}
                   readOnly
                   className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-sm font-mono text-surface-400"
-                  rows={3}
+                  rows={5}
                 />
                 <Button
                   variant="secondary"
-                  onClick={() => copyToClipboard(iframeSnippet, "Code")}
+                  onClick={() => copyToClipboard(embedData.embedCode, "Code")}
                   className="w-full"
                 >
                   <Code className="h-4 w-4 mr-2" />
@@ -996,7 +1110,7 @@ export function FormBuilder() {
           <CardContent>
             <div className="border border-surface-700 rounded-xl overflow-hidden">
               <iframe
-                src={publishUrl}
+                src={embedData.embedUrl}
                 width="100%"
                 height="600"
                 frameBorder="0"
