@@ -17,6 +17,8 @@ interface IAuthProviderProps {
 }
 
 const TOKEN_KEY = import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token";
+const REFRESH_TOKEN_KEY =
+  import.meta.env.VITE_JWT_REFRESH_KEY || "formbuilder_refresh_token";
 
 export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<IUser | null>(null);
@@ -37,10 +39,12 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
           setUser(response.data);
         } else {
           localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(REFRESH_TOKEN_KEY);
         }
       }
     } catch {
       localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
     } finally {
       setLoading(false);
     }
@@ -60,6 +64,7 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
       if (response.success && response.data) {
         setUser(response.data.user);
         localStorage.setItem(TOKEN_KEY, response.data.token);
+        localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
         return { success: true, data: response.data };
       } else {
         const err = response.message || "Erreur lors de la connexion";
@@ -91,6 +96,7 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
     } finally {
       setUser(null);
       localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
       setLoading(false);
     }
   };

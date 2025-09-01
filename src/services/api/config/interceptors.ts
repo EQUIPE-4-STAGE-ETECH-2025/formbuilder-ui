@@ -4,30 +4,23 @@ import {
   InternalAxiosRequestConfig,
 } from "axios";
 
-interface IRefreshResponse {
-  token: string;
-  refresh_token?: string;
-}
-
 const PUBLIC_ENDPOINTS = [
   "/auth/login",
   "/auth/register",
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/refresh",
-  "/auth/verify-email", 
+  "/auth/verify-email",
 ];
-
 
 export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
   // Intercepteur de requête pour ajouter le token
   apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     // Ne pas ajouter le token pour login ou refresh
     if (PUBLIC_ENDPOINTS.some((url) => config.url?.includes(url))) {
-      delete config.headers?.Authorization; 
+      delete config.headers?.Authorization;
       return config;
     }
-
 
     const token = localStorage.getItem(
       import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token"
@@ -49,7 +42,6 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
       if (
         error.response?.status === 401 &&
         !originalRequest._retry &&
-        !originalRequest._retry &&
         !PUBLIC_ENDPOINTS.some((url) => originalRequest.url?.includes(url))
       ) {
         originalRequest._retry = true;
@@ -60,24 +52,16 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
           );
 
           if (refreshToken) {
-            const response = await apiClient.post("/auth/refresh", {
+            const response = await apiClient.post("/api/auth/refresh", {
               refresh_token: refreshToken,
             });
 
-            const { token, refresh_token } = response.data as IRefreshResponse;
+            const { token } = response.data.data as { token: string };
 
             localStorage.setItem(
               import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token",
               token
             );
-
-            if (refresh_token) {
-              localStorage.setItem(
-                import.meta.env.VITE_JWT_REFRESH_KEY ||
-                "formbuilder_refresh_token",
-                refresh_token
-              );
-            }
 
             if (originalRequest.headers) {
               originalRequest.headers.Authorization = `Bearer ${token}`;
