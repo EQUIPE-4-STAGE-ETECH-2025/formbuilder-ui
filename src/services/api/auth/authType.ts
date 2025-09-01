@@ -9,6 +9,7 @@ export interface ILoginResponse {
   success: boolean;
   data?: {
     token: string;
+    refresh_token: string;
     user: IUser;
   };
   message?: string;
@@ -65,5 +66,14 @@ export interface IResetPasswordResponse {
 
 export interface IChangePasswordResponse {
   success: boolean;
+  message?: string;
+}
+
+export interface IRefreshResponse {
+  success: boolean;
+  data?: {
+    token: string;
+    user: IUser;
+  };
   message?: string;
 }

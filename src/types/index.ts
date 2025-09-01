@@ -21,6 +21,7 @@ export interface IUser {
 
 export interface ILoginSuccess {
   token: string;
+  refresh_token: string;
   user: IUser;
 }
 

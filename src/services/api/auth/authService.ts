@@ -1,3 +1,4 @@
+import { IUser } from "../../../types";
 import { apiClient } from "../config/apiClient";
 import {
   IChangePasswordResponse,
@@ -6,6 +7,7 @@ import {
   ILoginResponse,
   ILogoutResponse,
   IMeResponse,
+  IRefreshResponse,
   IRegisterRequest,
   IRegisterResponse,
   IResendVerificationResponse,
@@ -54,8 +56,12 @@ export const authService = {
 
   me: async (): Promise<IMeResponse> => {
     try {
-      const response = await apiClient.get<IMeResponse>(`${basePath}/me`);
-      return response.data;
+      const response = await apiClient.get<IUser>(`${basePath}/me`);
+      return {
+        success: true,
+        data: response.data,
+        message: "Utilisateur récupéré avec succès",
+      };
     } catch (error) {
       console.error("Erreur lors de la récupération du profil:", error);
       return {
@@ -205,6 +211,22 @@ export const authService = {
       return {
         success: false,
         message: "Erreur lors du changement de mot de passe",
+      };
+    }
+  },
+
+  refreshToken: async (refreshToken: string): Promise<IRefreshResponse> => {
+    try {
+      const response = await apiClient.post<IRefreshResponse>(
+        `${basePath}/refresh`,
+        { refresh_token: refreshToken }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Erreur lors du refresh du token:", error);
+      return {
+        success: false,
+        message: "Impossible de renouveler le token",
       };
     }
   },
