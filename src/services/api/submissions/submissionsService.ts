@@ -17,17 +17,17 @@ const adaptSubmission = (apiData: any): ISubmission => ({
 
 export const submissionsService = {
   submit: async (formId: string, payload: SubmitFormDto): Promise<SubmissionResponseDto> => {
-    const res = await apiClient.post(`/forms/${formId}/submit`, payload);
+    const res = await apiClient.post(`/api/forms/${formId}/submit`, payload);
     return res.data;
   },
 
   getByFormId: async (formId: string, query?: SubmissionsQuery): Promise<ISubmission[]> => {
-    const res = await apiClient.get(`/forms/${formId}/submissions`, { params: query });
+    const res = await apiClient.get(`/api/forms/${formId}/submissions`, { params: query });
     return res.data.map(adaptSubmission);
   },
 
   exportCsv: async (formId: string): Promise<Blob> => {
-    const res = await apiClient.get(`/forms/${formId}/submissions/export`, {
+    const res = await apiClient.get(`/api/forms/${formId}/submissions/export`, {
       responseType: "blob",
     });
     return res.data;

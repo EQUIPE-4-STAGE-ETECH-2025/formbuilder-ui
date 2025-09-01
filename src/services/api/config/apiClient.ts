@@ -6,7 +6,7 @@ import {
 } from "./interceptors";
 
 // Configuration de base
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || "10000");
 const API_RETRY_ATTEMPTS = parseInt(
   import.meta.env.VITE_API_RETRY_ATTEMPTS || "3"

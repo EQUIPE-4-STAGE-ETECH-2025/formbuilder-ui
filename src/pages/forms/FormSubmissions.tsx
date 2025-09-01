@@ -7,8 +7,9 @@ import { Pagination } from "../../components/ui/Pagination";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { formsService, versionsService } from "../../services/api";
-import { submissionsAPI } from "../../services/api.mock";
-import { IForm, IFormVersion, ISubmission } from "../../types";
+import { submissionsService } from "../../services/api/submissions/submissionsService";
+import { ISubmission } from "../../services/api/submissions/submissionsTypes";
+import { IForm, IFormVersion } from "../../types";
 import {
   adaptFormFromAPI,
   adaptVersionFromAPIForHooks,
@@ -18,34 +19,40 @@ export function FormSubmissions() {
   const { id } = useParams();
   const { addToast } = useToast();
   const { user } = useAuth();
+
   const [form, setForm] = useState<IForm | null>(null);
-  const [submissions, setSubmissions] = useState<ISubmission[]>([]);
   const [formVersion, setFormVersion] = useState<IFormVersion | null>(null);
+
+  const [submissions, setSubmissions] = useState<ISubmission[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
 
   const fetchForm = useCallback(async () => {
     try {
-      const response = await formsService.getById(id!);
-      if (response.success && response.data) {
+      if (!id) return;
+
+      const response = await formsService.getById(id);
+      if (response?.success && response.data) {
         const adaptedForm = adaptFormFromAPI(response.data, user?.id);
         setForm(adaptedForm);
 
-        // Récupérer la version actuelle du formulaire
-        const versionResponse = await versionsService.getByFormId(id!);
-        if (versionResponse.success && versionResponse.data) {
-          // Prendre la version la plus récente (versionNumber la plus élevée)
+        // Récupérer la version la plus récente du formulaire
+        const versionResponse = await versionsService.getByFormId(id);
+        if (versionResponse?.success && versionResponse.data?.length) {
           const latestVersion = versionResponse.data.reduce((latest, current) =>
             current.versionNumber > latest.versionNumber ? current : latest
           );
-          // Adapter la version vers le format UI en utilisant l'adaptateur centralisé
+
+          // Adapter la version vers le format UI
           const adaptedVersion = adaptVersionFromAPIForHooks(latestVersion);
           adaptedVersion.form_id = adaptedForm.id;
           adaptedVersion.schema.title = adaptedForm.title;
           adaptedVersion.schema.description = adaptedForm.description;
           adaptedVersion.schema.status = adaptedForm.status;
+
           setFormVersion(adaptedVersion);
         }
       }
@@ -56,13 +63,20 @@ export function FormSubmissions() {
 
   const fetchSubmissions = useCallback(async () => {
     try {
+      if (!id) return;
       setLoading(true);
-      const response = await submissionsAPI.getByFormId(id!);
 
-      if (response.success && response.data) {
-        setSubmissions(response.data);
-        setTotalItems(response.data.length);
-      }
+      // Le service peut renvoyer soit un tableau simple, soit { items, total }
+      const res: any = await submissionsService.getByFormId(id, {
+        page: currentPage,
+        limit: itemsPerPage,
+      });
+
+      const items: ISubmission[] = Array.isArray(res) ? res : res?.items ?? [];
+      const total = Array.isArray(res) ? res.length : res?.total ?? items.length;
+
+      setSubmissions(items);
+      setTotalItems(total);
     } catch {
       console.error("Error fetching submissions");
       addToast({
@@ -73,22 +87,50 @@ export function FormSubmissions() {
     } finally {
       setLoading(false);
     }
-  }, [id, addToast]);
+  }, [id, currentPage, itemsPerPage, addToast]);
 
   useEffect(() => {
-    if (id) {
-      fetchForm();
-      fetchSubmissions();
-    }
-  }, [id, currentPage, itemsPerPage, fetchForm, fetchSubmissions]);
+    if (!id) return;
+    fetchForm();
+  }, [id, fetchForm]);
+
+  useEffect(() => {
+    if (!id) return;
+    fetchSubmissions();
+  }, [id, currentPage, itemsPerPage, fetchSubmissions]);
+
+  // ===== Helpers =====
+  const sanitizeFilename = (name: string) =>
+    name.replace(/[^\p{L}\p{N}\-_. ]/gu, "_").trim() || "soumissions";
 
   const handleExport = async () => {
     try {
-      // In real app, would trigger CSV export
+      if (!id) return;
+
+      const file = await submissionsService.exportCsv(id);
+
+      const blob =
+        file instanceof Blob
+          ? file
+          : new Blob([typeof file === "string" ? file : ""], {
+              type: "text/csv;charset=utf-8;",
+            });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const base = sanitizeFilename(form?.title ?? "soumissions");
+      const date = new Date().toISOString().slice(0, 10);
+      a.download = `${base}-${date}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
       addToast({
         type: "success",
-        title: "Export en cours",
-        message: "Le fichier CSV sera téléchargé dans quelques secondes",
+        title: "Export lancé",
+        message: "Le téléchargement du CSV a démarré.",
       });
     } catch {
       addToast({
@@ -99,56 +141,46 @@ export function FormSubmissions() {
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  const handlePageChange = (page: number) => setCurrentPage(page);
 
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
-    setCurrentPage(1); // Reset to first page
+    setCurrentPage(1); // Reset à la première page
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("fr-FR", {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("fr-FR", {
       year: "numeric",
       month: "long",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
 
-  // Fonction pour obtenir le label d'un champ par son ID
+  // Obtenir le label d’un champ par son ID
   const getFieldLabel = (fieldId: string): string => {
     if (!formVersion?.schema?.fields) return fieldId;
     const field = formVersion.schema.fields.find((f) => f.id === fieldId);
     return field?.label || fieldId;
   };
 
-  // Fonction pour obtenir la valeur d'un champ de soumission
-  const getSubmissionValue = (
-    submission: ISubmission,
-    fieldId: string
-  ): string => {
-    const value = submission.data[fieldId];
+  // Obtenir la valeur d’un champ dans une soumission
+  const getSubmissionValue = (submission: ISubmission, fieldId: string): string => {
+    const value = submission.data?.[fieldId];
     if (value === undefined || value === null) return "-";
     return String(value);
   };
 
-  // Fonction pour obtenir les clés des champs depuis les soumissions
+  // Clés de champs présentes dans les soumissions (fallback si pas de version)
   const getFieldKeys = (): string[] => {
     if (submissions.length === 0) return [];
-
-    // Extraire toutes les clés uniques des données de soumission
     const allKeys = new Set<string>();
-    submissions.forEach((submission) => {
-      Object.keys(submission.data).forEach((key) => allKeys.add(key));
+    submissions.forEach((s) => {
+      Object.keys(s.data ?? {}).forEach((k) => allKeys.add(k));
     });
-
     return Array.from(allKeys).sort();
   };
 
-  // Obtenir les clés des champs (fallback si formVersion n'est pas disponible)
   const fieldKeys = getFieldKeys();
 
   if (loading && !form) {
@@ -175,12 +207,10 @@ export function FormSubmissions() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-text-100">
-            Soumissions du formulaire
-          </h1>
+          <h1 className="text-3xl font-bold text-text-100">Soumissions du formulaire</h1>
           <p className="text-surface-400 mt-2">{form.title}</p>
         </div>
-        <Button onClick={handleExport} variant="secondary">
+        <Button onClick={handleExport} variant="secondary" disabled={submissions.length === 0}>
           <Download className="h-4 w-4 mr-2" />
           Exporter CSV
         </Button>
@@ -198,12 +228,7 @@ export function FormSubmissions() {
           ) : submissions.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-surface-500 mb-4">
-                <svg
-                  className="w-16 h-16 mx-auto"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -212,65 +237,46 @@ export function FormSubmissions() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-text-100 mb-2">
-                Aucune soumission trouvée
-              </h3>
-              <p className="text-surface-400">
-                Aucune soumission pour le moment
-              </p>
+              <h3 className="text-lg font-medium text-text-100 mb-2">Aucune soumission trouvée</h3>
+              <p className="text-surface-400">Aucune soumission pour le moment</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr>
-                    <th className="text-left py-4 px-6 font-medium text-surface-300 text-sm">
-                      Date
-                    </th>
-                    <th className="text-left py-4 px-6 font-medium text-surface-300 text-sm">
-                      IP
-                    </th>
+                    <th className="text-left py-4 px-6 font-medium text-surface-300 text-sm">Date</th>
+                    <th className="text-left py-4 px-6 font-medium text-surface-300 text-sm">IP</th>
                     {/* Colonnes dynamiques pour les champs du formulaire */}
                     {fieldKeys.map((fieldKey) => (
-                      <th
-                        key={fieldKey}
-                        className="text-left py-4 px-6 font-medium text-surface-300 text-sm"
-                      >
+                      <th key={fieldKey} className="text-left py-4 px-6 font-medium text-surface-300 text-sm">
                         {getFieldLabel(fieldKey)}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {submissions
-                    .slice(
-                      (currentPage - 1) * itemsPerPage,
-                      currentPage * itemsPerPage
-                    )
-                    .map((submission) => (
-                      <tr key={submission.id}>
-                        <td className="py-4 px-6 text-sm text-surface-500">
-                          {formatDate(submission.submitted_at)}
-                        </td>
-                        <td className="py-4 px-6 text-sm text-surface-500">
-                          {submission.ip_address}
-                        </td>
-                        {/* Cellules dynamiques pour les valeurs des champs */}
-                        {fieldKeys.map((fieldKey) => (
-                          <td
-                            key={fieldKey}
-                            className="py-4 px-6 text-sm text-surface-500"
+                  {submissions.map((submission) => (
+                    <tr key={submission.id}>
+                      <td className="py-4 px-6 text-sm text-surface-500">
+                        {formatDate(submission.submittedAt)}
+                      </td>
+                      <td className="py-4 px-6 text-sm text-surface-500">
+                        {submission.ipAddress}
+                      </td>
+                      {/* Cellules dynamiques pour les valeurs des champs */}
+                      {fieldKeys.map((fieldKey) => (
+                        <td key={fieldKey} className="py-4 px-6 text-sm text-surface-500">
+                          <div
+                            className="max-w-xs truncate"
+                            title={getSubmissionValue(submission, fieldKey)}
                           >
-                            <div
-                              className="max-w-xs truncate"
-                              title={getSubmissionValue(submission, fieldKey)}
-                            >
-                              {getSubmissionValue(submission, fieldKey)}
-                            </div>
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
+                            {getSubmissionValue(submission, fieldKey)}
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
