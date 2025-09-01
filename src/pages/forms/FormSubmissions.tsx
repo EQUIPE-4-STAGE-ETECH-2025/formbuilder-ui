@@ -1,6 +1,15 @@
 import { Download } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../../components/ui/Card";
 import { Pagination } from "../../components/ui/Pagination";
@@ -8,21 +17,15 @@ import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { formsService, versionsService } from "../../services/api";
 import { submissionsService } from "../../services/api/submissions/submissionsService";
-import { ISubmission } from "../../services/api/submissions/submissionsTypes";
+import {
+  ISubmission,
+  getSubmissionValue,
+} from "../../services/api/submissions/submissionsTypes";
 import { IForm, IFormVersion } from "../../types";
 import {
   adaptFormFromAPI,
   adaptVersionFromAPIForHooks,
 } from "../../utils/formAdapter";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 
 export function FormSubmissions() {
   const { id } = useParams();
@@ -44,7 +47,6 @@ export function FormSubmissions() {
     average_submission_time: number | null;
   } | null>(null);
 
-  // ===== Fetch form & version =====
   const fetchForm = useCallback(async () => {
     if (!id) return;
     try {
@@ -55,9 +57,8 @@ export function FormSubmissions() {
 
         const versionResponse = await versionsService.getByFormId(id);
         if (versionResponse?.success && versionResponse.data?.length) {
-          const latestVersion = versionResponse.data.reduce(
-            (latest, current) =>
-              current.versionNumber > latest.versionNumber ? current : latest
+          const latestVersion = versionResponse.data.reduce((latest, current) =>
+            current.versionNumber > latest.versionNumber ? current : latest
           );
           const adaptedVersion = adaptVersionFromAPIForHooks(latestVersion);
           adaptedVersion.form_id = adaptedForm.id;
@@ -72,19 +73,16 @@ export function FormSubmissions() {
     }
   }, [id, user?.id]);
 
-  // ===== Fetch submissions =====
   const fetchSubmissions = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
-      const res: any = await submissionsService.getByFormId(id, {
+      const submissions = await submissionsService.getByFormId(id, {
         page: currentPage,
         limit: itemsPerPage,
       });
-      const items: ISubmission[] = Array.isArray(res) ? res : res?.items ?? [];
-      const total = Array.isArray(res) ? res.length : res?.total ?? items.length;
-      setSubmissions(items);
-      setTotalItems(total);
+      setSubmissions(submissions);
+      setTotalItems(submissions.length);
     } catch {
       addToast({
         type: "error",
@@ -96,7 +94,6 @@ export function FormSubmissions() {
     }
   }, [id, currentPage, itemsPerPage, addToast]);
 
-  // ===== Fetch analytics =====
   const fetchAnalytics = useCallback(async () => {
     if (!id) return;
     try {
@@ -136,9 +133,9 @@ export function FormSubmissions() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${sanitizeFilename(form?.title || "soumissions")}-${new Date()
-        .toISOString()
-        .slice(0, 10)}.csv`;
+      a.download = `${sanitizeFilename(
+        form?.title || "soumissions"
+      )}-${new Date().toISOString().slice(0, 10)}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -179,9 +176,11 @@ export function FormSubmissions() {
     return field?.label || fieldId;
   };
 
-  const getSubmissionValue = (submission: ISubmission, fieldId: string) => {
-    const value = submission.data?.[fieldId];
-    return value !== undefined && value !== null ? String(value) : "-";
+  const getSubmissionValueForDisplay = (
+    submission: ISubmission,
+    fieldId: string
+  ) => {
+    return getSubmissionValue(submission.data ?? {}, fieldId);
   };
 
   const getFieldKeys = (): string[] => {
@@ -216,7 +215,6 @@ export function FormSubmissions() {
 
   return (
     <div className="space-modern">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
           <h1 className="text-3xl font-bold text-text-100">
@@ -234,10 +232,8 @@ export function FormSubmissions() {
         </Button>
       </div>
 
-      {/* Analytics Cards */}
       {analytics && (
         <>
-          {/* Ligne des 3 cartes principales */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">
             <Card>
               <CardContent className="p-4">
@@ -257,17 +253,20 @@ export function FormSubmissions() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <p className="text-surface-500 text-sm">Temps moyen de remplissage</p>
+                <p className="text-surface-500 text-sm">
+                  Temps moyen de remplissage
+                </p>
                 <h2 className="text-2xl font-bold text-text-100">
                   {analytics.average_submission_time
-                    ? `${(analytics.average_submission_time / 60).toFixed(1)} min`
+                    ? `${(analytics.average_submission_time / 60).toFixed(
+                        1
+                      )} min`
                     : "-"}
                 </h2>
               </CardContent>
             </Card>
           </div>
 
-          {/* Card Évolution sur une ligne séparée */}
           <div className="my-6">
             <Card>
               <CardHeader>
@@ -279,12 +278,18 @@ export function FormSubmissions() {
                 <div className="h-32 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
-                      data={Object.entries(analytics.daily).map(([date, value]) => ({
-                        date,
-                        value,
-                      }))}
+                      data={Object.entries(analytics.daily).map(
+                        ([date, value]) => ({
+                          date,
+                          value,
+                        })
+                      )}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#404040" strokeOpacity={0.2} />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#404040"
+                        strokeOpacity={0.2}
+                      />
                       <XAxis dataKey="date" stroke="#a3a3a3" />
                       <YAxis stroke="#a3a3a3" />
                       <Tooltip
@@ -295,7 +300,13 @@ export function FormSubmissions() {
                           color: "#fff",
                         }}
                       />
-                      <Area type="monotone" dataKey="value" stroke="#eab308" fill="#eab308" fillOpacity={0.3} />
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#eab308"
+                        fill="#eab308"
+                        fillOpacity={0.3}
+                      />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -305,7 +316,6 @@ export function FormSubmissions() {
         </>
       )}
 
-      {/* Submissions Table */}
       <Card>
         <CardContent className="p-6">
           {loading ? (
@@ -343,7 +353,7 @@ export function FormSubmissions() {
                       <td className="p-2">{i + 1}</td>
                       {fieldKeys.map((key) => (
                         <td key={key} className="p-2">
-                          {getSubmissionValue(sub, key)}
+                          {getSubmissionValueForDisplay(sub, key)}
                         </td>
                       ))}
                       <td className="p-2">{formatDate(sub.submittedAt)}</td>
