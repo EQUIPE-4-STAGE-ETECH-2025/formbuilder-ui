@@ -2,7 +2,7 @@ import { Download } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
-import { Card, CardContent } from "../../components/ui/Card";
+import { Card, CardContent, CardHeader } from "../../components/ui/Card";
 import { Pagination } from "../../components/ui/Pagination";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
@@ -14,6 +14,15 @@ import {
   adaptFormFromAPI,
   adaptVersionFromAPIForHooks,
 } from "../../utils/formAdapter";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 export function FormSubmissions() {
   const { id } = useParams();
@@ -22,37 +31,39 @@ export function FormSubmissions() {
 
   const [form, setForm] = useState<IForm | null>(null);
   const [formVersion, setFormVersion] = useState<IFormVersion | null>(null);
-
   const [submissions, setSubmissions] = useState<ISubmission[]>([]);
   const [totalItems, setTotalItems] = useState(0);
-
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const fetchForm = useCallback(async () => {
-    try {
-      if (!id) return;
+  const [analytics, setAnalytics] = useState<{
+    total: number;
+    daily: Record<string, number>;
+    conversion_rate: number;
+    average_submission_time: number | null;
+  } | null>(null);
 
+  // ===== Fetch form & version =====
+  const fetchForm = useCallback(async () => {
+    if (!id) return;
+    try {
       const response = await formsService.getById(id);
       if (response?.success && response.data) {
         const adaptedForm = adaptFormFromAPI(response.data, user?.id);
         setForm(adaptedForm);
 
-        // Récupérer la version la plus récente du formulaire
         const versionResponse = await versionsService.getByFormId(id);
         if (versionResponse?.success && versionResponse.data?.length) {
-          const latestVersion = versionResponse.data.reduce((latest, current) =>
-            current.versionNumber > latest.versionNumber ? current : latest
+          const latestVersion = versionResponse.data.reduce(
+            (latest, current) =>
+              current.versionNumber > latest.versionNumber ? current : latest
           );
-
-          // Adapter la version vers le format UI
           const adaptedVersion = adaptVersionFromAPIForHooks(latestVersion);
           adaptedVersion.form_id = adaptedForm.id;
           adaptedVersion.schema.title = adaptedForm.title;
           adaptedVersion.schema.description = adaptedForm.description;
           adaptedVersion.schema.status = adaptedForm.status;
-
           setFormVersion(adaptedVersion);
         }
       }
@@ -61,20 +72,17 @@ export function FormSubmissions() {
     }
   }, [id, user?.id]);
 
+  // ===== Fetch submissions =====
   const fetchSubmissions = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
     try {
-      if (!id) return;
-      setLoading(true);
-
-      // Le service peut renvoyer soit un tableau simple, soit { items, total }
       const res: any = await submissionsService.getByFormId(id, {
         page: currentPage,
         limit: itemsPerPage,
       });
-
       const items: ISubmission[] = Array.isArray(res) ? res : res?.items ?? [];
       const total = Array.isArray(res) ? res.length : res?.total ?? items.length;
-
       setSubmissions(items);
       setTotalItems(total);
     } catch {
@@ -89,39 +97,50 @@ export function FormSubmissions() {
     }
   }, [id, currentPage, itemsPerPage, addToast]);
 
-  useEffect(() => {
+  // ===== Fetch analytics =====
+  const fetchAnalytics = useCallback(async () => {
     if (!id) return;
-    fetchForm();
-  }, [id, fetchForm]);
+    try {
+      const data = await submissionsService.getAnalytics(id);
+      setAnalytics(data);
+    } catch {
+      addToast({
+        type: "error",
+        title: "Erreur",
+        message: "Impossible de charger les statistiques",
+      });
+    }
+  }, [id, addToast]);
 
   useEffect(() => {
-    if (!id) return;
+    fetchForm();
+  }, [fetchForm]);
+
+  useEffect(() => {
     fetchSubmissions();
-  }, [id, currentPage, itemsPerPage, fetchSubmissions]);
+    fetchAnalytics();
+  }, [fetchSubmissions, fetchAnalytics]);
 
   // ===== Helpers =====
   const sanitizeFilename = (name: string) =>
     name.replace(/[^\p{L}\p{N}\-_. ]/gu, "_").trim() || "soumissions";
 
   const handleExport = async () => {
+    if (!id) return;
     try {
-      if (!id) return;
-
       const file = await submissionsService.exportCsv(id);
-
       const blob =
         file instanceof Blob
           ? file
           : new Blob([typeof file === "string" ? file : ""], {
               type: "text/csv;charset=utf-8;",
             });
-
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const base = sanitizeFilename(form?.title ?? "soumissions");
-      const date = new Date().toISOString().slice(0, 10);
-      a.download = `${base}-${date}.csv`;
+      a.download = `${sanitizeFilename(form?.title || "soumissions")}-${new Date()
+        .toISOString()
+        .slice(0, 10)}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -142,10 +161,9 @@ export function FormSubmissions() {
   };
 
   const handlePageChange = (page: number) => setCurrentPage(page);
-
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
-    setCurrentPage(1); // Reset à la première page
+    setCurrentPage(1);
   };
 
   const formatDate = (dateString: string) =>
@@ -157,21 +175,17 @@ export function FormSubmissions() {
       minute: "2-digit",
     });
 
-  // Obtenir le label d’un champ par son ID
-  const getFieldLabel = (fieldId: string): string => {
+  const getFieldLabel = (fieldId: string) => {
     if (!formVersion?.schema?.fields) return fieldId;
     const field = formVersion.schema.fields.find((f) => f.id === fieldId);
     return field?.label || fieldId;
   };
 
-  // Obtenir la valeur d’un champ dans une soumission
-  const getSubmissionValue = (submission: ISubmission, fieldId: string): string => {
+  const getSubmissionValue = (submission: ISubmission, fieldId: string) => {
     const value = submission.data?.[fieldId];
-    if (value === undefined || value === null) return "-";
-    return String(value);
+    return value !== undefined && value !== null ? String(value) : "-";
   };
 
-  // Clés de champs présentes dans les soumissions (fallback si pas de version)
   const getFieldKeys = (): string[] => {
     if (submissions.length === 0) return [];
     const allKeys = new Set<string>();
@@ -186,7 +200,7 @@ export function FormSubmissions() {
   if (loading && !form) {
     return (
       <div className="space-modern">
-        <div>
+        <div className="space-modern">
           <div className="h-8 loading-blur rounded-2xl w-1/3 mb-4"></div>
           <div className="h-64 loading-blur rounded-2xl"></div>
         </div>
@@ -207,14 +221,84 @@ export function FormSubmissions() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-text-100">Soumissions du formulaire</h1>
+          <h1 className="text-3xl font-bold text-text-100">
+            Soumissions du formulaire
+          </h1>
           <p className="text-surface-400 mt-2">{form.title}</p>
         </div>
-        <Button onClick={handleExport} variant="secondary" disabled={submissions.length === 0}>
+        <Button
+          onClick={handleExport}
+          variant="secondary"
+          disabled={submissions.length === 0}
+        >
           <Download className="h-4 w-4 mr-2" />
           Exporter CSV
         </Button>
       </div>
+
+      {/* Analytics Cards */}
+      {analytics && (
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 my-6">
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-surface-500 text-sm">Total soumissions</p>
+              <h2 className="text-2xl font-bold text-text-100">
+                {analytics.total}
+              </h2>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-surface-500 text-sm">Taux de conversion</p>
+              <h2 className="text-2xl font-bold text-text-100">
+                {analytics.conversion_rate}%
+              </h2>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-surface-500 text-sm">Temps moyen de remplissage</p>
+              <h2 className="text-2xl font-bold text-text-100">
+                {analytics.average_submission_time
+                  ? `${(analytics.average_submission_time / 60).toFixed(1)} min`
+                  : "-"}
+              </h2>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <h3 className="text-sm font-semibold text-surface-400">
+                Évolution
+              </h3>
+            </CardHeader>
+            <CardContent>
+              <div className="h-32 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={Object.entries(analytics.daily).map(([date, value]) => ({
+                      date,
+                      value,
+                    }))}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#404040" strokeOpacity={0.2} />
+                    <XAxis dataKey="date" stroke="#a3a3a3" />
+                    <YAxis stroke="#a3a3a3" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#222222",
+                        borderRadius: "12px",
+                        padding: "8px",
+                        color: "#fff",
+                      }}
+                    />
+                    <Area type="monotone" dataKey="value" stroke="#eab308" fill="#eab308" fillOpacity={0.3} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Submissions Table */}
       <Card>
@@ -226,75 +310,55 @@ export function FormSubmissions() {
               ))}
             </div>
           ) : submissions.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-surface-500 mb-4">
-                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-text-100 mb-2">Aucune soumission trouvée</h3>
-              <p className="text-surface-400">Aucune soumission pour le moment</p>
-            </div>
+            <p className="text-center text-surface-500 py-12">
+              Aucune soumission pour le moment
+            </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-auto border-collapse">
                 <thead>
-                  <tr>
-                    <th className="text-left py-4 px-6 font-medium text-surface-300 text-sm">Date</th>
-                    <th className="text-left py-4 px-6 font-medium text-surface-300 text-sm">IP</th>
-                    {/* Colonnes dynamiques pour les champs du formulaire */}
-                    {fieldKeys.map((fieldKey) => (
-                      <th key={fieldKey} className="text-left py-4 px-6 font-medium text-surface-300 text-sm">
-                        {getFieldLabel(fieldKey)}
+                  <tr className="bg-surface-900 text-surface-400 text-left">
+                    <th className="p-2 border-b border-surface-700">#</th>
+                    {fieldKeys.map((key) => (
+                      <th key={key} className="p-2 border-b border-surface-700">
+                        {getFieldLabel(key)}
                       </th>
                     ))}
+                    <th className="p-2 border-b border-surface-700">Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {submissions.map((submission) => (
-                    <tr key={submission.id}>
-                      <td className="py-4 px-6 text-sm text-surface-500">
-                        {formatDate(submission.submittedAt)}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-surface-500">
-                        {submission.ipAddress}
-                      </td>
-                      {/* Cellules dynamiques pour les valeurs des champs */}
-                      {fieldKeys.map((fieldKey) => (
-                        <td key={fieldKey} className="py-4 px-6 text-sm text-surface-500">
-                          <div
-                            className="max-w-xs truncate"
-                            title={getSubmissionValue(submission, fieldKey)}
-                          >
-                            {getSubmissionValue(submission, fieldKey)}
-                          </div>
+                  {submissions.map((sub, i) => (
+                    <tr
+                      key={sub.id}
+                      className={`border-b border-surface-700 ${
+                        i % 2 === 0 ? "bg-surface-950" : "bg-surface-900"
+                      }`}
+                    >
+                      <td className="p-2">{i + 1}</td>
+                      {fieldKeys.map((key) => (
+                        <td key={key} className="p-2">
+                          {getSubmissionValue(sub, key)}
                         </td>
                       ))}
+                      <td className="p-2">{formatDate(sub.submittedAt)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(totalItems / itemsPerPage)}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+          />
         </CardContent>
       </Card>
-
-      {/* Pagination */}
-      {totalItems > itemsPerPage && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={Math.ceil(totalItems / itemsPerPage)}
-          totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
-          onPageChange={handlePageChange}
-          onItemsPerPageChange={handleItemsPerPageChange}
-        />
-      )}
     </div>
   );
 }

@@ -32,4 +32,9 @@ export const submissionsService = {
     });
     return res.data;
   },
+
+  getAnalytics: async (formId: string): Promise<any> => {
+    const res = await apiClient.get(`/api/forms/${formId}/submissions/analytics`);
+    return res.data; // { total, daily, conversion_rate, average_submission_time }
+  },
 };
