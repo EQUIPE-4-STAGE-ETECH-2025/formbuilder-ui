@@ -12,7 +12,6 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 
-
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -91,12 +90,12 @@ export function Header() {
           </div>
 
           {/* Desktop Navigation - Centered */}
-          <nav className="hidden md:flex space-x-2 absolute left-1/2 transform -translate-x-1/2">
+          <nav className="hidden lg:flex space-x-2 absolute left-1/2 transform -translate-x-1/2">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
+                className={`px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
                   isActive(item.href)
                     ? "text-text-100"
                     : "text-surface-400 hover:text-text-100"
@@ -114,7 +113,7 @@ export function Header() {
               <input
                 type="text"
                 placeholder="Rechercher..."
-                className="header-search-input w-40 pl-10 pr-4 py-2 text-sm bg-surface-800 border border-surface-700/50 rounded-xl text-text-100 placeholder-surface-400 focus:outline-none focus:ring-0 focus:border-surface-700/50 transition-colors duration-200"
+                className="header-search-input w-32 lg:w-40 pl-10 pr-4 py-2 text-sm bg-surface-800 border border-surface-700/50 rounded-xl text-text-100 placeholder-surface-400 focus:outline-none focus:ring-0 focus:border-surface-700/50 transition-colors duration-200"
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-surface-400" />
             </div>
@@ -168,7 +167,7 @@ export function Header() {
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center space-x-3 p-2 rounded-xl hover:bg-surface-800 transition-all duration-200 focus-ring"
+                className="flex items-center space-x-2 lg:space-x-3 p-2 rounded-xl hover:bg-surface-800 transition-all duration-200 focus-ring"
               >
                 <div className="w-10 h-10 bg-yellow-500 rounded-2xl flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
@@ -176,13 +175,13 @@ export function Header() {
                     {user?.lastName?.[0]}
                   </span>
                 </div>
-                <span className="hidden md:block text-sm font-medium text-text-100">
+                <span className="hidden md:block text-sm font-medium text-text-100 truncate max-w-28 lg:max-w-32">
                   {user?.firstName} {user?.lastName}
                 </span>
               </button>
 
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-3 w-56 bg-surface-900 border border-surface-700/50 rounded-2xl shadow-large z-50 animate-scale-in">
+                <div className="absolute right-0 mt-3 w-48 lg:w-56 bg-surface-900 border border-surface-700/50 rounded-2xl shadow-large z-50 animate-scale-in">
                   <div className="py-2 px-1.5">
                     <Link
                       to="/profile"
