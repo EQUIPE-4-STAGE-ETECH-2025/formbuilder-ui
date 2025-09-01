@@ -176,7 +176,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 ### 3.1 Migration des services de soumissions
 
-- [ ] **SUBMISSIONS-000** : Migrer les services de soumissions vers la nouvelle architecture
+- [x] **SUBMISSIONS-000** : Migrer les services de soumissions vers la nouvelle architecture
   - Déplacer `submissionsAPI` de `api.mock.ts` vers `src/services/api/submissions/submissionsService.ts`
   - Créer les types dans `src/services/api/submissions/submissionsTypes.ts`
   - Mettre à jour tous les imports dans les composants :
@@ -186,14 +186,14 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 ### 3.2 Collecte des soumissions
 
-- [ ] **SUBMISSIONS-001** : Implémenter l'API de soumission (`POST /api/forms/:id/submit`)
+- [x] **SUBMISSIONS-001** : Implémenter l'API de soumission (`POST /api/forms/:id/submit`)
 
   - Validation des données selon le schéma du formulaire
   - Vérification des quotas utilisateur
   - Enregistrement de l'IP et timestamp
   - Notifications email si configurées
 
-- [ ] **SUBMISSIONS-002** : Implémenter l'API de récupération des soumissions (`GET /api/forms/:id/submissions`)
+- [x] **SUBMISSIONS-002** : Implémenter l'API de récupération des soumissions (`GET /api/forms/:id/submissions`)
   - Migrer `submissionsAPI.getByFormId()` depuis `api.mock.ts` vers `src/services/api/submissions/submissionsService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Pagination et filtres (date, statut)
@@ -203,7 +203,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 ### 3.3 Export et analyse
 
-- [ ] **SUBMISSIONS-003** : Implémenter l'API d'export CSV (`GET /api/forms/:id/submissions/export`)
+- [x] **SUBMISSIONS-003** : Implémenter l'API d'export CSV (`GET /api/forms/:id/submissions/export`)
 
   - Migrer `submissionsAPI.exportCsv()` depuis `api.mock.ts` vers `src/services/api/submissions/submissionsService.ts`
   - Remplacer la logique mockée par de vrais appels API
@@ -212,7 +212,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
   - Téléchargement sécurisé
   - Mettre à jour `src/pages/forms/FormSubmissions.tsx` pour utiliser le nouveau service
 
-- [ ] **SUBMISSIONS-004** : Implémenter les statistiques de soumissions
+- [x] **SUBMISSIONS-004** : Implémenter les statistiques de soumissions
   - Nombre de soumissions par période
   - Taux de conversion
   - Temps moyen de remplissage
