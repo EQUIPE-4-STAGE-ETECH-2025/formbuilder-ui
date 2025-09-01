@@ -40,7 +40,7 @@ EXPOSE 8080
 
 # Modifier nginx pour écouter sur le bon port et gérer les routes SPA
 RUN sed -i 's/80;/8080;/g' /etc/nginx/conf.d/default.conf && \
-    echo 'location / { try_files $uri $uri/ /index.html; }' >> /etc/nginx/conf.d/default.conf
+    sed -i '/location \/ {/a\        try_files $uri $uri/ /index.html;' /etc/nginx/conf.d/default.conf
 
 # Lancer nginx
 CMD ["nginx", "-g", "daemon off;"]
