@@ -38,8 +38,9 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Exposer le port attendu par Fly.io
 EXPOSE 8080
 
-# Modifier nginx pour écouter sur le bon port
-RUN sed -i 's/80;/8080;/g' /etc/nginx/conf.d/default.conf
+# Modifier nginx pour écouter sur le bon port et gérer les routes SPA
+RUN sed -i 's/80;/8080;/g' /etc/nginx/conf.d/default.conf && \
+    echo 'location / { try_files $uri $uri/ /index.html; }' >> /etc/nginx/conf.d/default.conf
 
 # Lancer nginx
 CMD ["nginx", "-g", "daemon off;"]
