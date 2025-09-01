@@ -86,7 +86,6 @@ export function FormSubmissions() {
       setSubmissions(items);
       setTotalItems(total);
     } catch {
-      console.error("Error fetching submissions");
       addToast({
         type: "error",
         title: "Erreur",
@@ -121,7 +120,6 @@ export function FormSubmissions() {
     fetchAnalytics();
   }, [fetchSubmissions, fetchAnalytics]);
 
-  // ===== Helpers =====
   const sanitizeFilename = (name: string) =>
     name.replace(/[^\p{L}\p{N}\-_. ]/gu, "_").trim() || "soumissions";
 
@@ -238,66 +236,73 @@ export function FormSubmissions() {
 
       {/* Analytics Cards */}
       {analytics && (
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 my-6">
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-surface-500 text-sm">Total soumissions</p>
-              <h2 className="text-2xl font-bold text-text-100">
-                {analytics.total}
-              </h2>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-surface-500 text-sm">Taux de conversion</p>
-              <h2 className="text-2xl font-bold text-text-100">
-                {analytics.conversion_rate}%
-              </h2>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-surface-500 text-sm">Temps moyen de remplissage</p>
-              <h2 className="text-2xl font-bold text-text-100">
-                {analytics.average_submission_time
-                  ? `${(analytics.average_submission_time / 60).toFixed(1)} min`
-                  : "-"}
-              </h2>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <h3 className="text-sm font-semibold text-surface-400">
-                Évolution
-              </h3>
-            </CardHeader>
-            <CardContent>
-              <div className="h-32 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={Object.entries(analytics.daily).map(([date, value]) => ({
-                      date,
-                      value,
-                    }))}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#404040" strokeOpacity={0.2} />
-                    <XAxis dataKey="date" stroke="#a3a3a3" />
-                    <YAxis stroke="#a3a3a3" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#222222",
-                        borderRadius: "12px",
-                        padding: "8px",
-                        color: "#fff",
-                      }}
-                    />
-                    <Area type="monotone" dataKey="value" stroke="#eab308" fill="#eab308" fillOpacity={0.3} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <>
+          {/* Ligne des 3 cartes principales */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">
+            <Card>
+              <CardContent className="p-4">
+                <p className="text-surface-500 text-sm">Total soumissions</p>
+                <h2 className="text-2xl font-bold text-text-100">
+                  {analytics.total}
+                </h2>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <p className="text-surface-500 text-sm">Taux de conversion</p>
+                <h2 className="text-2xl font-bold text-text-100">
+                  {analytics.conversion_rate}%
+                </h2>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <p className="text-surface-500 text-sm">Temps moyen de remplissage</p>
+                <h2 className="text-2xl font-bold text-text-100">
+                  {analytics.average_submission_time
+                    ? `${(analytics.average_submission_time / 60).toFixed(1)} min`
+                    : "-"}
+                </h2>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Card Évolution sur une ligne séparée */}
+          <div className="my-6">
+            <Card>
+              <CardHeader>
+                <h3 className="text-sm font-semibold text-surface-400">
+                  Évolution
+                </h3>
+              </CardHeader>
+              <CardContent>
+                <div className="h-32 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={Object.entries(analytics.daily).map(([date, value]) => ({
+                        date,
+                        value,
+                      }))}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#404040" strokeOpacity={0.2} />
+                      <XAxis dataKey="date" stroke="#a3a3a3" />
+                      <YAxis stroke="#a3a3a3" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#222222",
+                          borderRadius: "12px",
+                          padding: "8px",
+                          color: "#fff",
+                        }}
+                      />
+                      <Area type="monotone" dataKey="value" stroke="#eab308" fill="#eab308" fillOpacity={0.3} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
       )}
 
       {/* Submissions Table */}
