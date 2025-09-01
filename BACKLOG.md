@@ -212,7 +212,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
   - Téléchargement sécurisé
   - Mettre à jour `src/pages/forms/FormSubmissions.tsx` pour utiliser le nouveau service
 
-- [ ] **SUBMISSIONS-004** : Implémenter les statistiques de soumissions
+- [x] **SUBMISSIONS-004** : Implémenter les statistiques de soumissions
   - Nombre de soumissions par période
   - Taux de conversion
   - Temps moyen de remplissage
