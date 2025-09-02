@@ -46,7 +46,10 @@ export function Dashboard() {
   const submissionsThisMonth = (() => {
     if (!stats) return 0;
     const now = new Date();
-    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}`;
     return stats.submissionsPerMonth[key] || 0;
   })();
 
@@ -56,14 +59,14 @@ export function Dashboard() {
       Soumissions: count,
     })
   );
-  
+
   const formsStatusData = Object.entries(stats?.formsStatusCount || {}).map(
     ([status, count]) => ({
       name: status,
       value: count,
     })
   );
-  
+
   const topFormsData = Object.entries(stats?.submissionsPerForm || {}).map(
     ([formTitle, count]) => ({
       name: formTitle,
@@ -280,10 +283,12 @@ export function Dashboard() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-accent-400">
+                        <p className="text-sm font-medium text-accent-400">
                           {new Date(form.createdAt).toLocaleDateString()}
                         </p>
-                        <p className="text-xs text-surface-500">{form.status}</p>
+                        <p className="text-xs text-surface-500">
+                          {form.status}
+                        </p>
                       </div>
                     </div>
                   </Link>
