@@ -17,6 +17,18 @@ export interface IFormAnalytics {
   average_submission_time: number | null;
 }
 
+// Types pour les réponses paginées des soumissions
+export interface ISubmissionsListResponse {
+  success: boolean;
+  data?: ISubmission[];
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+  message?: string;
+}
+
 export type TSubmissionsResponse = ISubmission[];
 export type TAnalyticsResponse = IFormAnalytics;
 

@@ -1,6 +1,6 @@
 import { clsx } from "clsx";
 import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from "lucide-react";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import { ToastContext } from "../../contexts/ToastContext";
 
 interface Toast {
@@ -14,20 +14,23 @@ interface Toast {
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = (toast: Omit<Toast, "id">) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const newToast = { ...toast, id };
-    setToasts((prev) => [...prev, newToast]);
-
-    // Auto remove after duration
-    setTimeout(() => {
-      removeToast(id);
-    }, toast.duration || 5000);
-  };
-
-  const removeToast = (id: string) => {
+  const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  };
+  }, []);
+
+  const addToast = useCallback(
+    (toast: Omit<Toast, "id">) => {
+      const id = Math.random().toString(36).substr(2, 9);
+      const newToast = { ...toast, id };
+      setToasts((prev) => [...prev, newToast]);
+
+      // Auto remove after duration
+      setTimeout(() => {
+        removeToast(id);
+      }, toast.duration || 5000);
+    },
+    [removeToast]
+  );
 
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>
