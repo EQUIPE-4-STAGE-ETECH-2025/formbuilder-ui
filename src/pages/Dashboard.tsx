@@ -18,64 +18,18 @@ import {
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../components/ui/Card";
 import { useAuth } from "../hooks/useAuth";
-import { dashboardAPI } from "../services/api.mock";
-import { IDashboardStats } from "../types";
-
-// Mock data for charts
-const submissionsData = [
-  { name: "Jan", Soumissions: 120 },
-  { name: "Fév", Soumissions: 190 },
-  { name: "Mar", Soumissions: 300 },
-  { name: "Avr", Soumissions: 250 },
-  { name: "Mai", Soumissions: 400 },
-  { name: "Jun", Soumissions: 350 },
-  { name: "Jul", Soumissions: 450 },
-];
-
-const formsStatusData = [
-  { name: "Publiés", value: 8 },
-  { name: "Brouillons", value: 3 },
-  { name: "Désactivés", value: 1 },
-];
-
-const topFormsData = [
-  { name: "Contact Lead", Soumissions: 245 },
-  { name: "Newsletter", Soumissions: 189 },
-  { name: "Satisfaction", Soumissions: 156 },
-  { name: "Support", Soumissions: 89 },
-];
+import { dashboardService } from "../services/api/dashboard/dashboardService";
+import { IDashboardStats } from "../services/api/dashboard/dashboardTypes";
 
 export function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState<IDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Données mockées pour les formulaires récents
-  const mockRecentForms = [
-    {
-      id: "form-1",
-      title: "Contact Lead Generation",
-      submissionCount: 245,
-      status: "published" as const,
-    },
-    {
-      id: "form-2",
-      title: "Inscription Newsletter",
-      submissionCount: 189,
-      status: "published" as const,
-    },
-    {
-      id: "form-3",
-      title: "Satisfaction Client",
-      submissionCount: 156,
-      status: "published" as const,
-    },
-  ];
-
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await dashboardAPI.getStats();
+        const response = await dashboardService.getStats();
         if (response.success && response.data) {
           setStats(response.data);
         }
@@ -88,6 +42,36 @@ export function Dashboard() {
 
     fetchStats();
   }, []);
+
+  const submissionsThisMonth = (() => {
+    if (!stats) return 0;
+    const now = new Date();
+    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    return stats.submissionsPerMonth[key] || 0;
+  })();
+
+  const submissionsData = Object.entries(stats?.submissionsPerMonth || {}).map(
+    ([month, count]) => ({
+      name: month,
+      Soumissions: count,
+    })
+  );
+  
+  const formsStatusData = Object.entries(stats?.formsStatusCount || {}).map(
+    ([status, count]) => ({
+      name: status,
+      value: count,
+    })
+  );
+  
+  const topFormsData = Object.entries(stats?.submissionsPerForm || {}).map(
+    ([formTitle, count]) => ({
+      name: formTitle,
+      Soumissions: count,
+    })
+  );
+
+  const recentForms = stats?.recentForms || [];
 
   const getQuotaPercentage = (current: number, max: number) => {
     return Math.round((current / max) * 100);
@@ -140,7 +124,7 @@ export function Dashboard() {
               <div>
                 <p className="text-sm text-surface-400">Total Formulaires</p>
                 <p className="text-3xl font-bold text-text-100">
-                  {stats?.total_forms || 0}
+                  {stats?.totalForms || 0}
                 </p>
               </div>
               <div className="w-14 h-14 bg-accent-900/20 rounded-2xl flex items-center justify-center">
@@ -156,7 +140,7 @@ export function Dashboard() {
               <div>
                 <p className="text-sm text-surface-400">Formulaires Publiés</p>
                 <p className="text-3xl font-bold text-text-100">
-                  {stats?.published_forms || 0}
+                  {stats?.publishedForms || 0}
                 </p>
               </div>
               <div className="w-14 h-14 bg-accent-900/20 rounded-2xl flex items-center justify-center">
@@ -172,7 +156,7 @@ export function Dashboard() {
               <div>
                 <p className="text-sm text-surface-400">Total Soumissions</p>
                 <p className="text-3xl font-bold text-text-100">
-                  {stats?.total_submissions || 0}
+                  {stats?.totalSubmissions || 0}
                 </p>
               </div>
               <div className="w-14 h-14 bg-accent-900/20 rounded-2xl flex items-center justify-center">
@@ -188,7 +172,7 @@ export function Dashboard() {
               <div>
                 <p className="text-sm text-surface-400">Ce Mois</p>
                 <p className="text-3xl font-bold text-text-100">
-                  {stats?.submissions_this_month || 0}
+                  {submissionsThisMonth}
                 </p>
               </div>
               <div className="w-14 h-14 bg-accent-900/20 rounded-2xl flex items-center justify-center">
@@ -276,9 +260,9 @@ export function Dashboard() {
             </h3>
           </CardHeader>
           <CardContent>
-            {mockRecentForms.length > 0 ? (
+            {recentForms.length > 0 ? (
               <div className="space-y-4">
-                {mockRecentForms.slice(0, 2).map((form) => (
+                {recentForms.slice(0, 2).map((form) => (
                   <Link
                     key={form.id}
                     to={`/forms/${form.id}/edit`}
@@ -297,9 +281,9 @@ export function Dashboard() {
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-accent-400">
-                          {form.submissionCount}
+                          {new Date(form.createdAt).toLocaleDateString()}
                         </p>
-                        <p className="text-xs text-surface-500">soumissions</p>
+                        <p className="text-xs text-surface-500">{form.status}</p>
                       </div>
                     </div>
                   </Link>

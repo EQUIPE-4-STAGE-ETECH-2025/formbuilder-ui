@@ -328,7 +328,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 ### 6.1 Migration des services du tableau de bord
 
-- [ ] **DASHBOARD-000** : Migrer les services du tableau de bord vers la nouvelle architecture
+- [x] **DASHBOARD-000** : Migrer les services du tableau de bord vers la nouvelle architecture
   - Déplacer `dashboardAPI` de `api.mock.ts` vers `src/services/api/dashboard/dashboardService.ts`
   - Créer les types dans `src/services/api/dashboard/dashboardTypes.ts`
   - Mettre à jour tous les imports dans les composants :
@@ -338,7 +338,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 ### 6.2 Statistiques utilisateur
 
-- [ ] **DASHBOARD-001** : Implémenter l'API de statistiques (`GET /api/dashboard/stats`)
+- [x] **DASHBOARD-001** : Implémenter l'API de statistiques (`GET /api/dashboard/stats`)
 
   - Migrer `dashboardAPI.getStats()` depuis `api.mock.ts` vers `src/services/api/dashboard/dashboardService.ts`
   - Remplacer la logique mockée par de vrais appels API
@@ -346,7 +346,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
   - Agrégation des données utilisateur
   - Mettre à jour `src/pages/Dashboard.tsx` pour utiliser le nouveau service
 
-- [ ] **DASHBOARD-002** : Implémenter les graphiques de performance
+- [x] **DASHBOARD-002** : Implémenter les graphiques de performance
   - Soumissions par période
   - Formulaires les plus populaires
   - Évolution des quotas
