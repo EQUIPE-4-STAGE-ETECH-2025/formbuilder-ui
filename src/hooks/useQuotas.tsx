@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { quotaAPI } from "../services/api.mock";
-import { IQuotaStatus } from "../types";
 import { useAuth } from "./useAuth";
+import { quotasService } from "../services/api";
+import { IQuotaStatus } from "../services/api/quotas/quotaTypes";
 
 interface IUseQuotasReturn {
   quotaStatus: IQuotaStatus | null;
@@ -23,14 +23,9 @@ export const useQuotas = (): IUseQuotasReturn => {
     setError(null);
 
     try {
-      const response = await quotaAPI.getByUserId(user.id);
-      if (response.success && response.data && response.data.length > 0) {
-        // Prendre le quota du mois actuel ou le plus récent
-        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-        const currentQuota = response.data.find(
-          (q) => q.month === currentMonth
-        );
-        setQuotaStatus(currentQuota || response.data[0]);
+      const response = await quotasService.getByUserId(user.id);
+      if (response.success && response.data) {
+        setQuotaStatus(response.data);
       }
     } catch {
       setError("Erreur lors du chargement des quotas");
