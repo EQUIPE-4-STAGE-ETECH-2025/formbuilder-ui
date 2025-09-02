@@ -5,7 +5,7 @@ import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
 import { Dropdown } from "../../components/ui/Dropdown";
 import { useAuth } from "../../hooks/useAuth";
-import { formsService } from "../../services/api";
+import { formsService, submissionsService } from "../../services/api";
 import { IForm, IFormField } from "../../types";
 import { adaptFormFromAPI } from "../../utils/formAdapter";
 
@@ -91,12 +91,29 @@ export function FormEmbed() {
     }
   };
 
+  // Fonction utilitaire pour transformer les données du formulaire
+  const transformFormDataForSubmission = (
+    formData: Record<string, string | boolean | number>,
+    formFields: IFormField[]
+  ): Record<string, unknown> => {
+    const formattedData: Record<string, unknown> = {};
+
+    Object.entries(formData).forEach(([fieldId, value]) => {
+      const field = formFields.find((f) => f.id === fieldId);
+      if (field) {
+        formattedData[field.label] = value;
+      }
+    });
+
+    return formattedData;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!form) return;
 
-    // Validate all fields
+    // Validation de tous les champs
     const errors: Record<string, string> = {};
     form.fields.forEach((field) => {
       const value = formData[field.id];
@@ -112,13 +129,48 @@ export function FormEmbed() {
     }
 
     setSubmitting(true);
+    setError(null);
+
     try {
-      // In real app, would submit to API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Form submitted with data:", formData);
+      const submissionData = transformFormDataForSubmission(
+        formData,
+        form.fields
+      );
+
+      await submissionsService.submit(form.id, submissionData);
       setSubmitted(true);
-    } catch {
-      setError("Erreur lors de la soumission");
+    } catch (error) {
+      console.error("Submission error:", error);
+
+      // Gestion d'erreurs spécifiques
+      let errorMessage = "Erreur lors de la soumission du formulaire.";
+
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as {
+          response?: { status?: number; data?: { detail?: string } };
+        };
+        const status = axiosError.response?.status;
+        const detail = axiosError.response?.data?.detail;
+
+        switch (status) {
+          case 400:
+            errorMessage = detail || "Données du formulaire invalides.";
+            break;
+          case 404:
+            errorMessage = "Formulaire introuvable.";
+            break;
+          case 429:
+            errorMessage = "Trop de soumissions. Veuillez réessayer plus tard.";
+            break;
+          case 500:
+            errorMessage = "Erreur serveur. Veuillez réessayer plus tard.";
+            break;
+          default:
+            errorMessage = "Erreur lors de la soumission. Veuillez réessayer.";
+        }
+      }
+
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
     }

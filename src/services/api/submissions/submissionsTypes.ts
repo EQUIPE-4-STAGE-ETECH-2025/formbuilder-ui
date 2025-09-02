@@ -20,9 +20,8 @@ export interface IFormAnalytics {
 export type TSubmissionsResponse = ISubmission[];
 export type TAnalyticsResponse = IFormAnalytics;
 
-export interface SubmitFormDto {
-  data: Record<string, unknown>;
-}
+// L'API attend directement les champs avec leurs labels comme clés
+export type SubmitFormDto = Record<string, unknown>;
 
 export interface SubmissionResponseDto {
   id: string;
