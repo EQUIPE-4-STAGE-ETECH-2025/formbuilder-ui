@@ -23,10 +23,9 @@ export const useQuotas = (): IUseQuotasReturn => {
     setError(null);
 
     try {
-      const response = await quotasService.getByUserId(user.id);
-      if (response.success && response.data) {
-        setQuotaStatus(response.data);
-      }
+      const { data } = await quotasService.getByUserId(user.id);
+      if (data) setQuotaStatus(data);
+      
     } catch {
       setError("Erreur lors du chargement des quotas");
     } finally {
