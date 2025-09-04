@@ -292,7 +292,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 ### 5.1 Migration des services de quotas
 
-- [ ] **QUOTAS-000** : Migrer les services de quotas vers la nouvelle architecture
+- [x] **QUOTAS-000** : Migrer les services de quotas vers la nouvelle architecture
   - Déplacer `quotaAPI` de `api.mock.ts` vers `src/services/api/quotas/quotasService.ts`
   - Créer les types dans `src/services/api/quotas/quotasTypes.ts`
   - Mettre à jour tous les imports dans les composants :
@@ -302,7 +302,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 ### 5.2 Suivi des quotas
 
-- [ ] **QUOTAS-001** : Implémenter l'API de récupération des quotas (`GET /api/users/:id/quotas`)
+- [x] **QUOTAS-001** : Implémenter l'API de récupération des quotas (`GET /api/users/:id/quotas`)
 
   - Migrer `quotaAPI.getByUserId()` depuis `api.mock.ts` vers `src/services/api/quotas/quotasService.ts`
   - Remplacer la logique mockée par de vrais appels API
@@ -310,14 +310,14 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
   - Comparaison avec les limites du plan
   - Mettre à jour `src/hooks/useQuotas.tsx` pour utiliser le nouveau service
 
-- [ ] **QUOTAS-002** : Implémenter la vérification des quotas avant actions
+- [x] **QUOTAS-002** : Implémenter la vérification des quotas avant actions
   - Vérification avant création de formulaire
   - Vérification avant soumission
   - Vérification avant upload de fichier
 
 ### 5.3 Notifications de quotas
 
-- [ ] **QUOTAS-003** : Implémenter les notifications automatiques
+- [x] **QUOTAS-003** : Implémenter les notifications automatiques
   - Notification à 80% d'utilisation
   - Notification à 100% d'utilisation
   - Blocage des actions au-delà des limites
