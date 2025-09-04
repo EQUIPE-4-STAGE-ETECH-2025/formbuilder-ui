@@ -278,7 +278,7 @@ export function Dashboard() {
           <CardContent>
             {recentForms.length > 0 ? (
               <div className="space-y-4">
-                {recentForms.slice(0, 2).map((form) => (
+                {recentForms.slice(0, 3).map((form) => (
                   <Link
                     key={form.id}
                     to={`/forms/${form.id}/edit`}
