@@ -79,9 +79,13 @@ export function Header() {
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/dashboard" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-yellow-500 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                <span className="text-white font-bold text-lg">F</span>
+            <Link to="/dashboard" className="flex items-center space-x-2 group">
+              <div className="w-12 h-12 rounded-2xl overflow-hidden group-hover:scale-105 transition-transform duration-200">
+                <img
+                  src="/src/assets/images/logo/formbuilder-logo.png"
+                  alt="FormBuilder"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <span className="text-2xl font-bold text-text-100">
                 FormBuilder
@@ -108,15 +112,10 @@ export function Header() {
 
           {/* Right side */}
           <div className="flex items-center space-x-2">
-            {/* Search Field */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Rechercher..."
-                className="header-search-input w-32 lg:w-40 pl-10 pr-4 py-2 text-sm bg-surface-800 border border-surface-700/50 rounded-xl text-text-100 placeholder-surface-400 focus:outline-none focus:ring-0 focus:border-surface-700/50 transition-colors duration-200"
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-surface-400" />
-            </div>
+            {/* Search Icon */}
+            <button className="p-2 text-surface-400 hover:text-text-100 hover:bg-surface-800 rounded-xl transition-all duration-200 focus-ring">
+              <Search className="h-5 w-5" />
+            </button>
 
             {/* Language Selector */}
             <div className="relative">

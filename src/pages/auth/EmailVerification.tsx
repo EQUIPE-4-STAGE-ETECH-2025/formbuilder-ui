@@ -113,7 +113,7 @@ export function EmailVerification() {
       case "success":
         return (
           <>
-            <div className="mx-auto w-16 h-16 bg-yellow-600 rounded-2xl flex items-center justify-center">
+            <div className="mx-auto w-16 h-16 bg-accent-500 rounded-2xl flex items-center justify-center">
               <CheckCircle className="h-8 w-8 text-white" />
             </div>
             <h2 className="mt-6 text-3xl font-bold text-text-100">
@@ -128,7 +128,7 @@ export function EmailVerification() {
       case "expired":
         return (
           <>
-            <div className="mx-auto w-16 h-16 bg-yellow-600 rounded-2xl flex items-center justify-center">
+            <div className="mx-auto w-16 h-16 bg-accent-500 rounded-2xl flex items-center justify-center">
               <Mail className="h-8 w-8 text-white" />
             </div>
             <h2 className="mt-6 text-3xl font-bold text-text-100">
@@ -144,7 +144,7 @@ export function EmailVerification() {
       default:
         return (
           <>
-            <div className="mx-auto w-16 h-16 bg-yellow-600 rounded-2xl flex items-center justify-center">
+            <div className="mx-auto w-16 h-16 bg-accent-500 rounded-2xl flex items-center justify-center">
               <XCircle className="h-8 w-8 text-white" />
             </div>
             <h2 className="mt-6 text-3xl font-bold text-text-100">
@@ -163,7 +163,7 @@ export function EmailVerification() {
       case "success":
         return (
           <Link to="/login">
-            <Button className="w-full mt-2 mb-4" size="lg" variant="accent">
+            <Button className="w-full mt-6 mb-6" size="lg" variant="accent">
               Se connecter
             </Button>
           </Link>
@@ -176,14 +176,14 @@ export function EmailVerification() {
             <Button
               onClick={resendVerification}
               loading={loading}
-              className="w-full"
+              className="w-full mt-2"
               size="lg"
               variant="accent"
             >
               Renvoyer l'email de vérification
             </Button>
             <Link to="/register">
-              <Button variant="secondary" className="w-full my-6">
+              <Button variant="secondary" className="w-full my-2 mb-6">
                 Créer un nouveau compte
               </Button>
             </Link>

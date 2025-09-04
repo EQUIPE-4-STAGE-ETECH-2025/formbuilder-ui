@@ -60,7 +60,7 @@ export function ForgotPassword() {
         <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-md w-full space-y-8">
             <div className="text-center">
-              <div className="mx-auto w-16 h-16 bg-yellow-600 rounded-2xl flex items-center justify-center">
+              <div className="mx-auto w-16 h-16 bg-accent-500 rounded-2xl flex items-center justify-center">
                 <Mail className="h-8 w-8 text-white" />
               </div>
               <h2 className="mt-6 text-3xl font-bold text-text-100">
@@ -101,8 +101,12 @@ export function ForgotPassword() {
       <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="mx-auto w-16 h-16 bg-accent-600 rounded-2xl flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">F</span>
+            <div className="mx-auto w-20 h-20 rounded-2xl overflow-hidden">
+              <img
+                src="/src/assets/images/logo/formbuilder-logo.png"
+                alt="FormBuilder"
+                className="w-full h-full object-contain"
+              />
             </div>
             <h2 className="mt-6 text-3xl font-bold text-text-100">
               Mot de passe oublié ?

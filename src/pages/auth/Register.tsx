@@ -62,8 +62,12 @@ export function Register() {
       <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="mx-auto w-16 h-16 bg-accent-600 rounded-2xl flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">F</span>
+            <div className="mx-auto w-20 h-20 rounded-2xl overflow-hidden">
+              <img
+                src="/src/assets/images/logo/formbuilder-logo.png"
+                alt="FormBuilder"
+                className="w-full h-full object-contain"
+              />
             </div>
             <h2 className="mt-6 text-3xl font-bold text-text-100">
               Créer votre compte
@@ -180,15 +184,17 @@ export function Register() {
                     <Lock className="h-5 w-5 text-surface-500" />
                   </div>
                   <input
-                    {...register('password', {
-                      required: 'Mot de passe requis',
+                    {...register("password", {
+                      required: "Mot de passe requis",
                       minLength: {
                         value: 8,
-                        message: 'Le mot de passe doit faire au moins 8 caractères',
+                        message:
+                          "Le mot de passe doit faire au moins 8 caractères",
                       },
                       pattern: {
                         value: /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).+$/,
-                        message: 'Le mot de passe doit contenir une majuscule, un chiffre et un caractère spécial',
+                        message:
+                          "Le mot de passe doit contenir une majuscule, un chiffre et un caractère spécial",
                       },
                     })}
                     type={showPassword ? "text" : "password"}

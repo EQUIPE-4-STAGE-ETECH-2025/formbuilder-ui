@@ -27,10 +27,11 @@ export function Login() {
       addToast({
         type: "error",
         title: "Erreur de connexion",
-        message: result.error === "Email non vérifié."
+        message:
+          result.error === "Email non vérifié."
             ? "Veuillez vérifier votre email avant de vous connecter."
             : result.error || "Identifiants invalides",
-    });
+      });
     }
   };
 
@@ -39,8 +40,12 @@ export function Login() {
       <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="mx-auto w-16 h-16 bg-yellow-500 rounded-2xl flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">F</span>
+            <div className="mx-auto w-20 h-20 rounded-2xl overflow-hidden">
+              <img
+                src="/src/assets/images/logo/formbuilder-logo.png"
+                alt="FormBuilder"
+                className="w-full h-full object-contain"
+              />
             </div>
             <h2 className="mt-6 text-3xl font-bold text-text-100">Connexion</h2>
             <p className="mt-2 text-sm text-surface-400">
