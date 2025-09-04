@@ -17,14 +17,15 @@ import {
 } from "recharts";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../components/ui/Card";
-import { useAuth } from "../hooks/useAuth";
 import { dashboardService } from "../services/api/dashboard/dashboardService";
 import { IDashboardStats } from "../services/api/dashboard/dashboardTypes";
+import { useQuotas } from "../hooks/useQuotas";
 
 export function Dashboard() {
-  const { user } = useAuth();
   const [stats, setStats] = useState<IDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const { quotaStatus, loading: quotasLoading, error: quotasError } = useQuotas();
+
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -75,10 +76,6 @@ export function Dashboard() {
   );
 
   const recentForms = stats?.recentForms || [];
-
-  const getQuotaPercentage = (current: number, max: number) => {
-    return Math.round((current / max) * 100);
-  };
 
   const getQuotaColor = (percentage: number) => {
     if (percentage >= 90) return "bg-accent-500";
@@ -195,63 +192,79 @@ export function Dashboard() {
             </h3>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div>
-              <div className="flex justify-between text-sm text-surface-400 mb-2">
-                <span>Formulaires</span>
-                <span>
-                  {user?.subscription?.currentForms || 0}/
-                  {user?.subscription?.maxForms || 0}
-                </span>
-              </div>
-              <div className="w-full bg-surface-800 border border-surface-700/50 rounded-full h-3">
-                <div
-                  className={`h-3 rounded-full transition-all duration-300 ${getQuotaColor(
-                    getQuotaPercentage(
-                      user?.subscription?.currentForms || 0,
-                      user?.subscription?.maxForms || 1
-                    )
-                  )}`}
-                  style={{
-                    width: `${getQuotaPercentage(
-                      user?.subscription?.currentForms || 0,
-                      user?.subscription?.maxForms || 1
-                    )}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-sm text-surface-400 mb-2">
-                <span>Soumissions ce mois</span>
-                <span>
-                  {user?.subscription?.currentSubmissions || 0}/
-                  {user?.subscription?.maxSubmissionsPerMonth || 0}
-                </span>
-              </div>
-              <div className="w-full bg-surface-800 border border-surface-700/50 rounded-full h-3">
-                <div
-                  className={`h-3 rounded-full transition-all duration-300 ${getQuotaColor(
-                    getQuotaPercentage(
-                      user?.subscription?.currentSubmissions || 0,
-                      user?.subscription?.maxSubmissionsPerMonth || 1
-                    )
-                  )}`}
-                  style={{
-                    width: `${getQuotaPercentage(
-                      user?.subscription?.currentSubmissions || 0,
-                      user?.subscription?.maxSubmissionsPerMonth || 1
-                    )}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-            <div className="pt-4">
-              <Link to="/subscription">
-                <Button variant="secondary" size="md" className="w-full">
-                  Gérer mon abonnement
-                </Button>
-              </Link>
-            </div>
+            {quotasLoading ? (
+              <p className="text-surface-500">Chargement des quotas...</p>
+            ) : quotasError ? (
+              <p className="text-red-500">{quotasError}</p>
+            ) : quotaStatus ? (
+              <>
+                <div>
+                  <div className="flex justify-between text-sm text-surface-400 mb-2">
+                    <span>Formulaires</span>
+                    <span>
+                      {quotaStatus.usage.form_count}/{quotaStatus.limits.max_forms}
+                    </span>
+                  </div>
+                  <div className="w-full bg-surface-800 border border-surface-700/50 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all duration-300 ${getQuotaColor(
+                        quotaStatus.percentages.forms_used_percent
+                      )}`}
+                      style={{
+                        width: `${quotaStatus.percentages.forms_used_percent}%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-sm text-surface-400 mb-2">
+                    <span>Soumissions ce mois</span>
+                    <span>
+                      {quotaStatus.usage.submission_count}/
+                      {quotaStatus.limits.max_submissions_per_month}
+                    </span>
+                  </div>
+                  <div className="w-full bg-surface-800 border border-surface-700/50 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all duration-300 ${getQuotaColor(
+                        quotaStatus.percentages.submissions_used_percent
+                      )}`}
+                      style={{
+                        width: `${quotaStatus.percentages.submissions_used_percent}%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-sm text-surface-400 mb-2">
+                    <span>Stockage</span>
+                    <span>
+                      {quotaStatus.usage.storage_used_mb}MB/
+                      {quotaStatus.limits.max_storage_mb}MB
+                    </span>
+                  </div>
+                  <div className="w-full bg-surface-800 border border-surface-700/50 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all duration-300 ${getQuotaColor(
+                        quotaStatus.percentages.storage_used_percent
+                      )}`}
+                      style={{
+                        width: `${quotaStatus.percentages.storage_used_percent}%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="pt-4">
+                  <Link to="/subscription">
+                    <Button variant="secondary" size="md" className="w-full">
+                      Gérer mon abonnement
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <p className="text-surface-500">Aucune donnée de quotas</p>
+            )}
           </CardContent>
         </Card>
 
