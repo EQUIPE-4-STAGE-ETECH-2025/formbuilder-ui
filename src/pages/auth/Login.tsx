@@ -22,6 +22,11 @@ export function Login() {
     const result = await login(email, password);
 
     if (result.success && result.data) {
+      addToast({
+        type: "success",
+        title: "Connexion réussie",
+        message: "Bienvenue ! Vous êtes maintenant connecté.",
+      });
       navigate("/dashboard");
     } else {
       addToast({
