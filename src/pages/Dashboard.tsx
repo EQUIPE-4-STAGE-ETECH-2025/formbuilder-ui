@@ -17,15 +17,18 @@ import {
 } from "recharts";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../components/ui/Card";
+import { useQuotas } from "../hooks/useQuotas";
 import { dashboardService } from "../services/api/dashboard/dashboardService";
 import { IDashboardStats } from "../services/api/dashboard/dashboardTypes";
-import { useQuotas } from "../hooks/useQuotas";
 
 export function Dashboard() {
   const [stats, setStats] = useState<IDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const { quotaStatus, loading: quotasLoading, error: quotasError } = useQuotas();
-
+  const {
+    quotaStatus,
+    loading: quotasLoading,
+    error: quotasError,
+  } = useQuotas();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -55,10 +58,20 @@ export function Dashboard() {
   })();
 
   const submissionsData = Object.entries(stats?.submissionsPerMonth || {}).map(
-    ([month, count]) => ({
-      name: month,
-      Soumissions: count,
-    })
+    ([month, count]) => {
+      // Convertir le format "2024-07" en texte lisible
+      const [year, monthNum] = month.split("-");
+      const date = new Date(parseInt(year), parseInt(monthNum) - 1);
+      const monthName = date.toLocaleDateString("fr-FR", {
+        month: "short",
+        year: "numeric",
+      });
+
+      return {
+        name: monthName,
+        Soumissions: count,
+      };
+    }
   );
 
   const formsStatusData = Object.entries(stats?.formsStatusCount || {}).map(
@@ -76,6 +89,19 @@ export function Dashboard() {
   );
 
   const recentForms = stats?.recentForms || [];
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "PUBLISHED":
+        return "Publié";
+      case "DRAFT":
+        return "Brouillon";
+      case "DISABLED":
+        return "Désactivé";
+      default:
+        return "Inconnu";
+    }
+  };
 
   const getQuotaColor = (percentage: number) => {
     if (percentage >= 90) return "bg-accent-500";
@@ -122,7 +148,7 @@ export function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-surface-400">Total Formulaires</p>
+                <p className="text-sm text-surface-400">Total formulaires</p>
                 <p className="text-3xl font-bold text-text-100">
                   {stats?.totalForms || 0}
                 </p>
@@ -138,7 +164,7 @@ export function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-surface-400">Formulaires Publiés</p>
+                <p className="text-sm text-surface-400">Formulaires publiés</p>
                 <p className="text-3xl font-bold text-text-100">
                   {stats?.publishedForms || 0}
                 </p>
@@ -154,7 +180,7 @@ export function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-surface-400">Total Soumissions</p>
+                <p className="text-sm text-surface-400">Total soumissions</p>
                 <p className="text-3xl font-bold text-text-100">
                   {stats?.totalSubmissions || 0}
                 </p>
@@ -170,7 +196,7 @@ export function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-surface-400">Ce Mois</p>
+                <p className="text-sm text-surface-400">Ce mois</p>
                 <p className="text-3xl font-bold text-text-100">
                   {submissionsThisMonth}
                 </p>
@@ -188,7 +214,7 @@ export function Dashboard() {
         <Card>
           <CardHeader>
             <h3 className="text-xl font-semibold text-text-100">
-              Utilisation des Quotas
+              Utilisation des quotas
             </h3>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -202,7 +228,8 @@ export function Dashboard() {
                   <div className="flex justify-between text-sm text-surface-400 mb-2">
                     <span>Formulaires</span>
                     <span>
-                      {quotaStatus.usage.form_count}/{quotaStatus.limits.max_forms}
+                      {quotaStatus.usage.form_count}/
+                      {quotaStatus.limits.max_forms}
                     </span>
                   </div>
                   <div className="w-full bg-surface-800 border border-surface-700/50 rounded-full h-3">
@@ -272,7 +299,7 @@ export function Dashboard() {
         <Card>
           <CardHeader>
             <h3 className="text-xl font-semibold text-text-100">
-              Formulaires Récents
+              Formulaires récents
             </h3>
           </CardHeader>
           <CardContent>
@@ -297,10 +324,17 @@ export function Dashboard() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium text-accent-400">
-                          {new Date(form.createdAt).toLocaleDateString()}
+                          {new Date(form.createdAt).toLocaleDateString(
+                            "fr-FR",
+                            {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            }
+                          )}
                         </p>
                         <p className="text-xs text-surface-500">
-                          {form.status}
+                          {getStatusText(form.status)}
                         </p>
                       </div>
                     </div>
@@ -323,16 +357,215 @@ export function Dashboard() {
         <Card>
           <CardHeader>
             <h3 className="text-xl font-semibold text-text-100">
-              Évolution des Soumissions
+              Évolution des soumissions
             </h3>
           </CardHeader>
           <CardContent>
+            {submissionsData.length > 0 ? (
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={submissionsData}
+                    margin={{ top: 20, right: 20, left: 5, bottom: 20 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#404040"
+                      strokeOpacity={0.3}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      stroke="#a3a3a3"
+                      fontSize={12}
+                      fontWeight={500}
+                      tickLine={false}
+                      axisLine={{ stroke: "#525252", strokeWidth: 1 }}
+                    />
+                    <YAxis
+                      stroke="#a3a3a3"
+                      fontSize={12}
+                      fontWeight={500}
+                      tickLine={false}
+                      axisLine={{ stroke: "#525252", strokeWidth: 1 }}
+                      tickFormatter={(value) => value.toLocaleString()}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "rgba(38, 38, 38, 0.8)",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid rgba(64, 64, 64, 0.5)",
+                        borderRadius: "12px",
+                        boxShadow: "0 8px 32px -8px rgba(0, 0, 0, 0.5)",
+                        color: "#ffffff",
+                        fontSize: "13px",
+                        fontWeight: "500",
+                        padding: "12px 16px",
+                      }}
+                      labelStyle={{
+                        color: "#d4d4d4",
+                        fontSize: "12px",
+                        fontWeight: "400",
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="Soumissions"
+                      stroke="#eab308"
+                      strokeWidth={2}
+                      fill="#eab308"
+                      fillOpacity={0.4}
+                      dot={{
+                        fill: "#eab308",
+                        strokeWidth: 2,
+                        r: 6,
+                        stroke: "#eab308",
+                        strokeOpacity: 0.8,
+                      }}
+                      activeDot={{
+                        r: 8,
+                        stroke: "#eab308",
+                        strokeWidth: 2.5,
+                        fill: "transparent",
+                      }}
+                      animationDuration={1000}
+                      animationEasing="ease-out"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-80 flex items-center justify-center text-center py-12 text-surface-500">
+                <div>
+                  <TrendingUp className="h-16 w-16 mx-auto mb-4 text-surface-600" />
+                  <p>Aucune donnée de soumissions</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Forms Status Distribution */}
+        <Card>
+          <CardHeader>
+            <h3 className="text-xl font-semibold text-text-100">
+              Répartition des formulaires
+            </h3>
+          </CardHeader>
+          <CardContent>
+            {formsStatusData.length > 0 ? (
+              <div className="flex items-center">
+                <div className="w-3/4 h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={formsStatusData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={120}
+                        innerRadius={95}
+                        dataKey="value"
+                        label={false}
+                        labelLine={false}
+                        cornerRadius={12}
+                        paddingAngle={2}
+                        animationDuration={1200}
+                        animationEasing="ease-out"
+                      >
+                        {formsStatusData.map((_, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill="#eab308"
+                            fillOpacity={0.5}
+                            stroke="#eab308"
+                            strokeWidth={2.5}
+                            strokeOpacity={1}
+                            onMouseEnter={(e) => {
+                              (e.target as SVGElement).style.strokeWidth = "3";
+                            }}
+                            onMouseLeave={(e) => {
+                              (e.target as SVGElement).style.strokeWidth =
+                                "2.5";
+                            }}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "rgba(38, 38, 38, 0.8)",
+                          backdropFilter: "blur(8px)",
+                          border: "1px solid rgba(64, 64, 64, 0.5)",
+                          borderRadius: "12px",
+                          boxShadow: "0 8px 32px -8px rgba(0, 0, 0, 0.5)",
+                          color: "#ffffff",
+                          fontSize: "13px",
+                          fontWeight: "500",
+                          padding: "12px 16px",
+                        }}
+                        labelStyle={{
+                          color: "#ffffff",
+                          fontSize: "12px",
+                          fontWeight: "400",
+                        }}
+                        itemStyle={{
+                          color: "#ffffff",
+                        }}
+                        formatter={(value, name) => [
+                          <span className="text-accent-500">
+                            {getStatusText(String(name))} : {value}
+                          </span>,
+                          null,
+                        ]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                {/* Legend */}
+                <div className="ml-2 flex flex-col gap-3">
+                  {formsStatusData.map((entry, index) => {
+                    const total = formsStatusData.reduce(
+                      (sum, item) => sum + item.value,
+                      0
+                    );
+                    const percentage = Math.round((entry.value / total) * 100);
+
+                    return (
+                      <div
+                        key={index}
+                        className="p-2 bg-surface-900 border border-surface-700/50 rounded-lg hover:bg-surface-700 transition-all duration-200"
+                      >
+                        <span className="text-xs text-surface-500">
+                          <span className="text-accent-400">{percentage}%</span>{" "}
+                          {getStatusText(entry.name)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="h-80 flex items-center justify-center text-center py-12 text-surface-500">
+                <div>
+                  <FileText className="h-16 w-16 mx-auto mb-4 text-surface-600" />
+                  <p>Aucun formulaire créé</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top Performing Forms */}
+      <Card>
+        <CardHeader>
+          <h3 className="text-xl font-semibold text-text-100">
+            Formulaires les plus performants
+          </h3>
+        </CardHeader>
+        <CardContent>
+          {topFormsData.length > 0 ? (
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={submissionsData}
-                  margin={{ top: 20, right: 20, left: 5, bottom: 20 }}
-                >
+                <BarChart data={topFormsData}>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     stroke="#404040"
@@ -355,6 +588,7 @@ export function Dashboard() {
                     tickFormatter={(value) => value.toLocaleString()}
                   />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: "rgba(38, 38, 38, 0.8)",
                       backdropFilter: "blur(8px)",
@@ -372,201 +606,29 @@ export function Dashboard() {
                       fontWeight: "400",
                     }}
                   />
-                  <Area
-                    type="monotone"
+                  <Bar
                     dataKey="Soumissions"
-                    stroke="#eab308"
-                    strokeWidth={2}
                     fill="#eab308"
-                    fillOpacity={0.4}
-                    dot={{
-                      fill: "#eab308",
-                      strokeWidth: 2,
-                      r: 6,
-                      stroke: "#eab308",
-                      strokeOpacity: 0.8,
-                    }}
-                    activeDot={{
-                      r: 8,
-                      stroke: "#eab308",
-                      strokeWidth: 2.5,
-                      fill: "transparent",
-                    }}
+                    fillOpacity={0.5}
+                    radius={[8, 8, 0, 0]}
                     animationDuration={1000}
                     animationEasing="ease-out"
+                    stroke="#eab308"
+                    strokeWidth={2.5}
+                    strokeOpacity={1}
+                    activeBar={{ strokeWidth: 3, stroke: "#eab308" }}
                   />
-                </AreaChart>
+                </BarChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Forms Status Distribution */}
-        <Card>
-          <CardHeader>
-            <h3 className="text-xl font-semibold text-text-100">
-              Répartition des formulaires
-            </h3>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <div className="w-3/4 h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={formsStatusData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={120}
-                      innerRadius={95}
-                      dataKey="value"
-                      label={false}
-                      labelLine={false}
-                      cornerRadius={12}
-                      paddingAngle={2}
-                      animationDuration={1200}
-                      animationEasing="ease-out"
-                    >
-                      {formsStatusData.map((_, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill="#eab308"
-                          fillOpacity={0.5}
-                          stroke="#eab308"
-                          strokeWidth={2.5}
-                          strokeOpacity={1}
-                          onMouseEnter={(e) => {
-                            (e.target as SVGElement).style.strokeWidth = "3";
-                          }}
-                          onMouseLeave={(e) => {
-                            (e.target as SVGElement).style.strokeWidth = "2.5";
-                          }}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "rgba(38, 38, 38, 0.8)",
-                        backdropFilter: "blur(8px)",
-                        border: "1px solid rgba(64, 64, 64, 0.5)",
-                        borderRadius: "12px",
-                        boxShadow: "0 8px 32px -8px rgba(0, 0, 0, 0.5)",
-                        color: "#ffffff",
-                        fontSize: "13px",
-                        fontWeight: "500",
-                        padding: "12px 16px",
-                      }}
-                      labelStyle={{
-                        color: "#ffffff",
-                        fontSize: "12px",
-                        fontWeight: "400",
-                      }}
-                      itemStyle={{
-                        color: "#ffffff",
-                      }}
-                      formatter={(value, name) => [
-                        <span className="text-accent-500">
-                          {name} : {value}
-                        </span>,
-                        null,
-                      ]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              {/* Legend */}
-              <div className="ml-2 flex flex-col gap-3">
-                {formsStatusData.map((entry, index) => {
-                  const total = formsStatusData.reduce(
-                    (sum, item) => sum + item.value,
-                    0
-                  );
-                  const percentage = Math.round((entry.value / total) * 100);
-
-                  return (
-                    <div
-                      key={index}
-                      className="p-2 bg-surface-900 border border-surface-700/50 rounded-lg hover:bg-surface-700 transition-all duration-200"
-                    >
-                      <span className="text-xs text-surface-500">
-                        <span className="text-accent-400">{percentage}%</span>{" "}
-                        {entry.name}
-                      </span>
-                    </div>
-                  );
-                })}
+          ) : (
+            <div className="h-80 flex items-center justify-center text-center py-12 text-surface-500">
+              <div>
+                <Users className="h-16 w-16 mx-auto mb-4 text-surface-600" />
+                <p>Aucune soumission reçue</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Top Performing Forms */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-xl font-semibold text-text-100">
-            Formulaires les plus performants
-          </h3>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topFormsData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#404040"
-                  strokeOpacity={0.3}
-                />
-                <XAxis
-                  dataKey="name"
-                  stroke="#a3a3a3"
-                  fontSize={12}
-                  fontWeight={500}
-                  tickLine={false}
-                  axisLine={{ stroke: "#525252", strokeWidth: 1 }}
-                />
-                <YAxis
-                  stroke="#a3a3a3"
-                  fontSize={12}
-                  fontWeight={500}
-                  tickLine={false}
-                  axisLine={{ stroke: "#525252", strokeWidth: 1 }}
-                  tickFormatter={(value) => value.toLocaleString()}
-                />
-                <Tooltip
-                  cursor={false}
-                  contentStyle={{
-                    backgroundColor: "rgba(38, 38, 38, 0.8)",
-                    backdropFilter: "blur(8px)",
-                    border: "1px solid rgba(64, 64, 64, 0.5)",
-                    borderRadius: "12px",
-                    boxShadow: "0 8px 32px -8px rgba(0, 0, 0, 0.5)",
-                    color: "#ffffff",
-                    fontSize: "13px",
-                    fontWeight: "500",
-                    padding: "12px 16px",
-                  }}
-                  labelStyle={{
-                    color: "#d4d4d4",
-                    fontSize: "12px",
-                    fontWeight: "400",
-                  }}
-                />
-                <Bar
-                  dataKey="Soumissions"
-                  fill="#eab308"
-                  fillOpacity={0.5}
-                  radius={[8, 8, 0, 0]}
-                  animationDuration={1000}
-                  animationEasing="ease-out"
-                  stroke="#eab308"
-                  strokeWidth={2.5}
-                  strokeOpacity={1}
-                  activeBar={{ strokeWidth: 3, stroke: "#eab308" }}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>
