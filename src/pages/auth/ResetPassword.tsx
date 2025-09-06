@@ -79,7 +79,7 @@ export function ResetPassword() {
         return (
           <>
             <div className="text-center">
-              <div className="mx-auto w-20 h-20 rounded-2xl overflow-hidden">
+              <div className="mx-auto w-16 h-16 rounded-2xl overflow-hidden">
                 <img
                   src="/src/assets/images/logo/formbuilder-logo.png"
                   alt="FormBuilder"

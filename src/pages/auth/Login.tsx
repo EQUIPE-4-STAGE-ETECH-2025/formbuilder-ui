@@ -45,7 +45,7 @@ export function Login() {
       <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="mx-auto w-20 h-20 rounded-2xl overflow-hidden">
+            <div className="mx-auto w-16 h-16 rounded-2xl overflow-hidden">
               <img
                 src="/src/assets/images/logo/formbuilder-logo.png"
                 alt="FormBuilder"

@@ -79,8 +79,8 @@ export function Header() {
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/dashboard" className="flex items-center space-x-2 group">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden group-hover:scale-105 transition-transform duration-200">
+            <Link to="/dashboard" className="flex items-center space-x-3 group">
+              <div className="w-10 h-10 rounded-2xl overflow-hidden group-hover:scale-105 transition-transform duration-200">
                 <img
                   src="/src/assets/images/logo/formbuilder-logo.png"
                   alt="FormBuilder"
