@@ -223,18 +223,19 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 ### 4.1 Migration des services d'abonnements
 
-- [ ] **SUBSCRIPTIONS-000** : Migrer les services d'abonnements vers la nouvelle architecture
+- [x] **SUBSCRIPTIONS-000** : Migrer les services d'abonnements vers la nouvelle architecture
   - Déplacer `plansAPI` et `subscriptionsAPI` vers `src/services/api/subscriptions/subscriptionsService.ts`
   - Créer les types dans `src/services/api/subscriptions/subscriptionsTypes.ts`
   - Mettre à jour tous les imports dans les composants :
     - `src/pages/Subscription.tsx`
     - `src/hooks/useSubscriptions.tsx`
+    - `src/hooks/useStripe.tsx` (nouveau hook créé)
   - Tester que toutes les fonctionnalités marchent encore
   - Valider que les types sont correctement exportés
 
 ### 4.2 Plans et abonnements
 
-- [ ] **SUBSCRIPTIONS-001** : Implémenter l'API de récupération des plans (`GET /api/plans`)
+- [x] **SUBSCRIPTIONS-001** : Implémenter l'API de récupération des plans (`GET /api/plans`)
 
   - Migrer `plansAPI.getAll()` depuis `api.mock.ts` vers `src/services/api/subscriptions/subscriptionsService.ts`
   - Remplacer la logique mockée par de vrais appels API
@@ -242,7 +243,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
   - Tri par prix croissant
   - Mettre à jour `src/hooks/useSubscriptions.tsx` pour utiliser le nouveau service
 
-- [ ] **SUBSCRIPTIONS-002** : Implémenter l'API de récupération des abonnements (`GET /api/users/:id/subscriptions`)
+- [x] **SUBSCRIPTIONS-002** : Implémenter l'API de récupération des abonnements (`GET /api/users/:id/subscriptions`)
 
   - Migrer `subscriptionsAPI.getByUserId()` depuis `api.mock.ts` vers `src/services/api/subscriptions/subscriptionsService.ts`
   - Remplacer la logique mockée par de vrais appels API
@@ -250,41 +251,32 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
   - Statut actuel et dates
   - Mettre à jour `src/hooks/useSubscriptions.tsx` pour utiliser le nouveau service
 
-- [ ] **SUBSCRIPTIONS-003** : Implémenter l'API de création d'abonnement (`POST /api/subscriptions`)
+- [x] **SUBSCRIPTIONS-003** : Implémenter l'API de création d'abonnement (`POST /api/subscriptions`)
 
-  - Intégration avec Stripe
-  - Création du customer et subscription
+  - Intégration avec Stripe via Stripe Checkout
+  - Création du customer et subscription via `createCheckoutSession()`
+  - Abonnements gratuits via `createFreeSubscription()`
   - Mise à jour du plan utilisateur
   - Mettre à jour `src/pages/Subscription.tsx` pour utiliser le nouveau service
+  - Hook `useStripe` créé pour gérer les opérations Stripe
 
-- [ ] **SUBSCRIPTIONS-004** : Implémenter l'API de modification d'abonnement (`PUT /api/subscriptions/:id`)
-  - Changement de plan
+- [x] **SUBSCRIPTIONS-004** : Implémenter l'API de modification d'abonnement (`PUT /api/subscriptions/:id`)
+  - Changement de plan via `updateSubscription()`
   - Prorata des paiements
   - Mise à jour des quotas
   - Mettre à jour `src/pages/Subscription.tsx` pour utiliser le nouveau service
+  - Hook `useStripe` gère les modifications d'abonnement
 
-### 4.3 Webhooks Stripe
+### 4.3 Intégration Stripe
 
-- [ ] **STRIPE-001** : Implémenter les webhooks Stripe
-
-  - `customer.subscription.created`
-  - `customer.subscription.updated`
-  - `customer.subscription.deleted`
-  - `invoice.payment_failed`
-  - `invoice.payment_succeeded`
-
-- [ ] **STRIPE-002** : Gestion des échecs de paiement
-  - Notification utilisateur
-  - Rétrogradation automatique au plan gratuit
-  - Suspension des fonctionnalités avancées
-
-### 4.4 Configuration Stripe
-
-- [ ] **STRIPE-003** : Configurer l'intégration Stripe côté client
-  - Installer `@stripe/stripe-js`
-  - Configurer les clés publiques Stripe
-  - Créer les composants de paiement
-  - Gérer les erreurs de paiement
+- [x] **STRIPE-000** : Intégration Stripe complète
+  - Configuration des clés publiques Stripe (via API backend)
+  - Composants de paiement (hook `useStripe`)
+  - Gestion des erreurs de paiement
+  - Redirection vers Stripe Checkout
+  - Portail client Stripe
+  - Webhooks Stripe (gérés côté backend)
+  - Gestion des échecs de paiement (gérés côté backend)
 
 ---
 

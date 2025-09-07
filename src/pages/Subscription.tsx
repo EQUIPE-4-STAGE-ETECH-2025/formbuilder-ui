@@ -1,118 +1,225 @@
 import { Check, ChevronDown, Crown, Star, Zap } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardHeader } from "../components/ui/Card";
 import { useAuth } from "../hooks/useAuth";
+import { useStripe } from "../hooks/useStripe";
+import { useSubscriptions } from "../hooks/useSubscriptions";
 import { useToast } from "../hooks/useToast";
-import { plansAPI } from "../services/api.mock";
-import { IPlan } from "../types";
+import { IStripePlan } from "../services/api/subscriptions/subscriptionsTypes";
 
 export function Subscription() {
   const { user } = useAuth();
   const { addToast } = useToast();
-  const [plans, setPlans] = useState<IPlan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
   const [openFAQ, setOpenFAQ] = useState<string | null>(null);
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+  const hasProcessedUrlParamsRef = useRef(false);
 
-  const fetchPlans = useCallback(async () => {
-    try {
-      const response = await plansAPI.getAll();
-      if (response.success && response.data) {
-        // Ajouter les propriétés manquantes pour l'interface utilisateur
-        const plansWithUI = response.data.map((plan) => ({
-          ...plan,
-          price: plan.price_cents / 100,
-          popular: plan.id === "plan-premium",
-          features: getPlanFeatures(plan.id),
-        }));
-        setPlans(plansWithUI);
+  // Utiliser les nouveaux hooks
+  const { plans, subscriptions, loading, error, refreshData } =
+    useSubscriptions();
+  const {
+    subscribeToPlan,
+    openCustomerPortal,
+    checkCheckoutSessionStatus,
+    loading: stripeLoading,
+  } = useStripe();
+
+  // Trouver l'abonnement actif de l'utilisateur (un seul maintenant)
+  const activeSubscription = subscriptions.find((sub) => sub.isActive);
+
+  // Trouver le plan actuel de l'utilisateur
+  const currentPlan = activeSubscription
+    ? plans.find((plan) => plan.name === activeSubscription.planName)
+    : plans.find((plan) => plan.priceCents === 0); // Plan gratuit par défaut
+
+  // Gérer les paramètres d'URL pour les redirections Stripe
+  useEffect(() => {
+    const handleUrlParams = async () => {
+      const params = new URLSearchParams(location.search);
+      const sessionId = params.get("session_id");
+      const canceled = params.get("canceled");
+
+      // Éviter les traitements multiples
+      if (hasProcessedUrlParamsRef.current || (!sessionId && !canceled)) {
+        return;
       }
-    } catch (error) {
-      console.error("Error fetching plans:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+
+      hasProcessedUrlParamsRef.current = true;
+
+      // Nettoyer l'URL des paramètres immédiatement
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      if (canceled === "true") {
+        addToast({
+          type: "info",
+          title: "Paiement annulé",
+          message:
+            "Votre processus d'abonnement a été annulé. Aucun frais n'a été prélevé.",
+        });
+        return;
+      }
+
+      if (sessionId) {
+        try {
+          const success = await checkCheckoutSessionStatus(sessionId);
+          if (success) {
+            await refreshData();
+            addToast({
+              type: "success",
+              title: "Paiement réussi !",
+              message:
+                "Félicitations ! Votre abonnement a été activé avec succès.",
+            });
+          } else {
+            addToast({
+              type: "error",
+              title: "Erreur de paiement",
+              message:
+                "Impossible de vérifier votre paiement. Veuillez réessayer.",
+            });
+          }
+        } catch (error) {
+          console.error("Erreur lors de la vérification de la session:", error);
+          addToast({
+            type: "error",
+            title: "Erreur",
+            message: "Impossible de vérifier le paiement",
+          });
+        }
+      }
+    };
+
+    handleUrlParams();
+  }, [location.search, checkCheckoutSessionStatus, refreshData, addToast]);
 
   useEffect(() => {
-    fetchPlans();
-  }, [fetchPlans]);
+    if (error) {
+      addToast({
+        type: "error",
+        title: "Erreur",
+        message: error,
+      });
+    }
+  }, [error, addToast]);
 
-  const getPlanFeatures = (planId: string): string[] => {
-    switch (planId) {
-      case "plan-free":
-        return ["3 formulaires", "500 soumissions/mois", "10 Mo stockage"];
-      case "plan-premium":
-        return [
-          "20 formulaires",
-          "10 000 soumissions/mois",
-          "100 Mo stockage",
-          "Support prioritaire",
-        ];
-      case "plan-pro":
-        return [
-          "Formulaires illimités",
-          "100 000 soumissions/mois",
-          "500 Mo stockage",
-          "Support prioritaire",
-          "API avancée",
-        ];
-      default:
-        return [];
+  // Mapper les features des plans depuis les données de l'API
+  const getPlanFeatures = (plan: IStripePlan): string[] => {
+    const baseFeatures = [
+      `${
+        plan.maxForms === -1
+          ? "Formulaires illimités"
+          : `${plan.maxForms} formulaires`
+      }`,
+      `${plan.maxSubmissionsPerMonth.toLocaleString()} soumissions/mois`,
+      `${plan.maxStorageMb} Mo de stockage`,
+    ];
+
+    // Ajouter les fonctionnalités spécifiques depuis l'API
+    const apiFeatures = plan.features?.map((feature) => feature.label) || [];
+
+    return [...baseFeatures, ...apiFeatures];
+  };
+
+  // Gérer l'abonnement à un plan
+  const handleSubscribe = async (plan: IStripePlan) => {
+    if (!user) {
+      addToast({
+        type: "error",
+        title: "Connexion requise",
+        message: "Vous devez être connecté pour vous abonner",
+      });
+      return;
+    }
+
+    // Plan gratuit - déjà attribué automatiquement à l'inscription
+    if (plan.priceCents === 0) {
+      addToast({
+        type: "info",
+        title: "Plan gratuit",
+        message: "Vous avez déjà le plan gratuit automatiquement !",
+      });
+      return;
+    }
+
+    // Plans payants
+    if (plan.stripePriceId) {
+      try {
+        setLoadingPlanId(plan.id);
+
+        // Vérifier si l'utilisateur a déjà un abonnement payant actif
+        const hasActivePaidSubscription =
+          activeSubscription && currentPlan && currentPlan.priceCents > 0;
+
+        if (hasActivePaidSubscription) {
+          // Utilisateur avec abonnement payant → rediriger vers le portail client
+          await openCustomerPortal();
+        } else {
+          // Utilisateur avec plan gratuit → utiliser Stripe Checkout
+          await subscribeToPlan(plan.stripePriceId);
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'abonnement:", error);
+      } finally {
+        setLoadingPlanId(null);
+      }
+    } else {
+      addToast({
+        type: "error",
+        title: "Erreur",
+        message: "Ce plan n'est pas disponible pour l'abonnement",
+      });
     }
   };
 
-  const handleSubscribe = (planId: string) => {
-    // planId will be used when Stripe integration is implemented
-    console.log("Selected plan:", planId);
-    addToast({
-      type: "info",
-      title: "Fonctionnalité en cours",
-      message: "L'intégration Stripe sera disponible prochainement",
-    });
-  };
-
-  const getPlanIcon = (planId: string) => {
-    switch (planId) {
-      case "plan-free":
-        return <Star className="h-6 w-6 text-surface-500" />;
-      case "plan-premium":
-        return <Crown className="h-6 w-6 text-accent-500" />;
-      case "plan-pro":
-        return <Zap className="h-6 w-6 text-yellow-500" />;
-      default:
-        return <Star className="h-6 w-6 text-surface-500" />;
+  // Obtenir l'icône d'un plan
+  const getPlanIcon = (plan: IStripePlan) => {
+    // Déterminer le type de plan en fonction du prix
+    if (plan.priceCents === 0) {
+      return <Star className="h-6 w-6 text-surface-500" />;
+    } else if (plan.priceCents < 5000) {
+      // Moins de 50€
+      return <Crown className="h-6 w-6 text-accent-500" />;
+    } else {
+      return <Zap className="h-6 w-6 text-yellow-500" />;
     }
   };
 
-  const getPlanColor = (planId: string) => {
-    switch (planId) {
-      case "plan-free":
-        return "border-surface-700";
-      case "plan-premium":
-        return "border-accent-500 ring-2 ring-accent-500";
-      case "plan-pro":
-        return "border-yellow-500";
-      default:
-        return "border-surface-700";
+  // Obtenir les couleurs d'un plan
+  const getPlanColor = (plan: IStripePlan, isPopular: boolean) => {
+    if (isPopular) {
+      return "border-accent-500 ring-2 ring-accent-500";
+    }
+    if (plan.priceCents === 0) {
+      return "border-surface-700";
+    } else if (plan.priceCents < 5000) {
+      return "border-accent-500";
+    } else {
+      return "border-yellow-500";
     }
   };
 
-  const getButtonVariant = (planId: string, isCurrentPlan: boolean) => {
+  // Obtenir le variant du bouton
+  const getButtonVariant = (
+    plan: IStripePlan,
+    isCurrentPlan: boolean,
+    isPopular: boolean
+  ) => {
     if (isCurrentPlan) return "secondary";
-    switch (planId) {
-      case "plan-premium":
-        return "accent";
-      case "plan-pro":
-        return "primary";
-      default:
-        return "secondary";
-    }
+    if (isPopular) return "accent";
+    if (plan.priceCents === 0) return "secondary";
+    if (plan.priceCents >= 5000) return "primary";
+    return "accent";
   };
 
   const toggleFAQ = (faqId: string) => {
     setOpenFAQ(openFAQ === faqId ? null : faqId);
   };
+
+  // États de chargement
+  const isLoading = loading || stripeLoading;
 
   if (loading) {
     return (
@@ -140,34 +247,50 @@ export function Subscription() {
       </div>
 
       {/* Current Plan Status */}
-      {user && (
+      {user && currentPlan && (
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {getPlanIcon(user.subscription?.plan || "plan-free")}
+                {getPlanIcon(currentPlan)}
                 <div>
                   <p className="font-medium text-text-100">
-                    Plan actuel:{" "}
-                    {user.subscription?.plan === "plan-free"
-                      ? "Gratuit"
-                      : user.subscription?.plan === "plan-premium"
-                      ? "Premium"
-                      : "Pro"}
+                    Plan actuel : {currentPlan.name}
                   </p>
-                  <p className="text-sm text-surface-400">
-                    {user.subscription?.currentForms || 0} /{" "}
-                    {user.subscription?.maxForms || 0} formulaires utilisés
-                  </p>
+                  {activeSubscription?.endDate && (
+                    <p className="text-sm text-surface-400">
+                      Date d'expiration :{" "}
+                      {new Date(activeSubscription.endDate).toLocaleDateString(
+                        "fr-FR",
+                        {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        }
+                      )}
+                    </p>
+                  )}
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-surface-400">
-                  {user.subscription?.currentSubmissions || 0} /{" "}
-                  {user.subscription?.maxSubmissionsPerMonth || 0}
-                  <br />
-                  soumissions ce mois
-                </p>
+
+              <div className="flex items-center gap-4">
+                {/* Boutons de gestion d'abonnement */}
+                <div className="flex gap-2">
+                  {activeSubscription &&
+                    activeSubscription.stripeSubscriptionId && (
+                      <>
+                        <Button
+                          variant="secondary"
+                          size="md"
+                          onClick={openCustomerPortal}
+                          disabled={isLoading}
+                          className="w-full"
+                        >
+                          Gérer mon abonnement
+                        </Button>
+                      </>
+                    )}
+                </div>
               </div>
             </div>
           </CardContent>
@@ -177,13 +300,15 @@ export function Subscription() {
       {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((plan) => {
-          const isCurrentPlan = user?.subscription?.plan === plan.id;
-          const isPopular = plan.popular;
+          const isCurrentPlan = currentPlan?.id === plan.id;
+          const isPopular = plan.name.toLowerCase().includes("premium");
+          const planFeatures = getPlanFeatures(plan);
+          const priceDisplay = `${(plan.priceCents / 100).toFixed(0)}€`;
 
           return (
             <Card
               key={plan.id}
-              className={`relative ${getPlanColor(plan.id)} ${
+              className={`relative ${getPlanColor(plan, isPopular)} ${
                 isPopular ? "shadow-large" : ""
               } flex flex-col`}
             >
@@ -197,12 +322,12 @@ export function Subscription() {
 
               <CardHeader className="text-center pb-4">
                 <div className="flex justify-center mb-4">
-                  {getPlanIcon(plan.id)}
+                  {getPlanIcon(plan)}
                 </div>
                 <h3 className="text-xl font-bold text-text-100">{plan.name}</h3>
                 <div className="mt-2">
                   <span className="text-3xl font-bold text-text-100">
-                    {plan.price}€
+                    {priceDisplay}
                   </span>
                   <span className="text-surface-400">/mois</span>
                 </div>
@@ -210,8 +335,8 @@ export function Subscription() {
 
               <CardContent className="flex flex-col flex-1 space-y-8">
                 <ul className="space-y-2 flex-1">
-                  {plan.features?.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2">
+                  {planFeatures.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-yellow-500" />
                       <span className="text-sm text-surface-400">
                         {feature}
@@ -222,11 +347,20 @@ export function Subscription() {
 
                 <Button
                   className="w-full mt-auto"
-                  variant={getButtonVariant(plan.id, isCurrentPlan)}
-                  onClick={() => handleSubscribe(plan.id)}
-                  disabled={isCurrentPlan}
+                  variant={getButtonVariant(plan, isCurrentPlan, isPopular)}
+                  onClick={() => handleSubscribe(plan)}
+                  disabled={isCurrentPlan || loadingPlanId === plan.id}
                 >
-                  {isCurrentPlan ? "Plan actuel" : "Choisir ce plan"}
+                  {loadingPlanId === plan.id ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                      Chargement...
+                    </div>
+                  ) : isCurrentPlan ? (
+                    "Plan actuel"
+                  ) : (
+                    "Choisir ce plan"
+                  )}
                 </Button>
               </CardContent>
             </Card>
