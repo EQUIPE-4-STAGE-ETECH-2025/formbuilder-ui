@@ -4,6 +4,7 @@ import {
   ICreateFormRequest,
   IUpdateFormRequest,
 } from "../services/api/forms/formsTypes";
+import { QuotaExceededError } from "../services/api/quotas/quotaTypes";
 import { IForm } from "../types";
 import { adaptFormFromAPI } from "../utils/formAdapter";
 import { useAuth } from "./useAuth";
@@ -70,6 +71,10 @@ export const useForms = (): IUseFormsReturn => {
         throw new Error(errorMessage);
       }
     } catch (error) {
+      if (error instanceof QuotaExceededError) {
+        throw error;
+      }
+
       if (
         !(error instanceof Error) ||
         !error.message.includes("Erreur lors de la création")

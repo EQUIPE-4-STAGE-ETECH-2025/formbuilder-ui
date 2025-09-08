@@ -45,12 +45,14 @@ import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
 import { useAuth } from "../../hooks/useAuth";
 import { useForms } from "../../hooks/useForms";
+import { useQuotas } from "../../hooks/useQuotas";
 import { useToast } from "../../hooks/useToast";
 import { formsService } from "../../services/api";
 import {
   ICreateFormRequest,
   IUpdateFormRequest,
 } from "../../services/api/forms/formsTypes";
+import { QuotaExceededError } from "../../services/api/quotas/quotaTypes";
 import { IForm, IFormField } from "../../types";
 import { adaptFormFromAPI } from "../../utils/formAdapter";
 
@@ -233,6 +235,7 @@ export function FormBuilder() {
   const { addToast } = useToast();
   const { user } = useAuth();
   const { createForm, updateForm, publishForm, deleteForm } = useForms();
+  const { handleQuotaError } = useQuotas();
   const [form, setForm] = useState<IForm | null>(null);
   const [originalForm, setOriginalForm] = useState<IForm | null>(null); // Formulaire original pour comparaison
   const [loading, setLoading] = useState(true);
@@ -599,7 +602,12 @@ export function FormBuilder() {
         title: "Formulaire sauvegardé",
         message: "Vos modifications ont été enregistrées",
       });
-    } catch {
+    } catch (error) {
+      if (error instanceof QuotaExceededError) {
+        handleQuotaError(error);
+        return;
+      }
+
       addToast({
         type: "error",
         title: "Erreur",
@@ -642,7 +650,12 @@ export function FormBuilder() {
           message: "Votre formulaire est maintenant accessible au public",
         });
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof QuotaExceededError) {
+        handleQuotaError(error);
+        return;
+      }
+
       addToast({
         type: "error",
         title: "Erreur",

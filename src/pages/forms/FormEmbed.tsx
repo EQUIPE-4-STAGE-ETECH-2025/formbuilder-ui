@@ -5,13 +5,16 @@ import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
 import { Dropdown } from "../../components/ui/Dropdown";
 import { useAuth } from "../../hooks/useAuth";
+import { useQuotas } from "../../hooks/useQuotas";
 import { formsService, submissionsService } from "../../services/api";
+import { QuotaExceededError } from "../../services/api/quotas/quotaTypes";
 import { IForm, IFormField } from "../../types";
 import { adaptFormFromAPI } from "../../utils/formAdapter";
 
 export function FormEmbed() {
   const { id } = useParams();
   const { user } = useAuth();
+  const { handleQuotaError } = useQuotas();
   const [form, setForm] = useState<IForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -141,6 +144,14 @@ export function FormEmbed() {
       setSubmitted(true);
     } catch (error) {
       console.error("Submission error:", error);
+
+      if (error instanceof QuotaExceededError) {
+        handleQuotaError(error);
+        setError(
+          "Limite de soumissions atteinte. Veuillez réessayer plus tard."
+        );
+        return;
+      }
 
       // Gestion d'erreurs spécifiques
       let errorMessage = "Erreur lors de la soumission du formulaire.";

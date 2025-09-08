@@ -91,6 +91,7 @@ export const FormHistory: React.FC<IFormHistoryProps> = ({
         setShowRestoreModal(false);
         setSelectedVersion(null);
         onVersionRestored?.();
+        fetchVersions();
       } else {
         addToast({
           type: "error",

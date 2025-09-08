@@ -170,6 +170,10 @@ class FormsService {
     } catch (error) {
       console.error("Erreur lors de la création du formulaire:", error);
 
+      if (error instanceof Error && error.name === "QuotaExceededError") {
+        throw error;
+      }
+
       if (
         (
           error as {

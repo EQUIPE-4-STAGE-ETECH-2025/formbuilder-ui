@@ -3,6 +3,7 @@ import {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
+import { QuotaExceededError } from "../quotas/quotaTypes";
 
 const PUBLIC_ENDPOINTS = [
   "/auth/login",
@@ -92,6 +93,12 @@ export const setupErrorInterceptors = (apiClient: AxiosInstance): void => {
     (error) => {
       if (error.response) {
         const { status, data } = error.response;
+
+        if (status === 429 && data?.error === "Quota dépassé" && data?.data) {
+          const quotaError = new QuotaExceededError(data.data);
+          return Promise.reject(quotaError);
+        }
+
         switch (status) {
           case 400:
             console.error("Erreur de validation:", data);
@@ -123,7 +130,7 @@ export const setupLoggingInterceptors = (apiClient: AxiosInstance): void => {
   if (import.meta.env.DEV) {
     apiClient.interceptors.request.use(
       (config) => {
-        console.log("🚀 Requête API:", {
+        console.log("Requête API:", {
           method: config.method?.toUpperCase(),
           url: config.url,
           data: config.data,
@@ -135,7 +142,7 @@ export const setupLoggingInterceptors = (apiClient: AxiosInstance): void => {
 
     apiClient.interceptors.response.use(
       (response) => {
-        console.log("✅ Réponse API:", {
+        console.log("Réponse API:", {
           status: response.status,
           url: response.config.url,
           data: response.data,
@@ -143,7 +150,7 @@ export const setupLoggingInterceptors = (apiClient: AxiosInstance): void => {
         return response;
       },
       (error) => {
-        console.error("❌ Erreur de réponse:", {
+        console.error("Erreur de réponse:", {
           status: error.response?.status,
           url: error.config?.url,
           data: error.response?.data,
