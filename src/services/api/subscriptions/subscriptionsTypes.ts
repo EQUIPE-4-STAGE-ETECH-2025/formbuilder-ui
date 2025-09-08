@@ -24,7 +24,7 @@ export interface IStripeSubscription {
   planName: string;
   stripeSubscriptionId: string;
   startDate: string;
-  endDate: string;
+  endDate: string | null; // null pour les plans gratuits illimités
   status: string;
   isActive: boolean;
 }

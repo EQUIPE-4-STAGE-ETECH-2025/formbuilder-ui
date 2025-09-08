@@ -1,4 +1,11 @@
-import { Check, ChevronDown, Crown, Star, Zap } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Crown,
+  ExternalLink,
+  Star,
+  Zap,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Button } from "../components/ui/Button";
@@ -257,7 +264,7 @@ export function Subscription() {
                   <p className="font-medium text-text-100">
                     Plan actuel : {currentPlan.name}
                   </p>
-                  {activeSubscription?.endDate && (
+                  {activeSubscription?.endDate ? (
                     <p className="text-sm text-surface-400">
                       Date d'expiration :{" "}
                       {new Date(activeSubscription.endDate).toLocaleDateString(
@@ -269,7 +276,11 @@ export function Subscription() {
                         }
                       )}
                     </p>
-                  )}
+                  ) : currentPlan?.priceCents === 0 ? (
+                    <p className="text-sm text-surface-400">
+                      Date d'expiration : Aucune
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -283,10 +294,11 @@ export function Subscription() {
                           variant="secondary"
                           size="md"
                           onClick={openCustomerPortal}
-                          disabled={isLoading}
+                          disabled={isLoading || currentPlan?.priceCents === 0}
                           className="w-full"
                         >
-                          Gérer mon abonnement
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Accéder au portail
                         </Button>
                       </>
                     )}

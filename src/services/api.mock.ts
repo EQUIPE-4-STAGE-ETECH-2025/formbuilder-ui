@@ -100,6 +100,17 @@ const mockSubscriptions: ISubscription[] = [
     created_at: "2024-01-15T10:00:00Z",
     updated_at: "2024-01-15T10:00:00Z",
   },
+  {
+    id: "sub-free-1",
+    user_id: "user-1",
+    plan_id: "plan-free",
+    stripe_subscription_id: "sub_free_123",
+    start_date: "2024-01-01",
+    end_date: null, // Plan gratuit illimité
+    is_active: true,
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+  },
 ];
 
 const mockForms: IForm[] = [

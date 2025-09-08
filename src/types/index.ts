@@ -186,7 +186,7 @@ export interface ISubscription {
   plan_id: string;
   stripe_subscription_id: string;
   start_date: string;
-  end_date: string;
+  end_date: string | null; // null pour les plans gratuits illimités
   is_active: boolean;
   created_at: string;
   updated_at: string;
