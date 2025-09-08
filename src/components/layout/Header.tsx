@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import formbuilderLogo from "../../assets/images/logo/formbuilder-logo.png";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 
@@ -82,7 +83,7 @@ export function Header() {
             <Link to="/dashboard" className="flex items-center space-x-3 group">
               <div className="w-10 h-10 rounded-2xl overflow-hidden group-hover:scale-105 transition-transform duration-200">
                 <img
-                  src="/src/assets/images/logo/formbuilder-logo.png"
+                  src={formbuilderLogo}
                   alt="FormBuilder"
                   className="w-full h-full object-contain"
                 />

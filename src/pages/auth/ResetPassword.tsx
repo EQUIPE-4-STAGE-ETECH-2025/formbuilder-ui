@@ -6,6 +6,7 @@ import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
 import { useToast } from "../../hooks/useToast";
 import { authService } from "../../services/api";
+import formbuilderLogo from "../../assets/images/logo/formbuilder-logo.png";
 
 interface ResetPasswordForm {
   newPassword: string;
@@ -81,7 +82,7 @@ export function ResetPassword() {
             <div className="text-center">
               <div className="mx-auto w-16 h-16 rounded-2xl overflow-hidden">
                 <img
-                  src="/src/assets/images/logo/formbuilder-logo.png"
+                  src={formbuilderLogo}
                   alt="FormBuilder"
                   className="w-full h-full object-contain"
                 />

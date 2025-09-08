@@ -2,6 +2,7 @@ import { ArrowLeft, Mail } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import formbuilderLogo from "../../assets/images/logo/formbuilder-logo.png";
 import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
 import { useToast } from "../../hooks/useToast";
@@ -103,7 +104,7 @@ export function ForgotPassword() {
           <div className="text-center">
             <div className="mx-auto w-16 h-16 rounded-2xl overflow-hidden">
               <img
-                src="/src/assets/images/logo/formbuilder-logo.png"
+                src={formbuilderLogo}
                 alt="FormBuilder"
                 className="w-full h-full object-contain"
               />
