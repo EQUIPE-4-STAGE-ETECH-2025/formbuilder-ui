@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { formsService } from "../services/api";
 import {
   ICreateFormRequest,
@@ -28,29 +28,41 @@ export const useForms = (): IUseFormsReturn => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Fonctions utilitaires
-  const fetchForms = useCallback(async (): Promise<void> => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await formsService.getAll();
+  // Mémoïsation de l'ID utilisateur pour éviter les re-renders inutiles
+  const userId = useMemo(() => user?.id, [user?.id]);
 
-      if (response.success && response.data) {
-        const adaptedForms = response.data.map((form) =>
-          adaptFormFromAPI(form, user?.id)
-        );
-        setForms(adaptedForms);
-      } else {
-        setError(
-          response.message || "Erreur lors du chargement des formulaires"
-        );
+  // Fonctions utilitaires optimisées
+  const fetchForms = useCallback(
+    async (skipLoading = false): Promise<void> => {
+      try {
+        if (!skipLoading) {
+          setLoading(true);
+        }
+        setError(null);
+
+        // Le cache est maintenant géré par formsService.getAll()
+        const response = await formsService.getAll();
+
+        if (response.success && response.data) {
+          const adaptedForms = response.data.map((form) =>
+            adaptFormFromAPI(form, userId)
+          );
+          setForms(adaptedForms);
+        } else {
+          setError(
+            response.message || "Erreur lors du chargement des formulaires"
+          );
+        }
+      } catch {
+        setError("Erreur lors du chargement des formulaires");
+      } finally {
+        if (!skipLoading) {
+          setLoading(false);
+        }
       }
-    } catch {
-      setError("Erreur lors du chargement des formulaires");
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
+    },
+    [userId]
+  );
 
   // Effets
   useEffect(() => {
@@ -58,7 +70,6 @@ export const useForms = (): IUseFormsReturn => {
   }, [fetchForms]);
 
   const createForm = async (formData: ICreateFormRequest): Promise<void> => {
-    setLoading(true);
     setError(null);
 
     try {
@@ -70,21 +81,20 @@ export const useForms = (): IUseFormsReturn => {
         setError(errorMessage);
         throw new Error(errorMessage);
       }
+
+      // Rafraîchir la liste en arrière-plan (sans spinner)
+      fetchForms(true);
     } catch (error) {
       if (error instanceof QuotaExceededError) {
         throw error;
       }
 
-      if (
-        !(error instanceof Error) ||
-        !error.message.includes("Erreur lors de la création")
-      ) {
-        setError("Erreur lors de la création du formulaire");
-        throw new Error("Erreur lors de la création du formulaire");
-      }
-      throw error;
-    } finally {
-      setLoading(false);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la création du formulaire";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
@@ -92,9 +102,9 @@ export const useForms = (): IUseFormsReturn => {
     id: string,
     formData: IUpdateFormRequest
   ): Promise<void> => {
+    setError(null);
+
     try {
-      setLoading(true);
-      setError(null);
       const response = await formsService.update(id, formData);
 
       if (!response.success) {
@@ -103,37 +113,43 @@ export const useForms = (): IUseFormsReturn => {
         setError(errorMessage);
         throw new Error(errorMessage);
       }
+
+      // Rafraîchir la liste en arrière-plan (sans spinner)
+      fetchForms(true);
     } catch (error) {
-      if (
-        !(error instanceof Error) ||
-        !error.message.includes("Erreur lors de la mise à jour")
-      ) {
-        setError("Erreur lors de la mise à jour du formulaire");
-        throw new Error("Erreur lors de la mise à jour du formulaire");
-      }
-      throw error;
-    } finally {
-      setLoading(false);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la mise à jour du formulaire";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
   const deleteForm = async (id: string): Promise<void> => {
+    setError(null);
+
     try {
-      setLoading(true);
-      setError(null);
       const response = await formsService.delete(id);
 
       if (response.success) {
+        // Mise à jour immédiate de l'état local pour une UX plus rapide
         setForms((prevForms) => prevForms.filter((form) => form.id !== id));
       } else {
         setError(
           response.message || "Erreur lors de la suppression du formulaire"
         );
+        throw new Error(
+          response.message || "Erreur lors de la suppression du formulaire"
+        );
       }
-    } catch {
-      setError("Erreur lors de la suppression du formulaire");
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la suppression du formulaire";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
@@ -154,8 +170,6 @@ export const useForms = (): IUseFormsReturn => {
         throw new Error(errorMessage);
       }
 
-      // Selon le contrat API, la réponse contient les données mises à jour du formulaire
-      // On devrait mettre à jour la liste des formulaires si elle est chargée
       if (response.data) {
         const adaptedForm = adaptFormFromAPI(response.data, user?.id);
         setForms((prevForms) =>

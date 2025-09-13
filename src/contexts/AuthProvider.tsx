@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useCallback, useEffect, useState } from "react";
 import { authService } from "../services/api/auth/authService";
 import {
   IChangePasswordResponse,
@@ -9,6 +9,7 @@ import {
   IRegisterRequest,
   IRegisterResponse,
 } from "../services/api/auth/authType";
+import { clearAllCaches } from "../services/api/utils/apiUtils";
 import { ILoginResult, IUser } from "../types";
 import { AuthContext, IAuthContext } from "./AuthContext";
 
@@ -16,71 +17,78 @@ interface IAuthProviderProps {
   children: ReactNode;
 }
 
-const TOKEN_KEY = import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token";
-const REFRESH_TOKEN_KEY =
-  import.meta.env.VITE_JWT_REFRESH_KEY || "formbuilder_refresh_token";
+const STORAGE_KEYS = {
+  TOKEN: import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token",
+  REFRESH_TOKEN:
+    import.meta.env.VITE_JWT_REFRESH_KEY || "formbuilder_refresh_token",
+} as const;
 
 export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<IUser | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem(TOKEN_KEY);
+      const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
       if (token) {
         const response: IMeResponse = await authService.me();
         if (response.success && response.data) {
           setUser(response.data);
         } else {
-          localStorage.removeItem(TOKEN_KEY);
-          localStorage.removeItem(REFRESH_TOKEN_KEY);
+          localStorage.removeItem(STORAGE_KEYS.TOKEN);
+          localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+          clearAllCaches();
         }
       }
     } catch {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      clearAllCaches();
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const login = async (
-    email: string,
-    password: string
-  ): Promise<ILoginResult> => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
-    try {
-      const credentials: ILoginRequest = { email, password };
-      const response: ILoginResponse = await authService.login(credentials);
+  const login = useCallback(
+    async (email: string, password: string): Promise<ILoginResult> => {
+      setLoading(true);
+      setError(null);
 
-      if (response.success && response.data) {
-        setUser(response.data.user);
-        localStorage.setItem(TOKEN_KEY, response.data.token);
-        localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
-        return { success: true, data: response.data };
-      } else {
-        const err = response.message || "Erreur lors de la connexion";
+      try {
+        const credentials: ILoginRequest = { email, password };
+        const response: ILoginResponse = await authService.login(credentials);
+
+        if (response.success && response.data) {
+          setUser(response.data.user);
+          localStorage.setItem(STORAGE_KEYS.TOKEN, response.data.token);
+          localStorage.setItem(
+            STORAGE_KEYS.REFRESH_TOKEN,
+            response.data.refresh_token
+          );
+          return { success: true, data: response.data };
+        } else {
+          const err = response.message || "Erreur lors de la connexion";
+          setError(err);
+          return { success: false, error: err };
+        }
+      } catch {
+        const err = "Erreur lors de la connexion";
         setError(err);
         return { success: false, error: err };
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      const err = "Erreur lors de la connexion";
-      setError(err);
-      return { success: false, error: err };
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    []
+  );
 
-  const logout = async (): Promise<ILogoutResponse> => {
+  const logout = useCallback(async (): Promise<ILogoutResponse> => {
     setLoading(true);
     try {
       const response: ILogoutResponse = await authService.logout();
@@ -95,11 +103,11 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
       };
     } finally {
       setUser(null);
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
       setLoading(false);
     }
-  };
+  }, []);
 
   const register = async (userData: {
     firstName: string;

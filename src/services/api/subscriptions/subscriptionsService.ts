@@ -1,4 +1,5 @@
 import apiClient from "../config/apiClient";
+import { withErrorHandling } from "../utils/apiUtils";
 import {
   ICancelSubscriptionRequest,
   ICancelSubscriptionResponse,
@@ -22,19 +23,22 @@ import {
 export const plansService = {
   // Récupérer tous les plans disponibles
   async getAll(): Promise<TStripeApiResponse<IStripePlan[]>> {
-    try {
-      const response = await apiClient.get<IStripePlan[]>("/api/plans");
-      return {
-        success: true,
-        data: response.data,
-      };
-    } catch (error) {
-      console.error("Erreur lors de la récupération des plans:", error);
-      return {
-        success: false,
-        error: "Erreur lors de la récupération des plans",
-      };
-    }
+    const cacheKey = "plans_all";
+
+    const result = await withErrorHandling(
+      async () => {
+        const response = await apiClient.get<IStripePlan[]>("/api/plans");
+        return {
+          success: true,
+          data: response.data,
+        } as TStripeApiResponse<IStripePlan[]>;
+      },
+      "Erreur lors de la récupération des plans",
+      cacheKey,
+      10 * 60 * 1000 // Cache 10 minutes pour les plans (relativement stables)
+    );
+
+    return result as TStripeApiResponse<IStripePlan[]>;
   },
 };
 
@@ -44,21 +48,23 @@ export const subscriptionsService = {
   async getByUserId(
     userId: string
   ): Promise<TStripeApiResponse<IStripeSubscription[]>> {
-    try {
-      const response = await apiClient.get<IStripeSubscription[]>(
-        `/api/users/${userId}/subscriptions`
-      );
-      return {
-        success: true,
-        data: response.data,
-      };
-    } catch (error) {
-      console.error("Erreur lors de la récupération des abonnements:", error);
-      return {
-        success: false,
-        error: "Erreur lors de la récupération des abonnements",
-      };
-    }
+    const url = `/api/users/${userId}/subscriptions`;
+    const cacheKey = `subscriptions_user_${userId}`;
+
+    const result = await withErrorHandling(
+      async () => {
+        const response = await apiClient.get<IStripeSubscription[]>(url);
+        return {
+          success: true,
+          data: response.data,
+        } as TStripeApiResponse<IStripeSubscription[]>;
+      },
+      "Erreur lors de la récupération des abonnements",
+      cacheKey,
+      2 * 60 * 1000 // Cache 2 minutes pour les abonnements utilisateur
+    );
+
+    return result as TStripeApiResponse<IStripeSubscription[]>;
   },
 
   // Créer un abonnement gratuit (pour les plans gratuits uniquement)

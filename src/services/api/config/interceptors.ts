@@ -5,27 +5,66 @@ import {
 } from "axios";
 import { QuotaExceededError } from "../quotas/quotaTypes";
 
-const PUBLIC_ENDPOINTS = [
+const PUBLIC_ENDPOINTS = new Set([
   "/auth/login",
   "/auth/register",
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/refresh",
   "/auth/verify-email",
-];
+]);
+
+// Cache des clés de storage pour éviter les lectures répétées
+const STORAGE_KEYS = {
+  TOKEN: import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token",
+  REFRESH_TOKEN:
+    import.meta.env.VITE_JWT_REFRESH_KEY || "formbuilder_refresh_token",
+} as const;
+
+// Types pour la gestion des tokens
+interface IFailedRequest {
+  resolve: (value: string) => void;
+  reject: (error: Error) => void;
+}
+
+// Mutex pour éviter les refresh concurrents
+let isRefreshing = false;
+let failedQueue: IFailedRequest[] = [];
+
+// Fonction utilitaire pour vérifier si un endpoint est public
+const isPublicEndpoint = (url?: string): boolean => {
+  if (!url) return false;
+  return Array.from(PUBLIC_ENDPOINTS).some((endpoint) =>
+    url.includes(endpoint)
+  );
+};
+
+// Fonctions pour gérer la queue de refresh
+const processQueue = (
+  error: Error | null,
+  token: string | null = null
+): void => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else if (token) {
+      resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
 
 export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
   // Intercepteur de requête pour ajouter le token
   apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     // Ne pas ajouter le token pour login ou refresh
-    if (PUBLIC_ENDPOINTS.some((url) => config.url?.includes(url))) {
+    if (isPublicEndpoint(config.url)) {
       delete config.headers?.Authorization;
       return config;
     }
 
-    const token = localStorage.getItem(
-      import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token"
-    );
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -43,14 +82,28 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
       if (
         error.response?.status === 401 &&
         !originalRequest._retry &&
-        !PUBLIC_ENDPOINTS.some((url) => originalRequest.url?.includes(url))
+        !isPublicEndpoint(originalRequest.url)
       ) {
+        // Si un refresh est déjà en cours, ajouter la requête à la queue
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({
+              resolve: (token: string) => {
+                if (originalRequest.headers) {
+                  originalRequest.headers.Authorization = `Bearer ${token}`;
+                }
+                resolve(apiClient(originalRequest));
+              },
+              reject,
+            });
+          });
+        }
+
         originalRequest._retry = true;
+        isRefreshing = true;
 
         try {
-          const refreshToken = localStorage.getItem(
-            import.meta.env.VITE_JWT_REFRESH_KEY || "formbuilder_refresh_token"
-          );
+          const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
           if (refreshToken) {
             const response = await apiClient.post("/api/auth/refresh", {
@@ -58,11 +111,10 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
             });
 
             const { token } = response.data.data as { token: string };
+            localStorage.setItem(STORAGE_KEYS.TOKEN, token);
 
-            localStorage.setItem(
-              import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token",
-              token
-            );
+            // Traiter la queue des requêtes en attente
+            processQueue(null, token);
 
             if (originalRequest.headers) {
               originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -70,15 +122,19 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
 
             return apiClient(originalRequest);
           }
-        } catch {
+        } catch (refreshError) {
           // Échec du refresh → déconnexion
-          localStorage.removeItem(
-            import.meta.env.VITE_JWT_STORAGE_KEY || "formbuilder_token"
+          processQueue(
+            refreshError instanceof Error
+              ? refreshError
+              : new Error("Refresh failed"),
+            null
           );
-          localStorage.removeItem(
-            import.meta.env.VITE_JWT_REFRESH_KEY || "formbuilder_refresh_token"
-          );
+          localStorage.removeItem(STORAGE_KEYS.TOKEN);
+          localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
           window.location.href = "/login";
+        } finally {
+          isRefreshing = false;
         }
       }
 
@@ -86,6 +142,9 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
     }
   );
 };
+
+// Cache pour les erreurs déjà loggées pour éviter les doublons
+const loggedErrors = new Set<string>();
 
 export const setupErrorInterceptors = (apiClient: AxiosInstance): void => {
   apiClient.interceptors.response.use(
@@ -94,30 +153,33 @@ export const setupErrorInterceptors = (apiClient: AxiosInstance): void => {
       if (error.response) {
         const { status, data } = error.response;
 
+        // Gestion spéciale pour les erreurs de quota
         if (status === 429 && data?.error === "Quota dépassé" && data?.data) {
-          const quotaError = new QuotaExceededError(data.data);
-          return Promise.reject(quotaError);
+          return Promise.reject(new QuotaExceededError(data.data));
         }
 
-        switch (status) {
-          case 400:
-            console.error("Erreur de validation:", data);
-            break;
-          case 403:
-            console.error("Accès refusé:", data);
-            break;
-          case 404:
-            console.error("Ressource non trouvée:", data);
-            break;
-          case 500:
-            console.error("Erreur serveur:", data);
-            break;
-          default:
-            console.error("Erreur API:", data);
+        // Éviter les logs redondants en mode développement
+        const errorKey = `${status}-${error.config?.url}`;
+        if (import.meta.env.DEV && !loggedErrors.has(errorKey)) {
+          loggedErrors.add(errorKey);
+
+          const errorMessages: Record<number, string> = {
+            400: "Erreur de validation",
+            403: "Accès refusé",
+            404: "Ressource non trouvée",
+            500: "Erreur serveur",
+          };
+
+          const message = errorMessages[status] || "Erreur API";
+          console.error(`${message}:`, {
+            status,
+            url: error.config?.url,
+            data,
+          });
         }
-      } else if (error.request) {
+      } else if (error.request && import.meta.env.DEV) {
         console.error("Erreur de réseau:", error.request);
-      } else {
+      } else if (import.meta.env.DEV) {
         console.error("Erreur de configuration:", error.message);
       }
 
@@ -126,15 +188,35 @@ export const setupErrorInterceptors = (apiClient: AxiosInstance): void => {
   );
 };
 
+// Throttling pour les logs
+const logThrottle = new Map<string, number>();
+const LOG_THROTTLE_MS = 1000; // 1 seconde
+
+const shouldLog = (key: string): boolean => {
+  const now = Date.now();
+  const lastLog = logThrottle.get(key);
+
+  if (!lastLog || now - lastLog > LOG_THROTTLE_MS) {
+    logThrottle.set(key, now);
+    return true;
+  }
+
+  return false;
+};
+
 export const setupLoggingInterceptors = (apiClient: AxiosInstance): void => {
+  // Ne logger qu'en mode développement avec throttling
   if (import.meta.env.DEV) {
     apiClient.interceptors.request.use(
       (config) => {
-        console.log("Requête API:", {
-          method: config.method?.toUpperCase(),
-          url: config.url,
-          data: config.data,
-        });
+        const logKey = `req-${config.method}-${config.url}`;
+        if (shouldLog(logKey)) {
+          console.log("📤 Requête API:", {
+            method: config.method?.toUpperCase(),
+            url: config.url,
+            hasData: !!config.data,
+          });
+        }
         return config;
       },
       (error) => Promise.reject(error)
@@ -142,21 +224,26 @@ export const setupLoggingInterceptors = (apiClient: AxiosInstance): void => {
 
     apiClient.interceptors.response.use(
       (response) => {
-        console.log("Réponse API:", {
-          status: response.status,
-          url: response.config.url,
-          data: response.data,
-        });
+        const logKey = `res-${response.status}-${response.config.url}`;
+        if (shouldLog(logKey)) {
+          console.log("📥 Réponse API:", {
+            status: response.status,
+            url: response.config.url,
+            hasData: !!response.data,
+          });
+        }
         return response;
       },
       (error) => {
-        console.error("Erreur de réponse:", {
-          status: error.response?.status,
-          url: error.config?.url,
-          data: error.response?.data,
-        });
+        // Les erreurs sont déjà loggées dans setupErrorInterceptors
         return Promise.reject(error);
       }
     );
   }
+};
+
+// Fonction pour nettoyer le cache de logs
+export const clearLogCache = (): void => {
+  logThrottle.clear();
+  loggedErrors.clear();
 };

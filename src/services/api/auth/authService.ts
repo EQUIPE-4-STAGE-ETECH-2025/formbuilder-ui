@@ -1,5 +1,6 @@
 import { IUser } from "../../../types";
 import { apiClient } from "../config/apiClient";
+import { clearAllCaches, withErrorHandling } from "../utils/apiUtils";
 import {
   IChangePasswordResponse,
   IForgotPasswordResponse,
@@ -19,74 +20,69 @@ const basePath = "/api/auth";
 
 export const authService = {
   login: async (credentials: ILoginRequest): Promise<ILoginResponse> => {
-    try {
+    const result = await withErrorHandling(async () => {
       const response = await apiClient.post<ILoginResponse>(
         `${basePath}/login`,
         credentials
       );
+
+      // Nettoyer les caches après login pour éviter les données obsolètes
+      clearAllCaches();
+
       return response.data;
-    } catch (error) {
-      console.error("Erreur lors de la connexion:", error);
-      return {
-        success: false,
-        message:
-          (error as { response?: { data?: { error?: string } } })?.response
-            ?.data?.error || "Erreur de connexion",
-      };
-    }
+    }, "Erreur de connexion");
+
+    return result as ILoginResponse;
   },
 
   register: async (userData: IRegisterRequest): Promise<IRegisterResponse> => {
-    try {
-      const response = await apiClient.post<IRegisterResponse>(
-        `${basePath}/register`,
-        userData
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Erreur lors de l'inscription:", error);
-      return {
-        success: false,
-        message:
-          (error as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message || "Erreur lors de l'inscription",
-      };
-    }
+    const result = await withErrorHandling(
+      () =>
+        apiClient
+          .post<IRegisterResponse>(`${basePath}/register`, userData)
+          .then((res) => res.data),
+      "Erreur lors de l'inscription"
+    );
+
+    return result as IRegisterResponse;
   },
 
   me: async (): Promise<IMeResponse> => {
-    try {
-      const response = await apiClient.get<IUser>(`${basePath}/me`);
-      return {
-        success: true,
-        data: response.data,
-        message: "Utilisateur récupéré avec succès",
-      };
-    } catch (error) {
-      console.error("Erreur lors de la récupération du profil:", error);
-      return {
-        success: false,
-        message: "Impossible de récupérer l'utilisateur connecté",
-      };
-    }
+    const cacheKey = "auth_me";
+
+    const result = await withErrorHandling(
+      async () => {
+        const response = await apiClient.get<IUser>(`${basePath}/me`);
+        return {
+          success: true,
+          data: response.data,
+          message: "Utilisateur récupéré avec succès",
+        } as IMeResponse;
+      },
+      "Impossible de récupérer l'utilisateur connecté",
+      cacheKey,
+      2 * 60 * 1000 // Cache 2 minutes pour le profil utilisateur
+    );
+
+    return result as IMeResponse;
   },
 
   logout: async (): Promise<ILogoutResponse> => {
-    try {
+    const result = await withErrorHandling(async () => {
       const response = await apiClient.post<ILogoutResponse>(
         `${basePath}/logout`
       );
+
+      // Nettoyer tous les caches après déconnexion
+      clearAllCaches();
+
       return {
         success: true,
         message: response.data.message,
-      };
-    } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
-      return {
-        success: false,
-        message: "Erreur lors de la déconnexion",
-      };
-    }
+      } as ILogoutResponse;
+    }, "Erreur lors de la déconnexion");
+
+    return result as ILogoutResponse;
   },
 
   verifyEmail: async (token: string): Promise<IVerifyEmailResponse> => {

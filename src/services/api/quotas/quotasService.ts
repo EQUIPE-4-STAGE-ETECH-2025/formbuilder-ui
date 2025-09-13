@@ -1,37 +1,28 @@
 import apiClient from "../config/apiClient";
+import { withErrorHandling } from "../utils/apiUtils";
 import { IGetQuotasResponse } from "./quotaTypes";
 
 const basePath = "/api/users";
 
 export const quotasService = {
   getByUserId: async (userId: string): Promise<IGetQuotasResponse> => {
-    try {
-      const response = await apiClient.get<IGetQuotasResponse>(
-        `${basePath}/${userId}/quotas`
-      );
+    const url = `${basePath}/${userId}/quotas`;
+    const cacheKey = `quotas_${userId}`;
 
-      return {
-        success: true,
-        data: response.data.data,
-      };
-    } catch (error: unknown) {
-      console.error("Erreur lors de la récupération des quotas:", error);
+    const result = await withErrorHandling(
+      async () => {
+        const response = await apiClient.get<IGetQuotasResponse>(url);
 
-      // Gestion typée des erreurs d'API
-      const getErrorMessage = (err: unknown): string => {
-        if (err && typeof err === "object" && "response" in err) {
-          const response = (
-            err as { response?: { data?: { message?: string } } }
-          ).response;
-          return response?.data?.message || "Impossible de charger les quotas";
-        }
-        return "Impossible de charger les quotas";
-      };
+        return {
+          success: true,
+          data: response.data.data,
+        } as IGetQuotasResponse;
+      },
+      "Impossible de charger les quotas",
+      cacheKey,
+      1 * 60 * 1000 // Cache 1 minute pour les quotas (données critiques, cache court)
+    );
 
-      return {
-        success: false,
-        message: getErrorMessage(error),
-      };
-    }
+    return result as IGetQuotasResponse;
   },
 };
