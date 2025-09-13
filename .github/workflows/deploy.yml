@@ -70,9 +70,9 @@ jobs:
       - name: Configuration de Fly.io
         uses: superfly/flyctl-actions/setup-flyctl@master
 
-      # Étape 5: Déploiement sur Fly.io avec build args
+      # Étape 5: Déploiement sur Fly.io avec build args sécurisés
       - name: Déploiement sur Fly.io
-        run: flyctl deploy --remote-only --build-arg VITE_API_URL="https://formbuilder-api.fly.dev" --build-arg VITE_JWT_STORAGE_KEY="formbuilder_token" --build-arg VITE_JWT_REFRESH_KEY="formbuilder_refresh_token" --build-arg VITE_API_TIMEOUT="10000" --build-arg VITE_API_RETRY_ATTEMPTS="3" --build-arg VITE_STRIPE_CUSTOMER_PORTAL_URL="https://billing.stripe.com/p/login/test_5kQ6oIfm03J34isbCKe3e00"
+        run: flyctl deploy --remote-only --build-arg VITE_API_URL="${{ secrets.VITE_API_URL }}" --build-arg VITE_JWT_STORAGE_KEY="${{ secrets.VITE_JWT_STORAGE_KEY }}" --build-arg VITE_JWT_REFRESH_KEY="${{ secrets.VITE_JWT_REFRESH_KEY }}" --build-arg VITE_API_TIMEOUT="${{ secrets.VITE_API_TIMEOUT }}" --build-arg VITE_API_RETRY_ATTEMPTS="${{ secrets.VITE_API_RETRY_ATTEMPTS }}" --build-arg VITE_STRIPE_CUSTOMER_PORTAL_URL="${{ secrets.VITE_STRIPE_CUSTOMER_PORTAL_URL }}"
         env:
           # Token d'authentification Fly.io (doit être configuré dans les secrets GitHub)
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
