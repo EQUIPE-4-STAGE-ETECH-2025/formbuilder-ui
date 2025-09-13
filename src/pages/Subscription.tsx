@@ -71,24 +71,23 @@ export function Subscription() {
 
       if (sessionId) {
         try {
-          // TODO: Temporairement commenté pour la démo - à réactiver après
-          // const success = await checkCheckoutSessionStatus(sessionId);
-          // if (success) {
-          await refreshData();
-          addToast({
-            type: "success",
-            title: "Paiement réussi !",
-            message:
-              "Félicitations ! Votre abonnement a été activé avec succès.",
-          });
-          // } else {
-          //   addToast({
-          //     type: "error",
-          //     title: "Erreur de paiement",
-          //     message:
-          //       "Impossible de vérifier votre paiement. Veuillez réessayer.",
-          //   });
-          // }
+          const success = await checkCheckoutSessionStatus(sessionId);
+          if (success) {
+            await refreshData();
+            addToast({
+              type: "success",
+              title: "Paiement réussi !",
+              message:
+                "Félicitations ! Votre abonnement a été activé avec succès.",
+            });
+          } else {
+            addToast({
+              type: "error",
+              title: "Erreur de paiement",
+              message:
+                "Impossible de vérifier votre paiement. Veuillez réessayer.",
+            });
+          }
         } catch (error) {
           console.error("Erreur lors de la vérification de la session:", error);
           addToast({

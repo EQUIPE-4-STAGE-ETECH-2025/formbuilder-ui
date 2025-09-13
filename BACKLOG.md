@@ -12,7 +12,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **AUTH-001** : Implémenter l'API de connexion (`POST /api/auth/login`)
 
-  - Migrer `authAPI.login()` depuis `api.mock.ts` vers `src/services/api/auth/authService.ts`
+  - Implémenter `authAPI.login()` dans `src/services/api/auth/authService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Gérer les tokens JWT côté serveur
   - Implémenter la validation des identifiants avec Argon2
@@ -21,7 +21,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **AUTH-002** : Implémenter l'API d'inscription (`POST /api/auth/register`)
 
-  - Migrer `authAPI.register()` depuis `api.mock.ts` vers `src/services/api/auth/authService.ts`
+  - Implémenter `authAPI.register()` dans `src/services/api/auth/authService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Validation des données utilisateur (email unique, force du mot de passe)
   - Envoi d'email de vérification
@@ -30,7 +30,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **AUTH-003** : Implémenter l'API de vérification du profil (`GET /api/auth/me`)
 
-  - Migrer `authAPI.me()` depuis `api.mock.ts` vers `src/services/api/auth/authService.ts`
+  - Implémenter `authAPI.me()` dans `src/services/api/auth/authService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Validation du token JWT côté serveur
   - Retour des informations utilisateur complètes
@@ -64,8 +64,8 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 ### 2.1 Migration des services de formulaires
 
 - [x] **FORMS-000** : Migrer les services de formulaires vers la nouvelle architecture
-  - Déplacer `formsAPI` de `api.mock.ts` vers `src/services/api/forms/formsService.ts`
-  - Déplacer `formVersionsAPI` vers `src/services/api/forms/versionsService.ts`
+  - Implémenter `formsAPI` dans `src/services/api/forms/formsService.ts`
+  - Implémenter `formVersionsAPI` dans `src/services/api/forms/versionsService.ts`
   - Créer les types dans `src/services/api/forms/formsTypes.ts`
   - Mettre à jour tous les imports dans les composants :
     - `src/pages/forms/FormsList.tsx`
@@ -83,7 +83,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **FORMS-001** : Implémenter l'API de récupération des formulaires (`GET /api/forms`)
 
-  - Migrer `formsAPI.getAll()` depuis `api.mock.ts` vers `src/services/api/forms/formsService.ts`
+  - Migrer `formsAPI.getAll()` dans `src/services/api/forms/formsService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Pagination et filtres (statut, date)
   - Tri par date de création/modification
@@ -92,7 +92,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **FORMS-002** : Implémenter l'API de récupération d'un formulaire (`GET /api/forms/:id`)
 
-  - Migrer `formsAPI.getById()` depuis `api.mock.ts` vers `src/services/api/forms/formsService.ts`
+  - Migrer `formsAPI.getById()` dans `src/services/api/forms/formsService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Validation des permissions (propriétaire ou admin)
   - Récupération des champs et paramètres
@@ -100,7 +100,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **FORMS-003** : Implémenter l'API de création de formulaire (`POST /api/forms`)
 
-  - Migrer `formsAPI.create()` depuis `api.mock.ts` vers `src/services/api/forms/formsService.ts`
+  - Migrer `formsAPI.create()` dans `src/services/api/forms/formsService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Validation des données (titre, description)
   - Attribution automatique à l'utilisateur connecté
@@ -109,7 +109,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **FORMS-004** : Implémenter l'API de mise à jour de formulaire (`PUT /api/forms/:id`)
 
-  - Migrer `formsAPI.update()` depuis `api.mock.ts` vers `src/services/api/forms/formsService.ts`
+  - Migrer `formsAPI.update()` dans `src/services/api/forms/formsService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Validation des permissions
   - Mise à jour de `updated_at`
@@ -117,7 +117,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
   - Mettre à jour `src/pages/forms/FormBuilder.tsx` pour utiliser le nouveau service
 
 - [x] **FORMS-005** : Implémenter l'API de suppression de formulaire (`DELETE /api/forms/:id`)
-  - Migrer `formsAPI.delete()` depuis `api.mock.ts` vers `src/services/api/forms/formsService.ts`
+  - Migrer `formsAPI.delete()` dans `src/services/api/forms/formsService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Suppression en cascade (versions, soumissions)
   - Validation des permissions
@@ -128,7 +128,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **VERSIONS-001** : Implémenter l'API de récupération des versions (`GET /api/forms/:id/versions`)
 
-  - Migrer `formVersionsAPI.getByFormId()` depuis `api.mock.ts` vers `src/services/api/forms/versionsService.ts`
+  - Migrer `formVersionsAPI.getByFormId()` dans `src/services/api/forms/versionsService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Tri par numéro de version décroissant
   - Limitation à 10 versions maximum
@@ -177,7 +177,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 ### 3.1 Migration des services de soumissions
 
 - [x] **SUBMISSIONS-000** : Migrer les services de soumissions vers la nouvelle architecture
-  - Déplacer `submissionsAPI` de `api.mock.ts` vers `src/services/api/submissions/submissionsService.ts`
+  - Implémenter `submissionsAPI` dans `src/services/api/submissions/submissionsService.ts`
   - Créer les types dans `src/services/api/submissions/submissionsTypes.ts`
   - Mettre à jour tous les imports dans les composants :
     - `src/pages/forms/FormSubmissions.tsx`
@@ -194,7 +194,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
   - Notifications email si configurées
 
 - [x] **SUBMISSIONS-002** : Implémenter l'API de récupération des soumissions (`GET /api/forms/:id/submissions`)
-  - Migrer `submissionsAPI.getByFormId()` depuis `api.mock.ts` vers `src/services/api/submissions/submissionsService.ts`
+  - Migrer `submissionsAPI.getByFormId()` dans `src/services/api/submissions/submissionsService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Pagination et filtres (date, statut)
   - Tri par date de soumission
@@ -205,7 +205,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **SUBMISSIONS-003** : Implémenter l'API d'export CSV (`GET /api/forms/:id/submissions/export`)
 
-  - Migrer `submissionsAPI.exportCsv()` depuis `api.mock.ts` vers `src/services/api/submissions/submissionsService.ts`
+  - Migrer `submissionsAPI.exportCsv()` dans `src/services/api/submissions/submissionsService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Génération du fichier CSV avec en-têtes
   - Gestion des caractères spéciaux
@@ -237,7 +237,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **SUBSCRIPTIONS-001** : Implémenter l'API de récupération des plans (`GET /api/plans`)
 
-  - Migrer `plansAPI.getAll()` depuis `api.mock.ts` vers `src/services/api/subscriptions/subscriptionsService.ts`
+  - Migrer `plansAPI.getAll()` dans `src/services/api/subscriptions/subscriptionsService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Récupération depuis la base de données
   - Tri par prix croissant
@@ -245,7 +245,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **SUBSCRIPTIONS-002** : Implémenter l'API de récupération des abonnements (`GET /api/users/:id/subscriptions`)
 
-  - Migrer `subscriptionsAPI.getByUserId()` depuis `api.mock.ts` vers `src/services/api/subscriptions/subscriptionsService.ts`
+  - Migrer `subscriptionsAPI.getByUserId()` dans `src/services/api/subscriptions/subscriptionsService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Historique des abonnements
   - Statut actuel et dates
@@ -285,7 +285,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 ### 5.1 Migration des services de quotas
 
 - [x] **QUOTAS-000** : Migrer les services de quotas vers la nouvelle architecture
-  - Déplacer `quotaAPI` de `api.mock.ts` vers `src/services/api/quotas/quotasService.ts`
+  - Implémenter `quotaAPI` dans `src/services/api/quotas/quotasService.ts`
   - Créer les types dans `src/services/api/quotas/quotasTypes.ts`
   - Mettre à jour tous les imports dans les composants :
     - `src/hooks/useQuotas.tsx`
@@ -296,7 +296,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **QUOTAS-001** : Implémenter l'API de récupération des quotas (`GET /api/users/:id/quotas`)
 
-  - Migrer `quotaAPI.getByUserId()` depuis `api.mock.ts` vers `src/services/api/quotas/quotasService.ts`
+  - Migrer `quotaAPI.getByUserId()` dans `src/services/api/quotas/quotasService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Calcul en temps réel des utilisations
   - Comparaison avec les limites du plan
@@ -321,7 +321,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 ### 6.1 Migration des services du tableau de bord
 
 - [x] **DASHBOARD-000** : Migrer les services du tableau de bord vers la nouvelle architecture
-  - Déplacer `dashboardAPI` de `api.mock.ts` vers `src/services/api/dashboard/dashboardService.ts`
+  - Implémenter `dashboardAPI` dans `src/services/api/dashboard/dashboardService.ts`
   - Créer les types dans `src/services/api/dashboard/dashboardTypes.ts`
   - Mettre à jour tous les imports dans les composants :
     - `src/pages/Dashboard.tsx`
@@ -332,7 +332,7 @@ Ce backlog détaille toutes les tâches nécessaires pour remplacer les données
 
 - [x] **DASHBOARD-001** : Implémenter l'API de statistiques (`GET /api/dashboard/stats`)
 
-  - Migrer `dashboardAPI.getStats()` depuis `api.mock.ts` vers `src/services/api/dashboard/dashboardService.ts`
+  - Migrer `dashboardAPI.getStats()` dans `src/services/api/dashboard/dashboardService.ts`
   - Remplacer la logique mockée par de vrais appels API
   - Calcul des métriques en temps réel
   - Agrégation des données utilisateur
