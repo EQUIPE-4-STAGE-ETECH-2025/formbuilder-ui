@@ -16,8 +16,7 @@ export interface IFormField {
   label: string;
   required: boolean;
   placeholder?: string;
-  position: number; // Requis par l'API selon le payload
-  // Options pour les champs select et radio selon le format attendu par l'API
+  position: number;
   options?: Array<{
     value: string;
     label: string;
@@ -31,13 +30,12 @@ export interface IFormField {
     pattern?: string;
   };
   conditional?: {
-    field: string; // ID du champ condition
-    value: string | number | boolean; // Valeur qui déclenche l'affichage - selon le contrat API
+    field: string;
+    value: string | number | boolean;
   };
 }
 
 export interface IFormSettings {
-  // Structure réelle de l'API (différente du contrat documenté)
   submitButton: {
     text: string;
   };

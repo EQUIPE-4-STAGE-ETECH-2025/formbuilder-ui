@@ -1,4 +1,5 @@
 import { apiClient } from "../config/apiClient";
+import { apiCache, buildUrl, withErrorHandling } from "../utils/apiUtils";
 import {
   ISubmissionsListResponse,
   SubmissionResponseDto,
@@ -12,55 +13,68 @@ export const submissionsService = {
     formId: string,
     payload: SubmitFormDto
   ): Promise<SubmissionResponseDto> => {
-    const res = await apiClient.post(`/api/forms/${formId}/submit`, payload);
-    return res.data;
+    const result = await withErrorHandling(async () => {
+      const res = await apiClient.post(`/api/forms/${formId}/submit`, payload);
+
+      // Invalider le cache des soumissions après soumission
+      apiCache.delete(`submissions_${formId}_{}`);
+
+      return res.data;
+    }, `Erreur lors de la soumission du formulaire ${formId}`);
+
+    return result as SubmissionResponseDto;
   },
 
   getByFormId: async (
     formId: string,
     query?: SubmissionsQuery
   ): Promise<ISubmissionsListResponse> => {
-    try {
-      const queryParams = new URLSearchParams();
-      if (query?.page) queryParams.append("page", query.page.toString());
-      if (query?.limit) queryParams.append("limit", query.limit.toString());
-      if (query?.dateFrom) queryParams.append("dateFrom", query.dateFrom);
-      if (query?.dateTo) queryParams.append("dateTo", query.dateTo);
-      if (query?.status) queryParams.append("status", query.status);
+    const basePath = `/api/forms/${formId}/submissions`;
+    const url = buildUrl(
+      basePath,
+      query as Record<string, string | number | boolean | undefined>
+    );
+    const cacheKey = `submissions_${formId}_${JSON.stringify(query || {})}`;
 
-      const queryString = queryParams.toString();
-      const url = queryString
-        ? `/api/forms/${formId}/submissions?${queryString}`
-        : `/api/forms/${formId}/submissions`;
+    const result = await withErrorHandling(
+      () =>
+        apiClient.get<ISubmissionsListResponse>(url).then((res) => res.data),
+      "Erreur lors de la récupération des soumissions",
+      cacheKey,
+      2 * 60 * 1000 // Cache 2 minutes
+    );
 
-      const res = await apiClient.get<ISubmissionsListResponse>(url);
-      return res.data;
-    } catch (error) {
-      console.error("Erreur lors de la récupération des soumissions:", error);
-      return {
-        success: false,
-        message:
-          (
-            error as {
-              response?: { status?: number; data?: { message?: string } };
-            }
-          ).response?.data?.message ||
-          "Erreur lors de la récupération des soumissions",
-      };
-    }
+    return result as ISubmissionsListResponse;
   },
 
   exportCsv: async (formId: string): Promise<Blob> => {
-    const res = await apiClient.get(`/api/forms/${formId}/submissions/export`, {
-      responseType: "blob",
-    });
-    return res.data;
+    const result = await withErrorHandling(
+      () =>
+        apiClient
+          .get(`/api/forms/${formId}/submissions/export`, {
+            responseType: "blob",
+          })
+          .then((res) => res.data),
+      `Erreur lors de l'export CSV du formulaire ${formId}`
+      // Pas de cache pour les exports CSV
+    );
+
+    return result as Blob;
   },
 
   getAnalytics: async (formId: string): Promise<TAnalyticsResponse> => {
-    const res = await apiClient.get(
-      `/api/forms/${formId}/submissions/analytics`
+    const cacheKey = `analytics_${formId}`;
+
+    const result = await withErrorHandling(
+      () =>
+        apiClient
+          .get(`/api/forms/${formId}/submissions/analytics`)
+          .then((res) => res.data),
+      `Erreur lors de la récupération des analytics du formulaire ${formId}`,
+      cacheKey,
+      5 * 60 * 1000 // Cache 5 minutes pour les analytics
     );
-    return res.data;
+
+    return result as TAnalyticsResponse;
   },
 };

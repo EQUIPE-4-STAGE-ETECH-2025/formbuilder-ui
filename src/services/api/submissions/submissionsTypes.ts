@@ -1,7 +1,4 @@
-/**
- * Types pour les soumissions de formulaires
- * ✅ Validés avec le développeur backend
- */
+// Types pour les soumissions de formulaires
 export interface ISubmission {
   id: string;
   formId: string;

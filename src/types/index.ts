@@ -192,12 +192,6 @@ export interface ISubscription {
   updated_at: string;
 }
 
-export interface IFeature {
-  id: string;
-  code: string;
-  label: string;
-}
-
 export interface IPlanFeature {
   id: string;
   plan_id: string;
@@ -300,5 +294,3 @@ export interface IUserList {
   submissionsCount: number;
   lastLoginAt: string;
 }
-
-

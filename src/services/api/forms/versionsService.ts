@@ -10,7 +10,6 @@ class VersionsService {
 
   /**
    * Récupère toutes les versions d'un formulaire
-   * VERSIONS-001
    */
   async getByFormId(formId: string): Promise<IVersionListResponse> {
     try {
@@ -65,7 +64,6 @@ class VersionsService {
 
   /**
    * Crée une nouvelle version d'un formulaire
-   * VERSIONS-002
    */
   async create(
     formId: string,
@@ -150,7 +148,6 @@ class VersionsService {
 
   /**
    * Restaure une version spécifique d'un formulaire
-   * VERSIONS-003
    */
   async restore(
     formId: string,
@@ -208,7 +205,6 @@ class VersionsService {
 
   /**
    * Supprime une version spécifique d'un formulaire
-   * VERSIONS-004
    */
   async delete(
     formId: string,

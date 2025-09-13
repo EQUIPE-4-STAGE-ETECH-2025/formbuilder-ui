@@ -33,7 +33,6 @@ export function ProtectedRoute({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check role-based access
   if (adminOnly && user?.role !== "ADMIN") {
     return <Navigate to="/dashboard" replace />;
   }

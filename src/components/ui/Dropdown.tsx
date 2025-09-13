@@ -16,7 +16,6 @@ interface IDropdownProps {
   disabled?: boolean;
   size?: "sm" | "md" | "lg";
   icon?: React.ReactNode;
-  // Nouvelles props pour les dropdowns d'actions
   variant?: "select" | "actions";
   actions?: Array<{
     label: string;

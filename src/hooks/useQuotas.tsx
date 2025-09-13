@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { quotasService } from "../services/api";
 import {
   IQuotaStatus,
@@ -27,27 +27,43 @@ export const useQuotas = (): IUseQuotasReturn => {
   const [quotaError, setQuotaError] = useState<QuotaExceededError | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  const loadQuotas = useCallback(async () => {
-    if (!user?.id) return;
+  // Mémorisation de l'ID utilisateur
+  const userId = useMemo(() => user?.id, [user?.id]);
 
-    setLoading(true);
-    setError(null);
+  const loadQuotas = useCallback(
+    async (skipLoading = false) => {
+      if (!userId) return;
 
-    try {
-      const { data } = await quotasService.getByUserId(user.id);
-      if (data) setQuotaStatus(data);
-    } catch {
-      setError("Erreur lors du chargement des quotas");
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
+      if (!skipLoading) {
+        setLoading(true);
+      }
+      setError(null);
+
+      try {
+        // Utilise maintenant le cache automatique du service
+        const response = await quotasService.getByUserId(userId);
+
+        if (response.success && response.data) {
+          setQuotaStatus(response.data);
+        } else {
+          setError(response.message || "Erreur lors du chargement des quotas");
+        }
+      } catch {
+        setError("Erreur lors du chargement des quotas");
+      } finally {
+        if (!skipLoading) {
+          setLoading(false);
+        }
+      }
+    },
+    [userId]
+  );
 
   useEffect(() => {
-    if (user?.id) {
+    if (userId) {
       loadQuotas();
     }
-  }, [user?.id, loadQuotas]);
+  }, [userId, loadQuotas]);
 
   const refreshQuotas = async () => {
     await loadQuotas();
