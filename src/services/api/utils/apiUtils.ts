@@ -6,6 +6,7 @@ export interface IApiError {
     status?: number;
     data?: {
       message?: string;
+      error?: string;
     };
   };
 }
@@ -55,7 +56,11 @@ export const getErrorMessage = (
 ): string => {
   if (error && typeof error === "object" && "response" in error) {
     const apiError = error as IApiError;
-    return apiError.response?.data?.message || defaultMessage;
+    return (
+      apiError.response?.data?.error ||
+      apiError.response?.data?.message ||
+      defaultMessage
+    );
   }
 
   if (error instanceof Error) {
@@ -98,84 +103,14 @@ export const debounce = <T extends (...args: Parameters<T>) => ReturnType<T>>(
 };
 
 /**
- * Cache simple avec TTL pour les réponses API
- */
-class ApiCache<T> {
-  private cache = new Map<string, { data: T; expiry: number }>();
-  private readonly defaultTTL = 5 * 60 * 1000; // 5 minutes
-
-  set(key: string, data: T, ttl?: number): void {
-    const expiry = Date.now() + (ttl || this.defaultTTL);
-    this.cache.set(key, { data, expiry });
-
-    // Nettoyer le cache périodiquement
-    if (this.cache.size > 50) {
-      this.cleanExpired();
-    }
-  }
-
-  get(key: string): T | null {
-    const entry = this.cache.get(key);
-
-    if (!entry) {
-      return null;
-    }
-
-    if (Date.now() > entry.expiry) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    return entry.data;
-  }
-
-  delete(key: string): void {
-    this.cache.delete(key);
-  }
-
-  clear(): void {
-    this.cache.clear();
-  }
-
-  private cleanExpired(): void {
-    const now = Date.now();
-
-    this.cache.forEach((entry, key) => {
-      if (now > entry.expiry) {
-        this.cache.delete(key);
-      }
-    });
-  }
-}
-
-// Instance partagée du cache
-export const apiCache = new ApiCache();
-
-/**
- * Wrapper pour les appels API avec gestion d'erreurs et cache automatiques
+ * Wrapper pour les appels API avec gestion d'erreurs
  */
 export const withErrorHandling = async <T>(
   apiCall: () => Promise<T>,
-  defaultError: string,
-  cacheKey?: string,
-  cacheTTL?: number
+  defaultError: string
 ): Promise<T | { success: false; message: string }> => {
-  // Vérifier le cache en premier
-  if (cacheKey) {
-    const cachedResult = apiCache.get(cacheKey) as T | null;
-    if (cachedResult) {
-      return cachedResult;
-    }
-  }
-
   try {
     const result = await apiCall();
-
-    // Mettre en cache le résultat si une clé est fournie
-    if (cacheKey && result) {
-      apiCache.set(cacheKey, result, cacheTTL);
-    }
-
     return result;
   } catch (error) {
     console.error(`Erreur API: ${defaultError}`, error);
@@ -185,12 +120,4 @@ export const withErrorHandling = async <T>(
       message: getErrorMessage(error, defaultError),
     };
   }
-};
-
-/**
- * Nettoie tous les caches
- */
-export const clearAllCaches = (): void => {
-  queryCache.clear();
-  apiCache.clear();
 };

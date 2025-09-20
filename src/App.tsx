@@ -5,21 +5,18 @@ import {
   BrowserRouter as Router,
   Routes,
 } from "react-router-dom";
+import { AuthGuard } from "./components/auth/AuthGuard";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { Layout } from "./components/layout/Layout";
 import { ToastProvider } from "./components/ui/Toast";
 import { AuthProvider } from "./contexts/AuthProvider";
-import { useAuth } from "./hooks/useAuth";
 
 // Pages
-
-import { AdminDashboard } from "./pages/admin/AdminDashboard";
-import { AuditLog } from "./pages/admin/AuditLog";
-import { UserManagement } from "./pages/admin/UserManagement";
 import { EmailVerification } from "./pages/auth/EmailVerification";
 import { ForgotPassword } from "./pages/auth/ForgotPassword";
 import { Login } from "./pages/auth/Login";
 import { Register } from "./pages/auth/Register";
+import { ResetPassword } from "./pages/auth/ResetPassword";
 import { Dashboard } from "./pages/Dashboard";
 import { FormBuilder } from "./pages/forms/FormBuilder";
 import { FormEmbed } from "./pages/forms/FormEmbed";
@@ -28,7 +25,6 @@ import { FormSubmissions } from "./pages/forms/FormSubmissions";
 import { Profile } from "./pages/Profile";
 import { Settings } from "./pages/Settings";
 import { Subscription } from "./pages/Subscription";
-import { ResetPassword } from "./pages/auth/ResetPassword";
 
 // Composant principal
 const App: React.FC = () => {
@@ -38,13 +34,48 @@ const App: React.FC = () => {
         <Router>
           <Layout>
             <Routes>
-              {/* Routes publiques */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/verify-email" element={<EmailVerification />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              
+              {/* Routes publiques avec redirection si connecté */}
+              <Route
+                path="/login"
+                element={
+                  <AuthGuard>
+                    <Login />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  <AuthGuard>
+                    <Register />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/forgot-password"
+                element={
+                  <AuthGuard>
+                    <ForgotPassword />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/verify-email"
+                element={
+                  <AuthGuard>
+                    <EmailVerification />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/reset-password"
+                element={
+                  <AuthGuard>
+                    <ResetPassword />
+                  </AuthGuard>
+                }
+              />
+
               {/* Route d'intégration (publique) */}
               <Route path="/embed/:id" element={<FormEmbed />} />
 
@@ -52,39 +83,15 @@ const App: React.FC = () => {
               <Route
                 path="/dashboard"
                 element={
-                  <ProtectedRoute userOnly>
+                  <ProtectedRoute>
                     <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute adminOnly>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/users"
-                element={
-                  <ProtectedRoute adminOnly>
-                    <UserManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/audit-log"
-                element={
-                  <ProtectedRoute adminOnly>
-                    <AuditLog />
                   </ProtectedRoute>
                 }
               />
               <Route
                 path="/forms"
                 element={
-                  <ProtectedRoute userOnly>
+                  <ProtectedRoute>
                     <FormsList />
                   </ProtectedRoute>
                 }
@@ -92,7 +99,7 @@ const App: React.FC = () => {
               <Route
                 path="/forms/new"
                 element={
-                  <ProtectedRoute userOnly>
+                  <ProtectedRoute>
                     <FormBuilder />
                   </ProtectedRoute>
                 }
@@ -100,7 +107,7 @@ const App: React.FC = () => {
               <Route
                 path="/forms/:id/edit"
                 element={
-                  <ProtectedRoute userOnly>
+                  <ProtectedRoute>
                     <FormBuilder />
                   </ProtectedRoute>
                 }
@@ -108,7 +115,7 @@ const App: React.FC = () => {
               <Route
                 path="/forms/:id/submissions"
                 element={
-                  <ProtectedRoute userOnly>
+                  <ProtectedRoute>
                     <FormSubmissions />
                   </ProtectedRoute>
                 }
@@ -116,7 +123,7 @@ const App: React.FC = () => {
               <Route
                 path="/subscription"
                 element={
-                  <ProtectedRoute userOnly>
+                  <ProtectedRoute>
                     <Subscription />
                   </ProtectedRoute>
                 }
@@ -143,7 +150,7 @@ const App: React.FC = () => {
                 path="/"
                 element={
                   <ProtectedRoute>
-                    <RoleBasedRedirect />
+                    <Navigate to="/dashboard" replace />
                   </ProtectedRoute>
                 }
               />
@@ -153,17 +160,6 @@ const App: React.FC = () => {
       </ToastProvider>
     </AuthProvider>
   );
-};
-
-// Composant de redirection basé sur le rôle
-const RoleBasedRedirect: React.FC = () => {
-  const { user } = useAuth();
-
-  if (user?.role === "ADMIN") {
-    return <Navigate to="/admin" replace />;
-  }
-
-  return <Navigate to="/dashboard" replace />;
 };
 
 export default App;

@@ -1,6 +1,6 @@
 import { IUser } from "../../../types";
 import { apiClient } from "../config/apiClient";
-import { clearAllCaches, withErrorHandling } from "../utils/apiUtils";
+import { withErrorHandling } from "../utils/apiUtils";
 import {
   IChangePasswordResponse,
   IForgotPasswordResponse,
@@ -26,9 +26,6 @@ export const authService = {
         credentials
       );
 
-      // Nettoyer les caches après login pour éviter les données obsolètes
-      clearAllCaches();
-
       return response.data;
     }, "Erreur de connexion");
 
@@ -48,21 +45,14 @@ export const authService = {
   },
 
   me: async (): Promise<IMeResponse> => {
-    const cacheKey = "auth_me";
-
-    const result = await withErrorHandling(
-      async () => {
-        const response = await apiClient.get<IUser>(`${basePath}/me`);
-        return {
-          success: true,
-          data: response.data,
-          message: "Utilisateur récupéré avec succès",
-        } as IMeResponse;
-      },
-      "Impossible de récupérer l'utilisateur connecté",
-      cacheKey,
-      2 * 60 * 1000 // Cache 2 minutes pour le profil utilisateur
-    );
+    const result = await withErrorHandling(async () => {
+      const response = await apiClient.get<IUser>(`${basePath}/me`);
+      return {
+        success: true,
+        data: response.data,
+        message: "Utilisateur récupéré avec succès",
+      } as IMeResponse;
+    }, "Impossible de récupérer l'utilisateur connecté");
 
     return result as IMeResponse;
   },
@@ -72,9 +62,6 @@ export const authService = {
       const response = await apiClient.post<ILogoutResponse>(
         `${basePath}/logout`
       );
-
-      // Nettoyer tous les caches après déconnexion
-      clearAllCaches();
 
       return {
         success: true,

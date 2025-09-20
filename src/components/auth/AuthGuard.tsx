@@ -1,14 +1,14 @@
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
-interface ProtectedRouteProps {
+interface IProps {
   children: React.ReactNode;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function AuthGuard({ children }: IProps) {
   const { isAuthenticated, loading } = useAuth();
-  const location = useLocation();
 
+  // Afficher un loader pendant la vérification de l'authentification
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -22,9 +22,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // Si l'utilisateur est connecté, le rediriger vers le dashboard
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
   }
 
+  // Si l'utilisateur n'est pas connecté, afficher le contenu de la page d'authentification
   return <>{children}</>;
 }

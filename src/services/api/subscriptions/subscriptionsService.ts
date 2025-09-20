@@ -23,20 +23,13 @@ import {
 export const plansService = {
   // Récupérer tous les plans disponibles
   async getAll(): Promise<TStripeApiResponse<IStripePlan[]>> {
-    const cacheKey = "plans_all";
-
-    const result = await withErrorHandling(
-      async () => {
-        const response = await apiClient.get<IStripePlan[]>("/api/plans");
-        return {
-          success: true,
-          data: response.data,
-        } as TStripeApiResponse<IStripePlan[]>;
-      },
-      "Erreur lors de la récupération des plans",
-      cacheKey,
-      10 * 60 * 1000 // Cache 10 minutes pour les plans (relativement stables)
-    );
+    const result = await withErrorHandling(async () => {
+      const response = await apiClient.get<IStripePlan[]>("/api/plans");
+      return {
+        success: true,
+        data: response.data,
+      } as TStripeApiResponse<IStripePlan[]>;
+    }, "Erreur lors de la récupération des plans");
 
     return result as TStripeApiResponse<IStripePlan[]>;
   },
@@ -49,20 +42,14 @@ export const subscriptionsService = {
     userId: string
   ): Promise<TStripeApiResponse<IStripeSubscription[]>> {
     const url = `/api/users/${userId}/subscriptions`;
-    const cacheKey = `subscriptions_user_${userId}`;
 
-    const result = await withErrorHandling(
-      async () => {
-        const response = await apiClient.get<IStripeSubscription[]>(url);
-        return {
-          success: true,
-          data: response.data,
-        } as TStripeApiResponse<IStripeSubscription[]>;
-      },
-      "Erreur lors de la récupération des abonnements",
-      cacheKey,
-      2 * 60 * 1000 // Cache 2 minutes pour les abonnements utilisateur
-    );
+    const result = await withErrorHandling(async () => {
+      const response = await apiClient.get<IStripeSubscription[]>(url);
+      return {
+        success: true,
+        data: response.data,
+      } as TStripeApiResponse<IStripeSubscription[]>;
+    }, "Erreur lors de la récupération des abonnements");
 
     return result as TStripeApiResponse<IStripeSubscription[]>;
   },

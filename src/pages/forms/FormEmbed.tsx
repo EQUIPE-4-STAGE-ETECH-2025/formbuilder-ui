@@ -1,7 +1,6 @@
-import { AlertCircle, CheckCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, Zap } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Footer } from "../../components/layout/Footer";
 import { Button } from "../../components/ui/Button";
 import { Dropdown } from "../../components/ui/Dropdown";
 import { useAuth } from "../../hooks/useAuth";
@@ -10,6 +9,16 @@ import { formsService, submissionsService } from "../../services/api";
 import { QuotaExceededError } from "../../services/api/quotas/quotaTypes";
 import { IForm, IFormField } from "../../types";
 import { adaptFormFromAPI } from "../../utils/formAdapter";
+
+const FormEmbedFooter = () => (
+  <div className="py-4 text-center">
+    <p className="text-sm">
+      <Zap className="inline h-4 w-4 text-surface-500 mr-1" />
+      <span className="text-surface-500">Powered by</span>{" "}
+      <span className="text-text-100 font-bold">FormBuilder</span>
+    </p>
+  </div>
+);
 
 export function FormEmbed() {
   const { id } = useParams();
@@ -196,7 +205,7 @@ export function FormEmbed() {
             <p className="text-surface-400">Chargement du formulaire...</p>
           </div>
         </div>
-        <Footer />
+        <FormEmbedFooter />
       </div>
     );
   }
@@ -210,7 +219,7 @@ export function FormEmbed() {
             <p className="text-surface-400">{error}</p>
           </div>
         </div>
-        <Footer />
+        <FormEmbedFooter />
       </div>
     );
   }
@@ -230,7 +239,7 @@ export function FormEmbed() {
             </p>
           </div>
         </div>
-        <Footer />
+        <FormEmbedFooter />
       </div>
     );
   }
@@ -347,7 +356,15 @@ export function FormEmbed() {
                         onChange={(e) =>
                           handleFieldChange(field.id, e.target.checked)
                         }
-                        className="w-4 h-4 border border-surface-700/50 rounded bg-surface-900 text-accent-500 focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200"
+                        className="w-4 h-4 border border-surface-700/50 rounded bg-surface-900 text-accent-500 focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 focus:ring-offset-background-950 transition-all duration-200 checked:bg-accent-500 checked:border-accent-500"
+                        style={{
+                          backgroundImage: (formData[field.id] as boolean)
+                            ? "url(\"data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M11.207 5.793a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 8.586l3.293-3.293a1 1 0 011.414 0z'/%3e%3c/svg%3e\")"
+                            : "none",
+                          backgroundSize: "12px",
+                          backgroundPosition: "center",
+                          backgroundRepeat: "no-repeat",
+                        }}
                       />
                       <span className="ml-2 text-sm text-surface-300">
                         {field.placeholder || field.label}
@@ -399,7 +416,7 @@ export function FormEmbed() {
           </div>
         </div>
       </div>
-      <Footer />
+      <FormEmbedFooter />
     </div>
   );
 }

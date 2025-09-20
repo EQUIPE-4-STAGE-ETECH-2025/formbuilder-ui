@@ -40,7 +40,6 @@ export const useForms = (): IUseFormsReturn => {
         }
         setError(null);
 
-        // Le cache est maintenant géré par formsService.getAll()
         const response = await formsService.getAll();
 
         if (response.success && response.data) {

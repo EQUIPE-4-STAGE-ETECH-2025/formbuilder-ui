@@ -64,7 +64,10 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
       return config;
     }
 
-    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    // Vérifier d'abord localStorage, puis sessionStorage
+    const token =
+      localStorage.getItem(STORAGE_KEYS.TOKEN) ||
+      sessionStorage.getItem(STORAGE_KEYS.TOKEN);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -103,7 +106,10 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
         isRefreshing = true;
 
         try {
-          const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+          // Vérifier d'abord localStorage, puis sessionStorage pour le refresh token
+          const refreshToken =
+            localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN) ||
+            sessionStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
           if (refreshToken) {
             const response = await apiClient.post("/api/auth/refresh", {
@@ -111,7 +117,13 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
             });
 
             const { token } = response.data.data as { token: string };
-            localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+
+            // Stocker le nouveau token dans le même type de storage que l'ancien
+            if (localStorage.getItem(STORAGE_KEYS.TOKEN)) {
+              localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+            } else {
+              sessionStorage.setItem(STORAGE_KEYS.TOKEN, token);
+            }
 
             // Traiter la queue des requêtes en attente
             processQueue(null, token);
@@ -130,8 +142,11 @@ export const setupAuthInterceptors = (apiClient: AxiosInstance): void => {
               : new Error("Refresh failed"),
             null
           );
+          // Nettoyer les deux types de stockage
           localStorage.removeItem(STORAGE_KEYS.TOKEN);
           localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+          sessionStorage.removeItem(STORAGE_KEYS.TOKEN);
+          sessionStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
           window.location.href = "/login";
         } finally {
           isRefreshing = false;

@@ -9,7 +9,6 @@ import {
   IRegisterRequest,
   IRegisterResponse,
 } from "../services/api/auth/authType";
-import { clearAllCaches } from "../services/api/utils/apiUtils";
 import { ILoginResult, IUser } from "../types";
 import { AuthContext, IAuthContext } from "./AuthContext";
 
@@ -26,26 +25,35 @@ const STORAGE_KEYS = {
 export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<IUser | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loginLoading, setLoginLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const checkAuth = useCallback(async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+      // Vérifier d'abord localStorage, puis sessionStorage
+      const token =
+        localStorage.getItem(STORAGE_KEYS.TOKEN) ||
+        sessionStorage.getItem(STORAGE_KEYS.TOKEN);
+
       if (token) {
         const response: IMeResponse = await authService.me();
         if (response.success && response.data) {
           setUser(response.data);
         } else {
+          // Nettoyer les deux types de stockage
           localStorage.removeItem(STORAGE_KEYS.TOKEN);
           localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-          clearAllCaches();
+          sessionStorage.removeItem(STORAGE_KEYS.TOKEN);
+          sessionStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         }
       }
     } catch {
+      // Nettoyer les deux types de stockage
       localStorage.removeItem(STORAGE_KEYS.TOKEN);
       localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-      clearAllCaches();
+      sessionStorage.removeItem(STORAGE_KEYS.TOKEN);
+      sessionStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     } finally {
       setLoading(false);
     }
@@ -56,8 +64,12 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
   }, [checkAuth]);
 
   const login = useCallback(
-    async (email: string, password: string): Promise<ILoginResult> => {
-      setLoading(true);
+    async (
+      email: string,
+      password: string,
+      rememberMe: boolean = true
+    ): Promise<ILoginResult> => {
+      setLoginLoading(true);
       setError(null);
 
       try {
@@ -66,11 +78,22 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
 
         if (response.success && response.data) {
           setUser(response.data.user);
-          localStorage.setItem(STORAGE_KEYS.TOKEN, response.data.token);
-          localStorage.setItem(
-            STORAGE_KEYS.REFRESH_TOKEN,
-            response.data.refresh_token
-          );
+
+          // Stockage conditionnel basé sur rememberMe
+          if (rememberMe) {
+            localStorage.setItem(STORAGE_KEYS.TOKEN, response.data.token);
+            localStorage.setItem(
+              STORAGE_KEYS.REFRESH_TOKEN,
+              response.data.refresh_token
+            );
+          } else {
+            sessionStorage.setItem(STORAGE_KEYS.TOKEN, response.data.token);
+            sessionStorage.setItem(
+              STORAGE_KEYS.REFRESH_TOKEN,
+              response.data.refresh_token
+            );
+          }
+
           return { success: true, data: response.data };
         } else {
           const err = response.message || "Erreur lors de la connexion";
@@ -82,7 +105,7 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
         setError(err);
         return { success: false, error: err };
       } finally {
-        setLoading(false);
+        setLoginLoading(false);
       }
     },
     []
@@ -103,8 +126,11 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
       };
     } finally {
       setUser(null);
+      // Nettoyer les deux types de stockage
       localStorage.removeItem(STORAGE_KEYS.TOKEN);
       localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      sessionStorage.removeItem(STORAGE_KEYS.TOKEN);
+      sessionStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
       setLoading(false);
     }
   }, []);
@@ -155,6 +181,7 @@ export const AuthProvider: React.FC<IAuthProviderProps> = ({ children }) => {
   const value: IAuthContext = {
     user,
     loading,
+    loginLoading,
     error,
     isAuthenticated: !!user,
     login,

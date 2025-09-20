@@ -85,13 +85,13 @@ export const useQuotas = (): IUseQuotasReturn => {
   const getUpgradeMessage = (actionType: string): string => {
     switch (actionType) {
       case "create_form":
-        return "Passez à un plan supérieur pour créer plus de formulaires.";
+        return "Passez à un plan supérieur pour créer plus de formulaires";
       case "submit_form":
-        return "Passez à un plan supérieur pour accepter plus de soumissions par mois.";
+        return "Passez à un plan supérieur pour accepter plus de soumissions par mois";
       case "upload_file":
-        return "Passez à un plan supérieur pour plus d'espace de stockage.";
+        return "Passez à un plan supérieur pour plus d'espace de stockage";
       default:
-        return "Passez à un plan supérieur pour débloquer cette fonctionnalité.";
+        return "Passez à un plan supérieur pour débloquer cette fonctionnalité";
     }
   };
 
@@ -105,7 +105,7 @@ export const useQuotas = (): IUseQuotasReturn => {
 
       addToast({
         type: "warning",
-        title: "Quota Dépassé",
+        title: "Quota dépassé",
         message: `Vous ne pouvez plus ${actionLabel}. ${upgradeMessage}`,
         duration: 8000,
       });

@@ -15,6 +15,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
+  ArrowLeft,
   Calendar,
   CheckSquare,
   Circle,
@@ -359,6 +360,26 @@ export function FormBuilder() {
     }
   }, [id, fetchForm]);
 
+  // Fonction pour récupérer et mettre à jour le formulaire après sauvegarde
+  const refreshFormAfterSave = useCallback(async () => {
+    if (!form || form.id === "new") return;
+
+    try {
+      const response = await formsService.getById(form.id);
+      if (response.success && response.data) {
+        const updatedForm = adaptFormFromAPI(response.data, user?.id);
+        setForm(updatedForm);
+        setOriginalForm(JSON.parse(JSON.stringify(updatedForm)));
+      }
+    } catch (fetchError) {
+      console.error(
+        "Impossible de récupérer la version mise à jour:",
+        fetchError
+      );
+      setOriginalForm(JSON.parse(JSON.stringify(form)));
+    }
+  }, [form, user?.id]);
+
   // Fonction pour détecter les changements dans le formulaire
   const hasFormChanged = useCallback(
     (currentForm: IForm, originalFormData: IForm | null): boolean => {
@@ -553,8 +574,8 @@ export function FormBuilder() {
           emailNotification: {
             enabled: formToPrepare.settings.notifications.email ? true : false,
             recipients: formToPrepare.settings.notifications.email
-              ? ["admin@example.com"]
-              : ["admin@example.com"], // L'API exige toujours un tableau non vide
+              ? [user?.email || ""]
+              : [user?.email || ""], // L'API exige toujours un tableau non vide
           },
         },
       },
@@ -594,8 +615,7 @@ export function FormBuilder() {
           form.status.toUpperCase() as "DRAFT" | "PUBLISHED" | "ARCHIVED"
         );
         await updateForm(form.id, updateData);
-        // Mettre à jour le formulaire original après une sauvegarde réussie
-        setOriginalForm(JSON.parse(JSON.stringify(form)));
+        await refreshFormAfterSave();
       }
       addToast({
         type: "success",
@@ -639,7 +659,8 @@ export function FormBuilder() {
       } else {
         // Pour un formulaire existant, le publier directement
         await publishForm(form.id);
-        setForm({ ...form, status: "published" });
+        await refreshFormAfterSave();
+
         // Recharger les données d'intégration si on est sur l'onglet embed
         if (activeTab === "embed") {
           loadEmbedData();
@@ -1245,6 +1266,15 @@ export function FormBuilder() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/forms")}
+            className="mb-4 group"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
+            Retour à la liste des formulaires
+          </Button>
           <h1 className="text-3xl font-bold text-text-100">
             {form.id === "new"
               ? "Nouveau formulaire"

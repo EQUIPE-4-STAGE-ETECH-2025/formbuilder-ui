@@ -1,6 +1,6 @@
-import { Download } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { ArrowLeft, Download } from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Pagination } from "../../components/ui/Pagination";
@@ -18,8 +18,48 @@ import {
   adaptVersionFromAPIForHooks,
 } from "../../utils/formAdapter";
 
+// Composant mémorisé pour les lignes du tableau
+const SubmissionRow = memo(
+  ({
+    submission,
+    fieldKeys,
+    getSubmissionValueForDisplay,
+    formatDate,
+  }: {
+    submission: ISubmission;
+    fieldKeys: string[];
+    getSubmissionValueForDisplay: (
+      submission: ISubmission,
+      fieldId: string
+    ) => string;
+    formatDate: (dateString: string) => string;
+  }) => (
+    <tr>
+      <td className="py-4 px-6 text-sm text-surface-500">
+        {formatDate(submission.submittedAt)}
+      </td>
+      <td className="py-4 px-6 text-sm text-surface-500">
+        {submission.ipAddress || "-"}
+      </td>
+      {fieldKeys.map((fieldKey) => (
+        <td key={fieldKey} className="py-4 px-6 text-sm text-surface-500">
+          <div
+            className="max-w-xs truncate"
+            title={getSubmissionValueForDisplay(submission, fieldKey)}
+          >
+            {getSubmissionValueForDisplay(submission, fieldKey)}
+          </div>
+        </td>
+      ))}
+    </tr>
+  )
+);
+
+SubmissionRow.displayName = "SubmissionRow";
+
 export function FormSubmissions() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { addToast } = useToast();
   const { user } = useAuth();
 
@@ -31,19 +71,25 @@ export function FormSubmissions() {
   const [formVersion, setFormVersion] = useState<IFormVersion | null>(null);
   const [submissions, setSubmissions] = useState<ISubmission[]>([]);
   const [totalItems, setTotalItems] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [formLoading, setFormLoading] = useState(true);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const fetchForm = useCallback(async () => {
     if (!id) return;
+    setFormLoading(true);
     try {
-      const response = await formsService.getById(id);
-      if (response?.success && response.data) {
-        const adaptedForm = adaptFormFromAPI(response.data, user?.id);
+      // Paralléliser les appels API pour améliorer les performances
+      const [formResponse, versionResponse] = await Promise.all([
+        formsService.getById(id),
+        versionsService.getByFormId(id),
+      ]);
+
+      if (formResponse?.success && formResponse.data) {
+        const adaptedForm = adaptFormFromAPI(formResponse.data, user?.id);
         setForm(adaptedForm);
 
-        const versionResponse = await versionsService.getByFormId(id);
         if (versionResponse?.success && versionResponse.data?.length) {
           const latestVersion = versionResponse.data.reduce((latest, current) =>
             current.versionNumber > latest.versionNumber ? current : latest
@@ -56,14 +102,21 @@ export function FormSubmissions() {
           setFormVersion(adaptedVersion);
         }
       }
-    } catch {
-      console.error("Error fetching form");
+    } catch (error) {
+      console.error("Error fetching form:", error);
+      addToastRef.current({
+        type: "error",
+        title: "Erreur",
+        message: "Impossible de charger le formulaire",
+      });
+    } finally {
+      setFormLoading(false);
     }
   }, [id, user?.id]);
 
   const fetchSubmissions = useCallback(async () => {
     if (!id) return;
-    setLoading(true);
+    setSubmissionsLoading(true);
     try {
       const response = await submissionsService.getByFormId(id, {
         page: currentPage,
@@ -84,23 +137,31 @@ export function FormSubmissions() {
           });
         }
       }
-    } catch {
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
       addToastRef.current({
         type: "error",
         title: "Erreur",
         message: "Impossible de charger les soumissions",
       });
     } finally {
-      setLoading(false);
+      setSubmissionsLoading(false);
     }
   }, [id, currentPage, itemsPerPage]);
 
+  // Effet séparé pour charger les données du formulaire (une seule fois)
   useEffect(() => {
     if (id) {
       fetchForm();
+    }
+  }, [id, fetchForm]);
+
+  // Effet séparé pour charger les soumissions (dépend de la pagination)
+  useEffect(() => {
+    if (id && form) {
       fetchSubmissions();
     }
-  }, [id, currentPage, itemsPerPage, fetchForm, fetchSubmissions]);
+  }, [id, form, currentPage, itemsPerPage, fetchSubmissions]);
 
   const sanitizeFilename = (name: string) =>
     name.replace(/[^\p{L}\p{N}\-_. ]/gu, "_").trim() || "soumissions";
@@ -140,48 +201,68 @@ export function FormSubmissions() {
     }
   };
 
-  const handlePageChange = (page: number) => setCurrentPage(page);
-  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+  // Mémoriser les handlers pour éviter les re-renders inutiles
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  const handleItemsPerPageChange = useCallback((newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("fr-FR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  // Mémoriser la fonction de formatage des dates
+  const formatDate = useCallback(
+    (dateString: string) =>
+      new Date(dateString).toLocaleDateString("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    []
+  );
 
-  const getFieldLabel = (fieldId: string) => {
-    if (!formVersion?.schema?.fields) return fieldId;
-    const field = formVersion.schema.fields.find((f) => f.id === fieldId);
-    return field?.label || fieldId;
-  };
-
-  const getSubmissionValueForDisplay = (
-    submission: ISubmission,
-    fieldId: string
-  ): string => {
-    const value = getSubmissionValue(submission.data ?? {}, fieldId);
-    if (value === undefined || value === null) return "-";
-    return String(value);
-  };
-
-  const getFieldKeys = (): string[] => {
+  // Mémoriser les calculs coûteux pour éviter les recalculs inutiles
+  const fieldKeys = useMemo(() => {
     if (submissions.length === 0) return [];
     const allKeys = new Set<string>();
     submissions.forEach((s) => {
       Object.keys(s.data ?? {}).forEach((k) => allKeys.add(k));
     });
     return Array.from(allKeys).sort();
-  };
+  }, [submissions]);
 
-  const fieldKeys = getFieldKeys();
+  // Mémoriser les labels des champs pour éviter les recherches répétées
+  const fieldLabels = useMemo(() => {
+    const labels: Record<string, string> = {};
+    if (formVersion?.schema?.fields) {
+      formVersion.schema.fields.forEach((field) => {
+        labels[field.id] = field.label;
+      });
+    }
+    return labels;
+  }, [formVersion?.schema?.fields]);
 
-  if (loading || !formVersion) {
+  const getFieldLabel = useCallback(
+    (fieldId: string) => {
+      return fieldLabels[fieldId] || fieldId;
+    },
+    [fieldLabels]
+  );
+
+  const getSubmissionValueForDisplay = useCallback(
+    (submission: ISubmission, fieldId: string): string => {
+      const value = getSubmissionValue(submission.data ?? {}, fieldId);
+      if (value === undefined || value === null) return "-";
+      return String(value);
+    },
+    []
+  );
+
+  // Affichage conditionnel optimisé
+  if (formLoading) {
     return (
       <div className="space-modern">
         <div>
@@ -205,6 +286,15 @@ export function FormSubmissions() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/forms")}
+            className="mb-4 group"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
+            Retour à la liste des formulaires
+          </Button>
           <h1 className="text-3xl font-bold text-text-100">
             Soumissions du formulaire
           </h1>
@@ -219,11 +309,14 @@ export function FormSubmissions() {
       {/* Submissions Table */}
       <Card>
         <CardContent className="p-6">
-          {loading ? (
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-16 loading-blur rounded-2xl"></div>
-              ))}
+          {submissionsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-500 mx-auto mb-4"></div>
+                <p className="text-surface-400">
+                  Chargement des soumissions...
+                </p>
+              </div>
             </div>
           ) : submissions.length === 0 ? (
             <div className="text-center py-12">
@@ -273,31 +366,15 @@ export function FormSubmissions() {
                 </thead>
                 <tbody>
                   {submissions.map((submission) => (
-                    <tr key={submission.id}>
-                      <td className="py-4 px-6 text-sm text-surface-500">
-                        {formatDate(submission.submittedAt)}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-surface-500">
-                        {submission.ipAddress || "-"}
-                      </td>
-                      {/* Cellules dynamiques pour les valeurs des champs */}
-                      {fieldKeys.map((fieldKey) => (
-                        <td
-                          key={fieldKey}
-                          className="py-4 px-6 text-sm text-surface-500"
-                        >
-                          <div
-                            className="max-w-xs truncate"
-                            title={getSubmissionValueForDisplay(
-                              submission,
-                              fieldKey
-                            )}
-                          >
-                            {getSubmissionValueForDisplay(submission, fieldKey)}
-                          </div>
-                        </td>
-                      ))}
-                    </tr>
+                    <SubmissionRow
+                      key={submission.id}
+                      submission={submission}
+                      fieldKeys={fieldKeys}
+                      getSubmissionValueForDisplay={
+                        getSubmissionValueForDisplay
+                      }
+                      formatDate={formatDate}
+                    />
                   ))}
                 </tbody>
               </table>

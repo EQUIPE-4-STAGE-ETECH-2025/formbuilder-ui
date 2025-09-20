@@ -12,7 +12,7 @@ export function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const { login, loading, clearError } = useAuth();
+  const { login, loginLoading, clearError } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -20,7 +20,7 @@ export function Login() {
     e.preventDefault();
     clearError();
 
-    const result = await login(email, password);
+    const result = await login(email, password, rememberMe);
 
     if (result.success && result.data) {
       addToast({
@@ -154,7 +154,7 @@ export function Login() {
 
               <Button
                 type="submit"
-                loading={loading}
+                loading={loginLoading}
                 className="w-full"
                 size="lg"
                 variant="accent"

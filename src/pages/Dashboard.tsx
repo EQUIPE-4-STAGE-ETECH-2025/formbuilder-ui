@@ -1,4 +1,12 @@
-import { FileText, Plus, Send, TrendingUp, Users } from "lucide-react";
+import {
+  ExternalLink,
+  FileText,
+  History,
+  Plus,
+  Send,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -317,25 +325,25 @@ export function Dashboard() {
                           <FileText className="h-5 w-5 text-accent-400" />
                         </div>
                         <div>
-                          <p className="text-base font-medium text-surface-400">
+                          <p className="text-sm font-medium text-surface-400">
                             {form.title}
+                          </p>
+                          <p className="text-xs text-surface-500 flex items-center gap-1 mt-1">
+                            <History className="h-3 w-3" />
+                            Créé le{" "}
+                            {new Date(form.createdAt).toLocaleDateString(
+                              "fr-FR",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              }
+                            )}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-accent-400">
-                          {new Date(form.createdAt).toLocaleDateString(
-                            "fr-FR",
-                            {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            }
-                          )}
-                        </p>
-                        <p className="text-xs text-surface-500">
-                          {getStatusText(form.status)}
-                        </p>
+                        <ExternalLink className="h-4 w-4 text-accent-400" />
                       </div>
                     </div>
                   </Link>
@@ -452,7 +460,7 @@ export function Dashboard() {
             </h3>
           </CardHeader>
           <CardContent>
-            {formsStatusData.length > 0 ? (
+            {formsStatusData.length > 1 ? (
               <div className="flex items-center">
                 <div className="w-3/4 h-80">
                   <ResponsiveContainer width="100%" height="100%">
@@ -534,12 +542,28 @@ export function Dashboard() {
                         className="p-2 bg-surface-900 border border-surface-700/50 rounded-lg hover:bg-surface-700 transition-all duration-200"
                       >
                         <span className="text-xs text-surface-500">
-                          <span className="text-accent-400">{percentage}%</span>{" "}
+                          <span className="font-medium text-accent-400">
+                            {percentage}%
+                          </span>{" "}
                           {getStatusText(entry.name)}
                         </span>
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            ) : formsStatusData.length === 1 ? (
+              <div className="h-80 flex items-center justify-center text-center py-12 text-surface-500">
+                <div>
+                  <FileText className="h-16 w-16 mx-auto mb-4 text-surface-600" />
+                  <p>
+                    {formsStatusData[0].name === "PUBLISHED" &&
+                      "Tous vos formulaires sont publiés"}
+                    {formsStatusData[0].name === "DRAFT" &&
+                      "Tous vos formulaires sont en brouillon"}
+                    {formsStatusData[0].name === "DISABLED" &&
+                      "Tous vos formulaires sont désactivés"}
+                  </p>
                 </div>
               </div>
             ) : (

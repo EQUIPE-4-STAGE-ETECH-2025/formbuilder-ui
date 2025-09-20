@@ -1,5 +1,5 @@
 import { apiClient } from "../config/apiClient";
-import { apiCache, buildUrl, withErrorHandling } from "../utils/apiUtils";
+import { buildUrl, withErrorHandling } from "../utils/apiUtils";
 import {
   ICreateFormRequest,
   IEmbedQueryParams,
@@ -21,13 +21,10 @@ class FormsService {
       this.basePath,
       params as Record<string, string | number | boolean | undefined>
     );
-    const cacheKey = `forms_all_${JSON.stringify(params || {})}`;
 
     const result = await withErrorHandling(
       () => apiClient.get<IFormListResponse>(url).then((res) => res.data),
-      "Erreur lors de la récupération des formulaires",
-      cacheKey,
-      2 * 60 * 1000 // Cache 2 minutes
+      "Erreur lors de la récupération des formulaires"
     );
 
     return result as IFormListResponse;
@@ -38,13 +35,10 @@ class FormsService {
    */
   async getById(id: string): Promise<IFormResponse> {
     const url = `${this.basePath}/${id}`;
-    const cacheKey = `forms_${id}`;
 
     const result = await withErrorHandling(
       () => apiClient.get<IFormResponse>(url).then((res) => res.data),
-      `Erreur lors de la récupération du formulaire ${id}`,
-      cacheKey,
-      5 * 60 * 1000 // Cache 5 minutes pour un formulaire spécifique
+      `Erreur lors de la récupération du formulaire ${id}`
     );
 
     return result as IFormResponse;
@@ -55,13 +49,10 @@ class FormsService {
    */
   async getPublicById(id: string): Promise<IFormResponse> {
     const url = `/api/public/forms/${id}`;
-    const cacheKey = `forms_public_${id}`;
 
     const result = await withErrorHandling(
       () => apiClient.get<IFormResponse>(url).then((res) => res.data),
-      `Erreur lors de la récupération publique du formulaire ${id}`,
-      cacheKey,
-      10 * 60 * 1000 // Cache 10 minutes pour les formulaires publics (plus stable)
+      `Erreur lors de la récupération publique du formulaire ${id}`
     );
 
     return result as IFormResponse;
@@ -76,9 +67,6 @@ class FormsService {
         this.basePath,
         formData
       );
-
-      // Invalider le cache des listes de formulaires après création
-      apiCache.delete("forms_all_{}");
 
       return response.data;
     } catch (error) {
@@ -109,11 +97,6 @@ class FormsService {
         formData
       );
 
-      // Invalider les caches après mise à jour
-      apiCache.delete(`forms_${id}`);
-      apiCache.delete(`forms_public_${id}`);
-      apiCache.delete("forms_all_{}");
-
       return response.data;
     }, `Erreur lors de la mise à jour du formulaire ${id}`);
 
@@ -126,6 +109,7 @@ class FormsService {
   async delete(id: string): Promise<{ success: boolean; message?: string }> {
     try {
       const response = await apiClient.delete(`${this.basePath}/${id}`);
+
       return {
         success: true,
         message: response.data?.message || "Formulaire supprimé avec succès",
@@ -183,6 +167,7 @@ class FormsService {
       const response = await apiClient.post<IFormResponse>(
         `${this.basePath}/${id}/publish`
       );
+
       return response.data;
     } catch (error) {
       console.error(

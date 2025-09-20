@@ -24,9 +24,16 @@ export function Subscription() {
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
   const hasProcessedUrlParamsRef = useRef(false);
 
-  // Utiliser les nouveaux hooks
-  const { plans, subscriptions, loading, error, refreshData } =
-    useSubscriptions();
+  // Utiliser les nouveaux hooks avec chargement granulaire
+  const {
+    plans,
+    subscriptions,
+    loading,
+    plansLoading,
+    subscriptionsLoading,
+    error,
+    refreshData,
+  } = useSubscriptions();
   const {
     subscribeToPlan,
     openCustomerPortal,
@@ -42,7 +49,7 @@ export function Subscription() {
     ? plans.find((plan) => plan.name === activeSubscription.planName)
     : plans.find((plan) => plan.priceCents === 0); // Plan gratuit par défaut
 
-  // Gérer les paramètres d'URL pour les redirections Stripe
+  // Gérer les paramètres d'URL pour les redirections Stripe (non bloquant)
   useEffect(() => {
     const handleUrlParams = async () => {
       const params = new URLSearchParams(location.search);
@@ -56,9 +63,10 @@ export function Subscription() {
 
       hasProcessedUrlParamsRef.current = true;
 
-      // Nettoyer l'URL des paramètres immédiatement
+      // Nettoyer l'URL des paramètres immédiatement pour éviter les rechargements
       window.history.replaceState({}, document.title, window.location.pathname);
 
+      // Traitement immédiat pour les annulations (pas d'appel API)
       if (canceled === "true") {
         addToast({
           type: "info",
@@ -69,33 +77,40 @@ export function Subscription() {
         return;
       }
 
+      // Traitement non bloquant pour les sessions Stripe
       if (sessionId) {
-        try {
-          const success = await checkCheckoutSessionStatus(sessionId);
-          if (success) {
-            await refreshData();
-            addToast({
-              type: "success",
-              title: "Paiement réussi !",
-              message:
-                "Félicitations ! Votre abonnement a été activé avec succès.",
-            });
-          } else {
+        // Traiter en arrière-plan pour ne pas bloquer l'affichage de la page
+        setTimeout(async () => {
+          try {
+            const success = await checkCheckoutSessionStatus(sessionId);
+            if (success) {
+              await refreshData();
+              addToast({
+                type: "success",
+                title: "Paiement réussi !",
+                message:
+                  "Félicitations ! Votre abonnement a été activé avec succès.",
+              });
+            } else {
+              addToast({
+                type: "error",
+                title: "Erreur de paiement",
+                message:
+                  "Impossible de vérifier votre paiement. Veuillez réessayer.",
+              });
+            }
+          } catch (error) {
+            console.error(
+              "Erreur lors de la vérification de la session:",
+              error
+            );
             addToast({
               type: "error",
-              title: "Erreur de paiement",
-              message:
-                "Impossible de vérifier votre paiement. Veuillez réessayer.",
+              title: "Erreur",
+              message: "Impossible de vérifier le paiement",
             });
           }
-        } catch (error) {
-          console.error("Erreur lors de la vérification de la session:", error);
-          addToast({
-            type: "error",
-            title: "Erreur",
-            message: "Impossible de vérifier le paiement",
-          });
-        }
+        }, 100); // Délai minimal pour permettre l'affichage de la page
       }
     };
 
@@ -225,12 +240,24 @@ export function Subscription() {
     setOpenFAQ(openFAQ === faqId ? null : faqId);
   };
 
-  // États de chargement
+  // États de chargement optimisés
   const isLoading = loading || stripeLoading;
+  const showPlans = !plansLoading && plans.length > 0;
+  const showCurrentPlan = !subscriptionsLoading && user && currentPlan;
 
-  if (loading) {
+  // Afficher un skeleton loading seulement si les plans ne sont pas encore chargés
+  if (plansLoading && plans.length === 0) {
     return (
       <div className="space-modern">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-text-100 mb-4">
+            Choisissez votre plan
+          </h1>
+          <p className="text-lg text-surface-400 max-w-2xl mx-auto">
+            Créez des formulaires professionnels et collectez des données en
+            toute sécurité
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="h-80 loading-blur rounded-2xl"></div>
@@ -253,8 +280,8 @@ export function Subscription() {
         </p>
       </div>
 
-      {/* Current Plan Status */}
-      {user && currentPlan && (
+      {/* Current Plan Status - Affiché seulement quand les données sont prêtes */}
+      {showCurrentPlan && (
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -309,76 +336,101 @@ export function Subscription() {
         </Card>
       )}
 
-      {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {plans.map((plan) => {
-          const isCurrentPlan = currentPlan?.id === plan.id;
-          const isPopular = plan.name.toLowerCase().includes("premium");
-          const planFeatures = getPlanFeatures(plan);
-          const priceDisplay = `${(plan.priceCents / 100).toFixed(0)}€`;
-
-          return (
-            <Card
-              key={plan.id}
-              className={`relative ${getPlanColor(plan, isPopular)} ${
-                isPopular ? "shadow-large" : ""
-              } flex flex-col`}
-            >
-              {isPopular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-accent-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-                    Populaire
-                  </span>
+      {/* Skeleton loading pour les abonnements si nécessaire */}
+      {subscriptionsLoading && user && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 loading-blur rounded"></div>
+                <div>
+                  <div className="h-4 w-32 loading-blur rounded mb-2"></div>
+                  <div className="h-3 w-24 loading-blur rounded"></div>
                 </div>
-              )}
+              </div>
+              <div className="h-8 w-24 loading-blur rounded"></div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-              <CardHeader className="text-center pb-4">
-                <div className="flex justify-center mb-4">
-                  {getPlanIcon(plan)}
-                </div>
-                <h3 className="text-xl font-bold text-text-100">{plan.name}</h3>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold text-text-100">
-                    {priceDisplay}
-                  </span>
-                  <span className="text-surface-400">/mois</span>
-                </div>
-              </CardHeader>
+      {/* Plans Grid - Affiché dès que les plans sont chargés */}
+      {showPlans && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {plans.map((plan) => {
+            const isCurrentPlan = currentPlan?.id === plan.id;
+            const isPopular = plan.name.toLowerCase().includes("premium");
+            const planFeatures = getPlanFeatures(plan);
+            const priceDisplay = `${(plan.priceCents / 100).toFixed(0)}€`;
 
-              <CardContent className="flex flex-col flex-1 space-y-8">
-                <ul className="space-y-2 flex-1">
-                  {planFeatures.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-yellow-500" />
-                      <span className="text-sm text-surface-400">
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+            return (
+              <Card
+                key={plan.id}
+                className={`relative ${getPlanColor(plan, isPopular)} ${
+                  isPopular ? "shadow-large" : ""
+                } flex flex-col`}
+              >
+                {isPopular && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-accent-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                      Populaire
+                    </span>
+                  </div>
+                )}
 
-                <Button
-                  className="w-full mt-auto"
-                  variant={getButtonVariant(plan, isCurrentPlan, isPopular)}
-                  onClick={() => handleSubscribe(plan)}
-                  disabled={isCurrentPlan || loadingPlanId === plan.id}
-                >
-                  {loadingPlanId === plan.id ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                      Chargement...
-                    </div>
-                  ) : isCurrentPlan ? (
-                    "Plan actuel"
-                  ) : (
-                    "Choisir ce plan"
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                <CardHeader className="text-center pb-4">
+                  <div className="flex justify-center mb-4">
+                    {getPlanIcon(plan)}
+                  </div>
+                  <h3 className="text-xl font-bold text-text-100">
+                    {plan.name}
+                  </h3>
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold text-text-100">
+                      {priceDisplay}
+                    </span>
+                    <span className="text-surface-400">/mois</span>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="flex flex-col flex-1 space-y-8">
+                  <ul className="space-y-2 flex-1">
+                    {planFeatures.map((feature, featureIndex) => (
+                      <li
+                        key={featureIndex}
+                        className="flex items-center gap-2"
+                      >
+                        <Check className="h-4 w-4 text-yellow-500" />
+                        <span className="text-sm text-surface-400">
+                          {feature}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    className="w-full mt-auto"
+                    variant={getButtonVariant(plan, isCurrentPlan, isPopular)}
+                    onClick={() => handleSubscribe(plan)}
+                    disabled={isCurrentPlan || loadingPlanId === plan.id}
+                  >
+                    {loadingPlanId === plan.id ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                        Chargement...
+                      </div>
+                    ) : isCurrentPlan ? (
+                      "Plan actuel"
+                    ) : (
+                      "Choisir ce plan"
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* FAQ */}
       <div className="text-center">

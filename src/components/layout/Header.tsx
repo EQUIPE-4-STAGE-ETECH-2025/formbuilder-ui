@@ -34,17 +34,9 @@ export function Header() {
   }, []);
 
   const navigation = [
-    ...(user?.role === "ADMIN"
-      ? [
-          { name: "Dashboard", href: "/admin" },
-          { name: "Utilisateurs", href: "/admin/users" },
-          { name: "Journal d'audit", href: "/admin/audit-log" },
-        ]
-      : [
-          { name: "Dashboard", href: "/dashboard" },
-          { name: "Formulaires", href: "/forms" },
-          { name: "Abonnement", href: "/subscription" },
-        ]),
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Formulaires", href: "/forms" },
+    { name: "Abonnement", href: "/subscription" },
   ];
 
   const isActive = (href: string) => location.pathname === href;

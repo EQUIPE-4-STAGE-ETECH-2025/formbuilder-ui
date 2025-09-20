@@ -6,7 +6,7 @@ export interface IUser {
   email: string;
   passwordHash: string;
   isEmailVerified: boolean;
-  role: "USER" | "ADMIN";
+  role: "USER";
   createdAt: string;
   updatedAt: string;
   // Propriétés supplémentaires pour l'interface utilisateur
@@ -209,15 +209,6 @@ export interface IQuotaStatus {
   notified100: boolean;
 }
 
-export interface IAuditLog {
-  id: string;
-  admin_id: string;
-  target_user_id: string;
-  action: string;
-  reason: string;
-  created_at: string;
-}
-
 // Types pour les fonctions et unions
 export type TApiResponse<T> = {
   success: boolean;
@@ -226,7 +217,7 @@ export type TApiResponse<T> = {
   message?: string;
 };
 
-export type TUserRole = "USER" | "ADMIN";
+export type TUserRole = "USER";
 export type TFormStatus = "draft" | "published" | "disabled";
 export type TFieldType =
   | "text"
@@ -270,27 +261,4 @@ export interface IDashboardStats {
     storage_used_mb: number;
     storage_limit_mb: number;
   };
-}
-
-export interface IAdminStats {
-  totalUsers: number;
-  activeUsers: number;
-  totalForms: number;
-  totalSubmissions: number;
-  revenueThisMonth: number;
-  userGrowth: { name: string; utilisateurs: number; nouveaux: number }[];
-  revenue: { name: string; revenus: number }[];
-  planDistribution: { name: string; utilisateurs: number }[];
-}
-
-export interface IUserList {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  plan: string;
-  status: "active" | "suspended";
-  formsCount: number;
-  submissionsCount: number;
-  lastLoginAt: string;
 }
