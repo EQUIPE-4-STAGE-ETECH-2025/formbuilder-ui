@@ -1,12 +1,4 @@
-import {
-  ExternalLink,
-  FileText,
-  History,
-  Plus,
-  Send,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { FileText, History, Plus, Send, TrendingUp, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -219,77 +211,79 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Quota Usage */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <h3 className="text-xl font-semibold text-text-100">
               Utilisation des quotas
             </h3>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="flex flex-col h-full">
             {quotasLoading ? (
               <p className="text-surface-500">Chargement des quotas...</p>
             ) : quotasError ? (
               <p className="text-red-500">{quotasError}</p>
             ) : quotaStatus ? (
               <>
-                <div>
-                  <div className="flex justify-between text-sm text-surface-400 mb-2">
-                    <span>Formulaires</span>
-                    <span>
-                      {quotaStatus.usage.form_count}/
-                      {quotaStatus.limits.max_forms}
-                    </span>
+                <div className="space-y-6 flex-1">
+                  <div>
+                    <div className="flex justify-between text-sm text-surface-400 mb-2">
+                      <span>Formulaires</span>
+                      <span>
+                        {quotaStatus.usage.form_count}/
+                        {quotaStatus.limits.max_forms}
+                      </span>
+                    </div>
+                    <div className="w-full bg-surface-800 border border-surface-700/50 rounded-full h-3">
+                      <div
+                        className={`h-3 rounded-full transition-all duration-300 ${getQuotaColor(
+                          quotaStatus.percentages.forms_used_percent
+                        )}`}
+                        style={{
+                          width: `${quotaStatus.percentages.forms_used_percent}%`,
+                        }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="w-full bg-surface-800 border border-surface-700/50 rounded-full h-3">
-                    <div
-                      className={`h-3 rounded-full transition-all duration-300 ${getQuotaColor(
-                        quotaStatus.percentages.forms_used_percent
-                      )}`}
-                      style={{
-                        width: `${quotaStatus.percentages.forms_used_percent}%`,
-                      }}
-                    ></div>
+                  <div>
+                    <div className="flex justify-between text-sm text-surface-400 mb-2">
+                      <span>Soumissions ce mois</span>
+                      <span>
+                        {quotaStatus.usage.submission_count}/
+                        {quotaStatus.limits.max_submissions_per_month}
+                      </span>
+                    </div>
+                    <div className="w-full bg-surface-800 border border-surface-700/50 rounded-full h-3">
+                      <div
+                        className={`h-3 rounded-full transition-all duration-300 ${getQuotaColor(
+                          quotaStatus.percentages.submissions_used_percent
+                        )}`}
+                        style={{
+                          width: `${quotaStatus.percentages.submissions_used_percent}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm text-surface-400 mb-2">
+                      <span>Stockage</span>
+                      <span>
+                        {quotaStatus.usage.storage_used_mb}MB/
+                        {quotaStatus.limits.max_storage_mb}MB
+                      </span>
+                    </div>
+                    <div className="w-full bg-surface-800 border border-surface-700/50 rounded-full h-3">
+                      <div
+                        className={`h-3 rounded-full transition-all duration-300 ${getQuotaColor(
+                          quotaStatus.percentages.storage_used_percent
+                        )}`}
+                        style={{
+                          width: `${quotaStatus.percentages.storage_used_percent}%`,
+                        }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div className="flex justify-between text-sm text-surface-400 mb-2">
-                    <span>Soumissions ce mois</span>
-                    <span>
-                      {quotaStatus.usage.submission_count}/
-                      {quotaStatus.limits.max_submissions_per_month}
-                    </span>
-                  </div>
-                  <div className="w-full bg-surface-800 border border-surface-700/50 rounded-full h-3">
-                    <div
-                      className={`h-3 rounded-full transition-all duration-300 ${getQuotaColor(
-                        quotaStatus.percentages.submissions_used_percent
-                      )}`}
-                      style={{
-                        width: `${quotaStatus.percentages.submissions_used_percent}%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm text-surface-400 mb-2">
-                    <span>Stockage</span>
-                    <span>
-                      {quotaStatus.usage.storage_used_mb}MB/
-                      {quotaStatus.limits.max_storage_mb}MB
-                    </span>
-                  </div>
-                  <div className="w-full bg-surface-800 border border-surface-700/50 rounded-full h-3">
-                    <div
-                      className={`h-3 rounded-full transition-all duration-300 ${getQuotaColor(
-                        quotaStatus.percentages.storage_used_percent
-                      )}`}
-                      style={{
-                        width: `${quotaStatus.percentages.storage_used_percent}%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="pt-4">
+                <div className="mt-6">
                   <Link to="/subscription">
                     <Button variant="secondary" size="md" className="w-full">
                       Gérer mon abonnement
@@ -314,39 +308,39 @@ export function Dashboard() {
             {recentForms.length > 0 ? (
               <div className="space-y-4">
                 {recentForms.slice(0, 3).map((form) => (
-                  <Link
+                  <div
                     key={form.id}
-                    to={`/forms/${form.id}/edit`}
-                    className="block"
+                    className="group flex items-center justify-between p-4 bg-transparent border border-accent-500/30 rounded-xl hover:border-accent-500/50 hover:bg-accent-500/5 transition-all duration-200"
                   >
-                    <div className="flex items-center justify-between p-4 bg-transparent border border-accent-500/30 rounded-xl hover:border-accent-500/50 hover:bg-accent-500/5 transition-all duration-200 cursor-pointer">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-accent-900/20 rounded-xl flex items-center justify-center">
-                          <FileText className="h-5 w-5 text-accent-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-surface-400">
-                            {form.title}
-                          </p>
-                          <p className="text-xs text-surface-500 flex items-center gap-1 mt-1">
-                            <History className="h-3 w-3" />
-                            Créé le{" "}
-                            {new Date(form.createdAt).toLocaleDateString(
-                              "fr-FR",
-                              {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              }
-                            )}
-                          </p>
-                        </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-accent-900/20 rounded-xl flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-accent-400" />
                       </div>
-                      <div className="text-right">
-                        <ExternalLink className="h-4 w-4 text-accent-400" />
+                      <div>
+                        <p className="text-sm text-surface-400">{form.title}</p>
+                        <p className="text-xs text-surface-500 flex items-center gap-1 mt-1">
+                          <History className="h-3 w-3" />
+                          Créé le{" "}
+                          {new Date(form.createdAt).toLocaleDateString(
+                            "fr-FR",
+                            {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            }
+                          )}
+                        </p>
                       </div>
                     </div>
-                  </Link>
+                    <div className="text-right">
+                      <Link
+                        to={`/forms/${form.id}/edit`}
+                        className="flex items-center gap-1 text-sm text-accent-400 mr-2"
+                      >
+                        <span>Modifier</span>
+                      </Link>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -542,9 +536,7 @@ export function Dashboard() {
                         className="p-2 bg-surface-900 border border-surface-700/50 rounded-lg hover:bg-surface-700 transition-all duration-200"
                       >
                         <span className="text-xs text-surface-500">
-                          <span className="font-medium text-accent-400">
-                            {percentage}%
-                          </span>{" "}
+                          <span className="text-accent-400">{percentage}%</span>{" "}
                           {getStatusText(entry.name)}
                         </span>
                       </div>
