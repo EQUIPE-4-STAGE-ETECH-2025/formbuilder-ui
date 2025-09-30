@@ -176,11 +176,15 @@ export function FormEmbed() {
           case 400:
             errorMessage = detail || "Données du formulaire invalides.";
             break;
+          case 403:
+            errorMessage = "Ce formulaire n'est pas disponible.";
+            break;
           case 404:
             errorMessage = "Formulaire introuvable.";
             break;
           case 429:
-            errorMessage = "Trop de soumissions. Veuillez réessayer plus tard.";
+            errorMessage =
+              "Trop de soumissions. Veuillez réessayer dans une heure.";
             break;
           case 500:
             errorMessage = "Erreur serveur. Veuillez réessayer plus tard.";
@@ -403,6 +407,20 @@ export function FormEmbed() {
                   )}
                 </div>
               ))}
+
+              {/* Champ honeypot pour la sécurité iframe */}
+              <input
+                type="text"
+                name="_website_url"
+                value=""
+                style={{
+                  display: "none",
+                  position: "absolute",
+                  left: "-9999px",
+                }}
+                tabIndex={-1}
+                autoComplete="off"
+              />
 
               <Button
                 type="submit"

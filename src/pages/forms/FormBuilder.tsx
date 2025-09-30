@@ -875,7 +875,7 @@ export function FormBuilder() {
     }
   };
 
-  // Callback memoïzé pour la restauration de version
+  // Callback memorisé pour la restauration de version
   const handleVersionRestored = useMemo(() => {
     return () => {
       // Recharger le formulaire après restauration
@@ -1119,7 +1119,7 @@ export function FormBuilder() {
                   value={embedData.embedCode}
                   readOnly
                   className="w-full px-3 py-2 border border-surface-700/50 rounded-xl bg-surface-900 text-sm font-mono text-surface-400"
-                  rows={5}
+                  rows={3}
                 />
                 <Button
                   variant="secondary"

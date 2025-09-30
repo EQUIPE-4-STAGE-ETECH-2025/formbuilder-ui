@@ -14,7 +14,24 @@ export const submissionsService = {
     payload: SubmitFormDto
   ): Promise<SubmissionResponseDto> => {
     const result = await withErrorHandling(async () => {
-      const res = await apiClient.post(`/api/forms/${formId}/submit`, payload);
+      // Générer le timestamp pour le header de sécurité
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+
+      // Ajouter le champ honeypot vide aux données
+      const securePayload = {
+        ...payload,
+        _website_url: "",
+      };
+
+      const res = await apiClient.post(
+        `/api/forms/${formId}/submit`,
+        securePayload,
+        {
+          headers: {
+            "X-Honeypot-Field": timestamp,
+          },
+        }
+      );
 
       return res.data;
     }, `Erreur lors de la soumission du formulaire ${formId}`);

@@ -12,6 +12,7 @@ const PUBLIC_ENDPOINTS = new Set([
   "/auth/reset-password",
   "/auth/refresh",
   "/auth/verify-email",
+  "/api/public/forms",
 ]);
 
 // Cache des clés de storage pour éviter les lectures répétées
@@ -34,9 +35,17 @@ let failedQueue: IFailedRequest[] = [];
 // Fonction utilitaire pour vérifier si un endpoint est public
 const isPublicEndpoint = (url?: string): boolean => {
   if (!url) return false;
-  return Array.from(PUBLIC_ENDPOINTS).some((endpoint) =>
+
+  // Vérifier les endpoints publics de base
+  const isBasicPublic = Array.from(PUBLIC_ENDPOINTS).some((endpoint) =>
     url.includes(endpoint)
   );
+
+  // Vérifier spécifiquement les endpoints de soumission de formulaires
+  const isSubmitEndpoint =
+    url.includes("/api/forms/") && url.includes("/submit");
+
+  return isBasicPublic || isSubmitEndpoint;
 };
 
 // Fonctions pour gérer la queue de refresh
