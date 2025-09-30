@@ -11,11 +11,14 @@ import {
 export const submissionsService = {
   submit: async (
     formId: string,
-    payload: SubmitFormDto
+    payload: SubmitFormDto,
+    formStartTime?: number
   ): Promise<SubmissionResponseDto> => {
     const result = await withErrorHandling(async () => {
-      // Générer le timestamp pour le header de sécurité
-      const timestamp = Math.floor(Date.now() / 1000).toString();
+      // Utiliser le timestamp fourni ou générer un nouveau si non fourni (fallback)
+      const timestamp = formStartTime
+        ? formStartTime.toString()
+        : Math.floor(Date.now() / 1000).toString();
 
       // Ajouter le champ honeypot vide aux données
       const securePayload = {

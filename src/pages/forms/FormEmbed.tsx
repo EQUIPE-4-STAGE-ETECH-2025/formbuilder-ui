@@ -34,6 +34,9 @@ export function FormEmbed() {
   >({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  // Générer le timestamp au montage du composant pour la sécurité honeypot
+  const [formStartTime] = useState(() => Math.floor(Date.now() / 1000));
+
   const fetchForm = useCallback(async () => {
     try {
       // Utiliser l'endpoint public pour récupérer le formulaire
@@ -149,7 +152,7 @@ export function FormEmbed() {
         form.fields
       );
 
-      await submissionsService.submit(form.id, submissionData);
+      await submissionsService.submit(form.id, submissionData, formStartTime);
       setSubmitted(true);
     } catch (error) {
       console.error("Submission error:", error);
